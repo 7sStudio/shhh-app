@@ -11,7 +11,7 @@
 
 <p align="center">
   <a href="https://github.com/7sStudio/shhh-app/actions/workflows/ci.yml"><img src="https://github.com/7sStudio/shhh-app/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-  <a href="https://github.com/7sStudio/shhh-app/releases/latest"><img src="https://img.shields.io/github/v/release/7sStudio/shhh-app?label=release&amp;color=322B66" alt="Latest release"></a>
+  <a href="https://github.com/7sStudio/shhh-app/releases/latest"><img src="https://img.shields.io/github/v/release/7sStudio/shhh-app?sort=semver&amp;label=release&amp;color=322B66" alt="Latest release"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache%202.0-blue.svg" alt="License: Apache 2.0"></a>
   <a href="https://developer.android.com/tools/releases/platforms#14"><img src="https://img.shields.io/badge/API-34%2B-brightgreen.svg" alt="API 34+"></a>
   <a href="https://kotlinlang.org"><img src="https://img.shields.io/badge/Kotlin-2.4-7F52FF.svg?logo=kotlin&amp;logoColor=white" alt="Kotlin 2.4"></a>
