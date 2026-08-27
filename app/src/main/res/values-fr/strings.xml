@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Shhh</string>
+    <string name="app_tagline">Une tape pour faire taire votre téléphone</string>
+
+    <string name="status_quiet_on">Vibreur activé · média coupé</string>
+    <string name="status_quiet_off">Son activé · média restauré</string>
+
+    <string name="tile_label">Shhh</string>
+    <string name="tile_subtitle_on">Activé</string>
+    <string name="tile_subtitle_off">Désactivé</string>
+    <string name="tile_content_description">Basculer le mode silence</string>
+
+    <string name="widget_label_on">Silencieux</string>
+    <string name="widget_label_off">Shhh</string>
+    <string name="widget_description">Une tape : vibreur et média coupé</string>
+
+    <string name="permission_title">Configuration nécessaire</string>
+    <string name="permission_body">Android nécessite l\'accès Ne pas déranger pour changer les modes de sonnerie. Appuyez ci-dessous, trouvez Shhh dans la liste et activez-le.</string>
+    <string name="permission_button">Accorder l\'accès</string>
+
+    <string name="setup_add_tile">Tuile de paramètres rapides</string>
+    <string name="setup_add_widget">Widget d\'accueil</string>
+
+    <string name="timer_section_title">Silence temporaire</string>
+    <string name="timer_section_hint">Le son revient automatiquement</string>
+    <string name="timer_chip_15">15 min</string>
+    <string name="timer_chip_30">30 min</string>
+    <string name="timer_chip_60">1 heure</string>
+    <string name="timer_chip_120">2 heures</string>
+    <string name="timer_running_until">Le son revient à %1$s</string>
+    <string name="timer_end_now">Finir maintenant</string>
+
+    <string name="countdown_title">Silencieux</string>
+    <string name="countdown_text">Le son revient à %1$s</string>
+    <string name="countdown_action_restore">Restaurer maintenant</string>
+    <string name="channel_countdown_name">Statut du silence</string>
+    <string name="channel_countdown_description">Compte à rebours pendant un silence temporaire</string>
+    <string name="channel_service_name">Changements programmés</string>
+    <string name="channel_service_description">Notification technique lors d\'un changement programmé</string>
+    <string name="service_notification_title">Ajustement du son…</string>
+
+    <string name="headphones_notification_title">Ecouteurs connectés</string>
+    <string name="headphones_notification_text">Appuyez pour restaurer le volume média — la sonnerie reste silencieuse</string>
+
+    <string name="quiet_hours_title">Heures de silence</string>
+    <string name="quiet_hours_hint">Silence automatique selon un planning</string>
+    <string name="quiet_hours_starts">Commence</string>
+    <string name="quiet_hours_ends">Finit</string>
+    <string name="quiet_days_every_day">Chaque jour</string>
+    <string name="quiet_days_none">Aucun jour sélectionné</string>
+
+    <string name="exact_alarm_title">Autoriser alarmes et rappels</string>
+    <string name="exact_alarm_body">Les minuteries et heures de silence nécessitent l\'accès "Alarmes et rappels" pour que le son revienne à la minute exacte, même en veille.</string>
+    <string name="exact_alarm_grant">Ouvrir les paramètres</string>
+
+    <string name="settings_title">Paramètres</string>
+    <string name="settings_back">Retour</string>
+    <string name="settings_behavior_header">Comportement du silence</string>
+    <string name="settings_ringer_title">Sonnerie en mode silence</string>
+    <string name="settings_ringer_hint">Appels entrants quand Shhh est activé</string>
+    <string name="settings_ringer_vibrate">Vibreur</string>
+    <string name="settings_ringer_silent">Silencieux</string>
+    <string name="settings_restore_title">Restaurer le volume à</string>
+    <string name="settings_restore_hint">Niveau média après désactivation</string>
+    <string name="settings_restore_previous">Niveau précédent</string>
+    <string name="settings_restore_fixed">Niveau fixe</string>
+    <string name="settings_restore_fixed_value">Niveau fixe · %1$d%%</string>
+    <string name="settings_notifications_header">Notifications</string>
+    <string name="settings_countdown_title">Compte à rebours</string>
+    <string name="settings_countdown_hint">Voir le temps restant pendant une minuterie</string>
+    <string name="settings_headphones_header">Ecouteurs</string>
+    <string name="settings_headphones_title">Restaurer média pour écouteurs</string>
+    <string name="settings_headphones_hint">Le son revient lors de la connexion d\'écouteurs Bluetooth</string>
+    <string name="settings_quick_access_header">Accès rapide</string>
+    <string name="settings_automation_title">Automatisation</string>
+    <string name="settings_automation_hint">Contrôler Shhh via Tasker ou raccourcis</string>
+    <string name="settings_about_header">À propos</string>
+    <string name="settings_version">Version %1$s</string>
+    <string name="settings_source_title">Code source</string>
+    <string name="settings_source_hint">Apache-2.0, sur GitHub</string>
+    <string name="settings_troubleshooting_title">Dépannage</string>
+    <string name="settings_troubleshooting_hint">Résoudre les problèmes de minuteries sur certains appareils</string>
+
+    <string name="automation_sheet_title">Intents d\'automatisation</string>
+    <string name="automation_sheet_body">Toute application pouvant lancer une activité peut contrôler Shhh via io.github.shhhapp.shhh/.ToggleActivity :</string>
+    <string name="automation_action_hush">…action.HUSH — silence immédiat (durée optionnelle)</string>
+    <string name="automation_action_unhush">…action.UNHUSH — restaurer le son</string>
+    <string name="automation_action_toggle">…action.TOGGLE — inverser l\'état</string>
+    <string name="automation_action_media">…action.RESTORE_MEDIA — média uniquement</string>
+
+    <string name="shortcut_toggle_short">Basculer</string>
+    <string name="shortcut_toggle_long">Basculer le silence</string>
+    <string name="shortcut_hush30_short">30 min</string>
+    <string name="shortcut_hush30_long">Silence pour 30 min</string>
+    <string name="shortcut_hush60_short">1 heure</string>
+    <string name="shortcut_hush60_long">Silence pour 1 heure</string>
+
+    <string name="dial_label_12am">00:00</string>
+    <string name="dial_label_6am">06:00</string>
+    <string name="dial_label_12pm">12:00</string>
+    <string name="dial_label_6pm">18:00</string>
+    <string name="duration_hours">%1$d h</string>
+    <string name="duration_minutes">%1$d min</string>
+    <string name="duration_full">%1$d h %2$d min</string>
+</resources>

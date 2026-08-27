@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Shhh</string>
+    <string name="app_tagline">نقرة واحدة لإسكات هاتفك</string>
+
+    <string name="status_quiet_on">الاهتزاز مفعل · الوسائط مكتومة</string>
+    <string name="status_quiet_off">الصوت مفعل · تمت استعادة الوسائط</string>
+
+    <string name="tile_label">Shhh</string>
+    <string name="tile_subtitle_on">مفعل</string>
+    <string name="tile_subtitle_off">معطل</string>
+    <string name="tile_content_description">تبديل وضع الهدوء</string>
+
+    <string name="widget_label_on">صامت</string>
+    <string name="widget_label_off">Shhh</string>
+    <string name="widget_description">نقرة واحدة: اهتزاز وكتم الوسائط</string>
+
+    <string name="permission_title">مطلوب إعداد لمرة واحدة</string>
+    <string name="permission_body">يتطلب أندرويد الوصول إلى "عدم الإزعاج" لتبديل أوضاع الرنين. اضغط أدناه، وابحث عن Shhh في القائمة، وقم بتفعيله.</string>
+    <string name="permission_button">منح الإذن</string>
+
+    <string name="setup_add_tile">زر الإعدادات السريعة</string>
+    <string name="setup_add_widget">أداة الشاشة الرئيسية</string>
+
+    <string name="timer_section_title">هدوء مؤقت</string>
+    <string name="timer_section_hint">يعود الصوت تلقائياً</string>
+    <string name="timer_chip_15">١٥ دقيقة</string>
+    <string name="timer_chip_30">٣٠ دقيقة</string>
+    <string name="timer_chip_60">ساعة واحدة</string>
+    <string name="timer_chip_120">ساعتان</string>
+    <string name="timer_running_until">يعود الصوت في %1$s</string>
+    <string name="timer_end_now">إلغاء الآن</string>
+
+    <string name="countdown_title">صامت</string>
+    <string name="countdown_text">يعود الصوت في %1$s</string>
+    <string name="countdown_action_restore">استعادة الآن</string>
+    <string name="channel_countdown_name">حالة الهدوء</string>
+    <string name="channel_countdown_description">العد التنازلي أثناء تشغيل مؤقت الهدوء</string>
+    <string name="channel_service_name">تغييرات مجدولة</string>
+    <string name="channel_service_description">إشعار تقني موجز أثناء تطبيق تغيير مجدول</string>
+    <string name="service_notification_title">جارٍ ضبط الصوت…</string>
+
+    <string name="headphones_notification_title">تم توصيل سماعات الرأس</string>
+    <string name="headphones_notification_text">اضغط لاستعادة صوت الوسائط — يظل الرنين صامتاً</string>
+
+    <string name="quiet_hours_title">ساعات الهدوء</string>
+    <string name="quiet_hours_hint">إسكات الهاتف تلقائياً حسب جدول زمني</string>
+    <string name="quiet_hours_starts">يبدأ</string>
+    <string name="quiet_hours_ends">ينتهي</string>
+    <string name="quiet_days_every_day">كل يوم</string>
+    <string name="quiet_days_none">لم يتم اختيار أيام</string>
+
+    <string name="exact_alarm_title">السماح بالتنبيهات والتذكيرات</string>
+    <string name="exact_alarm_body">تحتاج المؤقتات وساعات الهدوء إلى إذن "التنبيهات والتذكيرات" حتى يعود الصوت في الدقيقة المحددة تماماً — حتى أثناء سكون الهاتف.</string>
+    <string name="exact_alarm_grant">فتح الإعدادات</string>
+
+    <string name="settings_title">الإعدادات</string>
+    <string name="settings_back">رجوع</string>
+    <string name="settings_behavior_header">سلوك الهدوء</string>
+    <string name="settings_ringer_title">الرنين أثناء الهدوء</string>
+    <string name="settings_ringer_hint">ما تفعله المكالمات الواردة عند تفعيل Shhh</string>
+    <string name="settings_ringer_vibrate">اهتزاز</string>
+    <string name="settings_ringer_silent">صامت</string>
+    <string name="settings_restore_title">استعادة الصوت إلى</string>
+    <string name="settings_restore_hint">مستوى الوسائط بعد إلغاء الهدوء</string>
+    <string name="settings_restore_previous">المستوى السابق</string>
+    <string name="settings_restore_fixed">مستوى ثابت</string>
+    <string name="settings_restore_fixed_value">مستوى ثابت · %1$d%%</string>
+    <string name="settings_notifications_header">الإشعارات</string>
+    <string name="settings_countdown_title">عد تنازلي مباشر</string>
+    <string name="settings_countdown_hint">رؤية الوقت المتبقي أثناء تشغيل مؤقت الهدوء</string>
+    <string name="settings_headphones_header">سماعات الرأس</string>
+    <string name="settings_headphones_title">استعادة الوسائط للسماعات</string>
+    <string name="settings_headphones_hint">يعود صوت الوسائط عند توصيل سماعات بلوتوث — يظل الرنين صامتاً</string>
+    <string name="settings_quick_access_header">وصول سريع</string>
+    <string name="settings_automation_title">الأتمتة</string>
+    <string name="settings_automation_hint">التحكم في Shhh من Tasker والاختصارات</string>
+    <string name="settings_about_header">حول التطبيق</string>
+    <string name="settings_version">الإصدار %1$s</string>
+    <string name="settings_source_title">كود المصدر</string>
+    <string name="settings_source_hint">Apache-2.0، على GitHub</string>
+    <string name="settings_troubleshooting_title">استكشاف الأخطاء وإصلاحها</string>
+    <string name="settings_troubleshooting_hint">حل مشاكل عدم عمل المؤقتات في بعض الأجهزة</string>
+
+    <string name="automation_sheet_title">أوامر الأتمتة</string>
+    <string name="automation_sheet_body">يمكن لأي تطبيق أتمتة التحكم في Shhh عبر النشاط io.github.shhhapp.shhh/.ToggleActivity:</string>
+    <string name="automation_action_hush">…action.HUSH — هدوء الآن (مع مدة اختيارية)</string>
+    <string name="automation_action_unhush">…action.UNHUSH — استعادة الصوت</string>
+    <string name="automation_action_toggle">…action.TOGGLE — تبديل الحالة الحالية</string>
+    <string name="automation_action_media">…action.RESTORE_MEDIA — الوسائط فقط</string>
+
+    <string name="shortcut_toggle_short">تبديل</string>
+    <string name="shortcut_toggle_long">تبديل الهدوء</string>
+    <string name="shortcut_hush30_short">٣٠ دقيقة</string>
+    <string name="shortcut_hush30_long">هدوء لمدة ٣٠ دقيقة</string>
+    <string name="shortcut_hush60_short">ساعة واحدة</string>
+    <string name="shortcut_hush60_long">هدوء لمدة ساعة واحدة</string>
+
+    <string name="dial_label_12am">١٢ ص</string>
+    <string name="dial_label_6am">٦ ص</string>
+    <string name="dial_label_12pm">١٢ م</string>
+    <string name="dial_label_6pm">٦ م</string>
+    <string name="duration_hours">%1$d ساعة</string>
+    <string name="duration_minutes">%1$d دقيقة</string>
+    <string name="duration_full">%1$d ساعة و%2$d دقيقة</string>
+</resources>

@@ -1,0 +1,48 @@
+# Gradle
+.gradle/
+build/
+*/build/
+
+# Android Studio / IntelliJ
+.idea/
+*.iml
+captures/
+.externalNativeBuild/
+.cxx/
+
+# Local configuration (SDK path, signing secrets)
+local.properties
+keystore.properties
+*.jks
+*.keystore
+
+# macOS
+.DS_Store
+
+# Kotlin
+.kotlin/
+
+# Python
+.venv-logo/
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Tools output
+tools/logo/out/
+
+# Android release artifacts
+app/release/
+
+# Android build outputs
+**/build/
+**/release/
+*.apk
+*.aab
+*.dm
+
+# Local agent planning artifacts (may contain personal notes)
+.artifacts/

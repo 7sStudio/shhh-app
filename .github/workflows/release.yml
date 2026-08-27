@@ -1,0 +1,119 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build & publish release APK
+    runs-on: ubuntu-latest
+    # Signs only when the repository has signing secrets configured (Settings >
+    # Secrets: SIGNING_KEYSTORE_BASE64, SIGNING_KEYSTORE_PASSWORD, SIGNING_KEY_ALIAS,
+    # SIGNING_KEY_PASSWORD). Otherwise the unsigned APK is published for manual
+    # signing. The `secrets` context is not available in a step-level `if:`, so it is
+    # resolved here — job-level `env` is one of the few keys that may read it.
+    env:
+      HAS_SIGNING: ${{ secrets.SIGNING_KEYSTORE_BASE64 != '' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          # Full history: the guard below reads the previous tag's versionCode.
+          fetch-depth: 0
+
+      # Android identifies an app by applicationId + signing cert, and refuses to
+      # install an update whose versionCode did not increase. That failure is
+      # invisible here — the build succeeds and the release publishes — so catch
+      # the mismatch before anything ships.
+      - name: Verify tag matches app version
+        run: |
+          set -euo pipefail
+          TAG="${GITHUB_REF_NAME}"
+          EXPECTED="${TAG#v}"
+          VERSION_NAME=$(sed -n 's/.*versionName = "\(.*\)".*/\1/p' app/build.gradle.kts | head -1)
+          VERSION_CODE=$(sed -n 's/.*versionCode = \([0-9]*\).*/\1/p' app/build.gradle.kts | head -1)
+
+          echo "tag:         $TAG"
+          echo "versionName: $VERSION_NAME"
+          echo "versionCode: $VERSION_CODE"
+
+          fail=0
+
+          if [ "$VERSION_NAME" != "$EXPECTED" ]; then
+            echo "::error::Tag $TAG implies versionName $EXPECTED, but app/build.gradle.kts declares $VERSION_NAME"
+            fail=1
+          fi
+
+          PREV=$(git tag --list 'v*' --sort=-v:refname | grep -v "^${TAG}$" | head -1 || true)
+          if [ -n "$PREV" ]; then
+            PREV_CODE=$(git show "$PREV:app/build.gradle.kts" | sed -n 's/.*versionCode = \([0-9]*\).*/\1/p' | head -1)
+            echo "previous:    $PREV (versionCode $PREV_CODE)"
+            if [ "$VERSION_CODE" -le "$PREV_CODE" ]; then
+              echo "::error::versionCode $VERSION_CODE must exceed $PREV_CODE from $PREV, or Android will refuse the update"
+              fail=1
+            fi
+          else
+            echo "previous:    none (first release)"
+          fi
+
+          CHANGELOG="fastlane/metadata/android/en-US/changelogs/${VERSION_CODE}.txt"
+          if [ ! -s "$CHANGELOG" ]; then
+            echo "::error::Missing $CHANGELOG — F-Droid publishes release notes from this file"
+            fail=1
+          fi
+
+          if [ "$fail" -eq 0 ]; then echo "Version metadata OK"; fi
+          exit $fail
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c # v6
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6
+
+      - name: Run unit tests
+        run: ./gradlew testDebugUnitTest
+
+      - name: Build release APK
+        run: ./gradlew assembleRelease
+
+      - name: Sign APK
+        if: env.HAS_SIGNING == 'true'
+        env:
+          KEYSTORE_BASE64: ${{ secrets.SIGNING_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.SIGNING_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
+        run: |
+          echo "$KEYSTORE_BASE64" | base64 -d > release.keystore
+          BUILD_TOOLS="$ANDROID_HOME/build-tools/$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)"
+          # apksigner does not align; zipalign must run on the unsigned input first.
+          "$BUILD_TOOLS/zipalign" -p -f 4 \
+            app/build/outputs/apk/release/app-release-unsigned.apk \
+            aligned.apk
+          "$BUILD_TOOLS/apksigner" sign \
+            --ks release.keystore \
+            --ks-pass "pass:$KEYSTORE_PASSWORD" \
+            --ks-key-alias "$KEY_ALIAS" \
+            --key-pass "pass:$KEY_PASSWORD" \
+            --out Shhh-${{ github.ref_name }}.apk \
+            aligned.apk
+          "$BUILD_TOOLS/apksigner" verify --print-certs Shhh-${{ github.ref_name }}.apk
+          rm release.keystore aligned.apk
+
+      - name: Prepare unsigned artifact name
+        if: env.HAS_SIGNING != 'true'
+        run: cp app/build/outputs/apk/release/app-release-unsigned.apk Shhh-${{ github.ref_name }}-unsigned.apk
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3
+        with:
+          files: Shhh-*.apk
+          generate_release_notes: true

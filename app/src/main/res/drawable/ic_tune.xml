@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Material Symbols "tune" (rounded) — Apache 2.0, Google. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="960"
+    android:viewportHeight="960">
+    <group android:translateY="960">
+        <path
+            android:fillColor="#FF000000"
+            android:pathData="M440,-120v-80H120q-17,0 -28.5,-11.5T80,-240q0,-17 11.5,-28.5T120,-280h320v-80q0,-17 11.5,-28.5T480,-400q17,0 28.5,11.5T520,-360v80h320q17,0 28.5,11.5T880,-240q0,-17 -11.5,-28.5T840,-280H520v80q0,17 -11.5,28.5T480,-160q-17,0 -28.5,-11.5T440,-120ZM280,-440v-80H120q-17,0 -28.5,-11.5T80,-560q0,-17 11.5,-28.5T120,-600h160v-80q0,-17 11.5,-28.5T320,-720q17,0 28.5,11.5T360,-680v80h480q17,0 28.5,11.5T880,-560q0,-17 -11.5,-28.5T840,-600H360v80q0,17 -11.5,28.5T320,-480q-17,0 -28.5,-11.5T280,-440ZM640,-760v-80H120q-17,0 -28.5,-11.5T80,-880q0,-17 11.5,-28.5T120,-920h520v-80q0,-17 11.5,-28.5T680,-1040q17,0 28.5,11.5T720,-1000v80h120q17,0 28.5,11.5T880,-880q0,-17 -11.5,-28.5T840,-920H720v80q0,17 -11.5,28.5T680,-800q-17,0 -28.5,-11.5T640,-760Z" />
+    </group>
+</vector>

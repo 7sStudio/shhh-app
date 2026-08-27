@@ -1,0 +1,9 @@
+# Code owners for shhh-app.
+#
+# The owner listed here is requested for review automatically on every pull
+# request, and the "no-merge-main" ruleset requires that review before a PR can
+# land on main (require_code_owner_review). Keep the catch-all last-match rule
+# below in place — CODEOWNERS uses last-match-wins, not first-match.
+
+# Default owner for everything in the repository.
+*       @7sStudio

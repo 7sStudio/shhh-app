@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Shhh</string>
+    <string name="app_tagline">One tap to hush your phone</string>
+
+    <string name="status_quiet_on">Vibrate on · media muted</string>
+    <string name="status_quiet_off">Sound on · media restored</string>
+
+    <string name="tile_label">Shhh</string>
+    <string name="tile_subtitle_on">On</string>
+    <string name="tile_subtitle_off">Off</string>
+    <string name="tile_content_description">Toggle quiet mode</string>
+
+    <string name="widget_label_on">Hushed</string>
+    <string name="widget_label_off">Shhh</string>
+    <string name="widget_description">One tap: vibrate and mute media</string>
+
+    <string name="permission_title">One-time setup needed</string>
+    <string name="permission_body">Android requires Do Not Disturb access to switch
+        ringer modes. Tap below, find Shhh in the list, and turn it on — that\'s it.</string>
+    <string name="permission_button">Grant access</string>
+
+    <string name="setup_add_tile">Quick Settings tile</string>
+    <string name="setup_add_widget">Home screen widget</string>
+
+    <!-- Timed hush -->
+    <string name="timer_section_title">Hush for a while</string>
+    <string name="timer_section_hint">Sound comes back on its own</string>
+    <string name="timer_chip_15">15 min</string>
+    <string name="timer_chip_30">30 min</string>
+    <string name="timer_chip_60">1 hour</string>
+    <string name="timer_chip_120">2 hours</string>
+    <string name="timer_running_until">Sound returns at %1$s</string>
+    <string name="timer_end_now">End now</string>
+
+    <!-- Countdown notification -->
+    <string name="countdown_title">Hushed</string>
+    <string name="countdown_text">Sound returns at %1$s</string>
+    <string name="countdown_action_restore">Restore now</string>
+    <string name="channel_countdown_name">Hush status</string>
+    <string name="channel_countdown_description">Countdown while a hush timer is running</string>
+    <string name="channel_service_name">Scheduled changes</string>
+    <string name="channel_service_description">Brief technical notification while a scheduled change is applied</string>
+    <string name="service_notification_title">Adjusting sound…</string>
+
+    <!-- Headphones -->
+    <string name="headphones_notification_title">Headphones connected</string>
+    <string name="headphones_notification_text">Tap to bring media volume back — ringer stays hushed</string>
+
+    <!-- Quiet hours -->
+    <string name="quiet_hours_title">Quiet hours</string>
+    <string name="quiet_hours_hint">Hush automatically on a schedule</string>
+    <string name="quiet_hours_starts">Starts</string>
+    <string name="quiet_hours_ends">Ends</string>
+    <string name="quiet_days_every_day">Every day</string>
+    <string name="quiet_days_none">No days selected</string>
+
+    <!-- Exact alarm access -->
+    <string name="exact_alarm_title">Allow alarms &amp; reminders</string>
+    <string name="exact_alarm_body">Timers and quiet hours need Android\'s
+        "Alarms &amp; reminders" access so sound comes back at the exact minute —
+        even while the phone sleeps. One switch, one time.</string>
+    <string name="exact_alarm_grant">Open settings</string>
+
+    <!-- Settings screen -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_back">Back</string>
+    <string name="settings_behavior_header">Hush behavior</string>
+    <string name="settings_ringer_title">Ringer while hushed</string>
+    <string name="settings_ringer_hint">What incoming calls do when Shhh is on</string>
+    <string name="settings_ringer_vibrate">Vibrate</string>
+    <string name="settings_ringer_silent">Silent</string>
+    <string name="settings_restore_title">Bring volume back to</string>
+    <string name="settings_restore_hint">Media level after un-hushing</string>
+    <string name="settings_restore_previous">Previous level</string>
+    <string name="settings_restore_fixed">Fixed level</string>
+    <string name="settings_restore_fixed_value">Fixed level · %1$d%%</string>
+    <string name="settings_notifications_header">Notifications</string>
+    <string name="settings_countdown_title">Live countdown</string>
+    <string name="settings_countdown_hint">See time remaining while a hush timer runs</string>
+    <string name="settings_headphones_header">Headphones</string>
+    <string name="settings_headphones_title">Un-mute media for headphones</string>
+    <string name="settings_headphones_hint">Media comes back when Bluetooth headphones connect — ringer stays hushed</string>
+    <string name="settings_quick_access_header">Quick access</string>
+    <string name="settings_automation_title">Automation</string>
+    <string name="settings_automation_hint">Control Shhh from Tasker, routines and shortcuts</string>
+    <string name="settings_about_header">About</string>
+    <string name="settings_version">Version %1$s</string>
+    <string name="settings_source_title">Source code</string>
+    <string name="settings_source_hint">Apache-2.0, on GitHub</string>
+
+    <string name="settings_troubleshooting_title">Troubleshooting</string>
+    <string name="settings_troubleshooting_hint">Fix issues with timers not firing on some devices</string>
+
+    <!-- Automation sheet -->
+    <string name="automation_sheet_title">Automation intents</string>
+    <string name="automation_sheet_body">Any automation app that can start an activity
+        (Tasker, MacroDroid, routines) can control Shhh. Start the activity
+        io.github.shhhapp.shhh/.ToggleActivity with one of these actions:</string>
+    <string name="automation_action_hush">…action.HUSH — hush now (optional extra duration_minutes)</string>
+    <string name="automation_action_unhush">…action.UNHUSH — restore sound</string>
+    <string name="automation_action_toggle">…action.TOGGLE — flip current state</string>
+    <string name="automation_action_media">…action.RESTORE_MEDIA — media volume only</string>
+
+    <!-- Launcher shortcuts -->
+    <string name="shortcut_toggle_short">Toggle</string>
+    <string name="shortcut_toggle_long">Toggle hush</string>
+    <string name="shortcut_hush30_short">30 min</string>
+    <string name="shortcut_hush30_long">Hush for 30 min</string>
+    <string name="shortcut_hush60_short">1 hour</string>
+    <string name="shortcut_hush60_long">Hush for 1 hour</string>
+
+    <!-- Dial labels -->
+    <string name="dial_label_12am">12 AM</string>
+    <string name="dial_label_6am">6 AM</string>
+    <string name="dial_label_12pm">12 PM</string>
+    <string name="dial_label_6pm">6 PM</string>
+    <string name="duration_hours">%1$d hr</string>
+    <string name="duration_minutes">%1$d min</string>
+    <string name="duration_full">%1$d hr %2$d min</string>
+</resources>

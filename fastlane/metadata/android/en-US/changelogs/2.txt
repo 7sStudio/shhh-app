@@ -1,0 +1,7 @@
+• Timed hush: 15 min – 2 h, sound returns automatically
+• Quiet hours schedule with per-weekday control
+• Live countdown notification (optional)
+• Vibrate or silent, previous or fixed restore volume
+• Bluetooth headphones media restore (optional)
+• Launcher shortcuts + automation intents (Tasker etc.)
+• Redesigned home + settings screens

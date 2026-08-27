@@ -1,0 +1,25 @@
+Shhh is a tiny, modern quiet-mode toggle for the moments you need silence now: meetings, movies, sleep.
+
+One tap — from a Quick Settings tile, a home screen widget, or the app — and your ringer switches to vibrate (or silent) while media volume drops to zero. Tap again and everything comes back, including the exact media volume you had before.
+
+<b>Features</b>
+
+• Quick Settings tile with live on/off state
+• Home screen widget that matches your wallpaper colors (Material You)
+• Timed hush: 15 min to 2 hours, sound returns on its own
+• Quiet hours: automatic nightly schedule, per weekday
+• Live countdown notification while a timer runs (optional)
+• Bluetooth headphones option: media comes back when you connect, ringer stays hushed
+• Launcher shortcuts and automation intents for Tasker & routines
+• Choose vibrate or silent, and how volume is restored
+
+<b>Private by design</b>
+
+No accounts, no ads, no analytics — Shhh does not even have the internet permission. Open source under Apache-2.0.
+
+<b>Access it needs (all official Android switches)</b>
+
+• Do Not Disturb access — required by Android to switch ringer modes
+• Alarms & reminders — so timers and quiet hours fire at the exact minute
+• Notifications — only for the optional countdown
+• Nearby devices — only for the optional Bluetooth headphones feature

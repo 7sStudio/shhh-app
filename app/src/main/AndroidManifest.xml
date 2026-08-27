@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Required to switch ringer modes; granted by the user via an official
+         Settings toggle (Do Not Disturb access). -->
+    <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
+    <!-- Countdown + headphones notifications (runtime permission on 13+). -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Re-arm hush timers and quiet-hours alarms after a reboot. -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!-- Momentary service that applies scheduled changes: Android 16+ only
+         allows background ringer/volume changes from a foreground service. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <!-- Timed hush + quiet hours must fire at the exact minute; granted by the
+         user via the official "Alarms & reminders" Settings switch. -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <!-- Lets the hush countdown appear as a Live Update chip (install-time). -->
+    <uses-permission android:name="android.permission.POST_PROMOTED_NOTIFICATIONS" />
+    <!-- Only to hear "Bluetooth headphones connected" for the optional
+         media-restore-on-headphones feature (runtime permission). -->
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+
+    <!-- android:allowBackup is omitted on purpose: it is deprecated from Android 12
+         and its default (backup allowed) is what we want for a handful of settings. -->
+    <application
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.Shhh">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <meta-data
+                android:name="android.app.shortcuts"
+                android:resource="@xml/shortcuts" />
+        </activity>
+
+        <!-- Invisible trampoline: gives tile/widget/notification/automation
+             actions a foreground context so ringer/volume changes aren't
+             dropped by Android 16+ audio hardening. Exported on purpose: it is
+             the public automation surface (Tasker, routines, shortcuts) and
+             can only change sound state. -->
+        <activity
+            android:name=".ToggleActivity"
+            android:excludeFromRecents="true"
+            android:exported="true"
+            android:noHistory="true"
+            android:taskAffinity=""
+            android:theme="@style/Theme.Shhh.Invisible">
+            <intent-filter>
+                <action android:name="io.github.shhhapp.shhh.action.HUSH" />
+                <action android:name="io.github.shhhapp.shhh.action.UNHUSH" />
+                <action android:name="io.github.shhhapp.shhh.action.TOGGLE" />
+                <action android:name="io.github.shhhapp.shhh.action.RESTORE_MEDIA" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
+        <service
+            android:name=".tile.ShhhTileService"
+            android:exported="true"
+            android:icon="@drawable/ic_tile"
+            android:label="@string/tile_label"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.service.quicksettings.TOGGLEABLE_TILE"
+                android:value="true" />
+        </service>
+
+        <!-- Momentary foreground service for scheduled transitions (timed hush
+             restore, quiet-hours start). Runs for under a second. -->
+        <service
+            android:name=".schedule.HushService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Applying a user-scheduled ringer/volume profile change at the exact scheduled time" />
+        </service>
+
+        <receiver
+            android:name=".schedule.AlarmReceiver"
+            android:exported="false" />
+
+        <receiver
+            android:name=".schedule.BootReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.TIME_SET" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+                <action android:name="android.app.action.SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED" />
+            </intent-filter>
+        </receiver>
+
+        <receiver
+            android:name=".audio.HeadsetReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.bluetooth.headset.profile.action.CONNECTION_STATE_CHANGED" />
+            </intent-filter>
+        </receiver>
+
+        <receiver
+            android:name=".widget.ShhhWidgetReceiver"
+            android:exported="true"
+            android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/shhh_widget_info" />
+        </receiver>
+    </application>
+</manifest>
