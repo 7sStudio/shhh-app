@@ -6,12 +6,14 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.media.AudioManager
+import android.os.Looper
 import android.service.quicksettings.Tile
 import android.service.quicksettings.TileService
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.github.shhhapp.shhh.MainActivity
 import io.github.shhhapp.shhh.ToggleActivity
+import io.github.shhhapp.shhh.core.QuietModeController
 import io.github.shhhapp.shhh.core.ShhhSettings
 import java.lang.reflect.Proxy
 import org.junit.Assert.assertEquals
@@ -89,6 +91,7 @@ class ShhhTileServiceTest {
         settings = ShhhSettings(context)
         settings.timerEndMillis = 0L
         settings.previousMediaVolume = ShhhSettings.NO_SAVED_VOLUME
+        settings.lastKnownQuiet = false
         settings.hushRinger = ShhhSettings.HushRinger.VIBRATE
         settings.restoreMode = ShhhSettings.RestoreMode.PREVIOUS
         settings.liveCountdownEnabled = false
@@ -220,6 +223,128 @@ class ShhhTileServiceTest {
         val launched = shadowOf(collapsed.single()).savedIntent
         assertEquals(ToggleActivity::class.java.name, launched.component?.className)
         assertTrue(launched.flags and Intent.FLAG_ACTIVITY_NEW_TASK != 0)
+    }
+
+    // ---- Do Not Disturb ----
+    // While a zen mode is active, AudioService masks the readable ringer to
+    // SILENT (verified on Android 17). The tile must not mirror DND as "on",
+    // and a tap during DND must hush — not restore, which would make
+    // AudioService exit the user's DND mode.
+
+    /** What the phone looks like to an app while Do Not Disturb is active. */
+    private fun simulateDnd() {
+        notificationManager.setInterruptionFilter(
+            NotificationManager.INTERRUPTION_FILTER_PRIORITY
+        )
+        audioManager.ringerMode = AudioManager.RINGER_MODE_SILENT
+    }
+
+    @Test
+    fun `an active dnd mode alone leaves the tile off`() {
+        simulateDnd()
+        val service = buildService()
+
+        service.onStartListening()
+
+        assertEquals(Tile.STATE_INACTIVE, service.qsTile.state)
+        assertEquals("Off", service.qsTile.subtitle.toString())
+    }
+
+    @Test
+    fun `the tile stays active when dnd joins an active hush`() {
+        QuietModeController(context).goQuiet()
+        simulateDnd()
+        val service = buildService()
+
+        service.onStartListening()
+
+        assertEquals(Tile.STATE_ACTIVE, service.qsTile.state)
+        assertEquals("On", service.qsTile.subtitle.toString())
+    }
+
+    @Test
+    fun `clicking during dnd always routes through the trampoline`() {
+        // Background audio writes are silently dropped while DND is active,
+        // and the masked ringer hides the drop from the applied-check — so
+        // the tile must not even try; only the visible activity may act.
+        simulateDnd()
+        audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, 8, 0)
+        val service = buildService()
+        val collapsed = recordCollapsedActivities(service)
+        service.onStartListening()
+
+        service.onClick()
+
+        val launched = shadowOf(collapsed.single()).savedIntent
+        assertEquals(ToggleActivity::class.java.name, launched.component?.className)
+        // Nothing was touched from the tile's own (background) context.
+        assertEquals(AudioManager.RINGER_MODE_SILENT, audioManager.ringerMode)
+        assertEquals(8, audioManager.getStreamVolume(AudioManager.STREAM_MUSIC))
+    }
+
+    // ---- live refresh while the shade is open ----
+
+    @Test
+    fun `a ringer change while the shade is open refreshes the tile`() {
+        val service = buildService()
+        service.onStartListening()
+        assertEquals(Tile.STATE_INACTIVE, service.qsTile.state)
+
+        audioManager.ringerMode = AudioManager.RINGER_MODE_VIBRATE
+        context.sendBroadcast(Intent(AudioManager.RINGER_MODE_CHANGED_ACTION))
+        shadowOf(Looper.getMainLooper()).idle()
+
+        assertEquals(Tile.STATE_ACTIVE, service.qsTile.state)
+    }
+
+    @Test
+    fun `a dnd change while the shade is open refreshes the tile`() {
+        QuietModeController(context).goQuiet()
+        val service = buildService()
+        service.onStartListening()
+        assertEquals(Tile.STATE_ACTIVE, service.qsTile.state)
+
+        // The user restores sound elsewhere, then a DND change lands: the
+        // filter broadcast alone must re-read the state.
+        QuietModeController(context).restoreSound()
+        context.sendBroadcast(Intent(NotificationManager.ACTION_INTERRUPTION_FILTER_CHANGED))
+        shadowOf(Looper.getMainLooper()).idle()
+
+        assertEquals(Tile.STATE_INACTIVE, service.qsTile.state)
+    }
+
+    @Test
+    fun `the receiver is dropped when the shade closes`() {
+        val service = buildService()
+        service.onStartListening()
+        service.onStopListening()
+
+        audioManager.ringerMode = AudioManager.RINGER_MODE_VIBRATE
+        context.sendBroadcast(Intent(AudioManager.RINGER_MODE_CHANGED_ACTION))
+        shadowOf(Looper.getMainLooper()).idle()
+
+        assertEquals(Tile.STATE_INACTIVE, service.qsTile.state)
+    }
+
+    // onDestroy also unregisters defensively, but Robolectric cannot invoke
+    // TileService.onDestroy (its shadow is not a ShadowService), so only the
+    // stop/start cycles are exercised here.
+    @Test
+    fun `repeated listening cycles neither double-register nor crash`() {
+        val service = buildService()
+        service.onStartListening()
+        service.onStopListening()
+        service.onStopListening()
+
+        service.onStartListening()
+        service.onStartListening()
+
+        audioManager.ringerMode = AudioManager.RINGER_MODE_VIBRATE
+        context.sendBroadcast(Intent(AudioManager.RINGER_MODE_CHANGED_ACTION))
+        shadowOf(Looper.getMainLooper()).idle()
+
+        assertEquals(Tile.STATE_ACTIVE, service.qsTile.state)
+        service.onStopListening()
     }
 
     @Test

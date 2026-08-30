@@ -56,7 +56,23 @@ class QuietModeIntegrationTest {
     @After
     fun tearDown() {
         // Leave the device sounding normal for the next test/user.
+        shell("cmd notification set_dnd off")
+        waitFor("DND off") { !controller.isDndActive }
         controller.restoreSound()
+    }
+
+    /** Zen changes propagate asynchronously; poll instead of sleeping blind. */
+    private fun waitFor(what: String, condition: () -> Boolean) {
+        val deadline = System.currentTimeMillis() + 5_000
+        while (!condition()) {
+            assertTrue("timed out waiting for: $what", System.currentTimeMillis() < deadline)
+            Thread.sleep(50)
+        }
+    }
+
+    private fun enableDnd() {
+        shell("cmd notification set_dnd priority")
+        waitFor("DND active") { controller.isDndActive }
     }
 
     @Test
@@ -82,5 +98,66 @@ class QuietModeIntegrationTest {
         assertFalse(controller.isQuiet)
         assertEquals(AudioManager.RINGER_MODE_NORMAL, audioManager.ringerMode)
         assertEquals(5, audioManager.getStreamVolume(AudioManager.STREAM_MUSIC))
+    }
+
+    // ---- Do Not Disturb ----
+
+    @Test
+    fun dnd_masksTheRingerAsSilent_thePlatformBehaviorTheFallbackExistsFor() {
+        // Pins the premise: while zen is active, AudioService reports SILENT
+        // to apps even though the real ringer is untouched. If this ever
+        // fails, the DND fallback in QuietModeController can be revisited.
+        // The mask lands asynchronously a moment after the filter flips, so
+        // wait for it rather than asserting a race.
+        enableDnd()
+
+        waitFor("ringer masked by DND") {
+            audioManager.ringerMode == AudioManager.RINGER_MODE_SILENT
+        }
+    }
+
+    @Test
+    fun dndAlone_doesNotReadAsQuiet_onRealDevice() {
+        enableDnd()
+
+        assertFalse(controller.isQuiet)
+    }
+
+    @Test
+    fun hushEngagedBeforeDnd_staysQuietDuringDnd_onRealDevice() {
+        controller.goQuiet()
+
+        enableDnd()
+
+        assertTrue(controller.isQuiet)
+    }
+
+    @Test
+    fun hushDuringDnd_reportsQuietAndKeepsDndAlive_onRealDevice() {
+        enableDnd()
+
+        val result = controller.goQuiet()
+
+        assertEquals(QuietModeController.Result.Success(quiet = true), result)
+        assertTrue(controller.isQuiet)
+        // A ringer write here would make AudioService exit the user's DND.
+        assertTrue("hushing must not end the user's DND mode", controller.isDndActive)
+    }
+
+    @Test
+    fun restoreDuringDnd_bringsSoundBack_onRealDevice() {
+        controller.goQuiet()
+        enableDnd()
+
+        val result = controller.restoreSound()
+
+        assertEquals(QuietModeController.Result.Success(quiet = false), result)
+        assertFalse(controller.isQuiet)
+        // Restoring sound during DND deliberately exits zen — a phone cannot
+        // be audible while a DND mode silences it.
+        waitFor("DND ended by the restore") { !controller.isDndActive }
+        waitFor("ringer back to normal") {
+            audioManager.ringerMode == AudioManager.RINGER_MODE_NORMAL
+        }
     }
 }

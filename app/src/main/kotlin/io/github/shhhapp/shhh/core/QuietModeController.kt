@@ -15,7 +15,8 @@ import android.os.SystemClock
  *
  * "Quiet" is defined by what the phone is actually doing right now, so the
  * toggle can never drift out of sync with changes made through the volume
- * keys or system settings.
+ * keys or system settings. The one exception is while Do Not Disturb is
+ * active, when the ringer mode apps can read is masked — see [isQuiet].
  */
 class QuietModeController(
     context: Context,
@@ -34,9 +35,38 @@ class QuietModeController(
     val hasDndAccess: Boolean
         get() = notificationManager.isNotificationPolicyAccessGranted
 
-    /** True when the ringer is anything other than normal (vibrate or silent). */
+    /**
+     * True while any Do Not Disturb mode is active (the DND tile, Bedtime,
+     * driving — all zen modes). UNKNOWN reads as inactive so a filter the
+     * system cannot report never blanks out the real ringer state.
+     */
+    val isDndActive: Boolean
+        get() = when (notificationManager.currentInterruptionFilter) {
+            NotificationManager.INTERRUPTION_FILTER_ALL,
+            NotificationManager.INTERRUPTION_FILTER_UNKNOWN -> false
+            else -> true
+        }
+
+    /**
+     * True when the ringer is anything other than normal (vibrate or silent).
+     *
+     * While Do Not Disturb is active the ringer mode cannot be trusted:
+     * AudioService masks the value reported to apps to SILENT for every zen
+     * mode, even when the underlying ringer is untouched (verified on
+     * Android 17 / Pixel — internal NORMAL, external SILENT). Reading it
+     * directly made the tile/widget light up whenever DND or Bedtime mode
+     * turned on. So under DND this falls back to the last state observed
+     * while the ringer was still readable — which is also what the ringer
+     * returns to when DND ends. Outside DND the remembered value is kept in
+     * sync on every read, so volume-key changes are picked up as before.
+     */
     val isQuiet: Boolean
-        get() = audioManager.ringerMode != AudioManager.RINGER_MODE_NORMAL
+        get() {
+            if (isDndActive) return settings.lastKnownQuiet
+            val quiet = audioManager.ringerMode != AudioManager.RINGER_MODE_NORMAL
+            if (settings.lastKnownQuiet != quiet) settings.lastKnownQuiet = quiet
+            return quiet
+        }
 
     sealed interface Result {
         /** Toggle applied; [quiet] is the new state. */
@@ -60,15 +90,24 @@ class QuietModeController(
     fun goQuiet(): Result {
         if (!hasDndAccess) return Result.NeedsDndAccess
         return try {
-            applyRingerMode(when (settings.hushRinger) {
-                ShhhSettings.HushRinger.VIBRATE -> AudioManager.RINGER_MODE_VIBRATE
-                ShhhSettings.HushRinger.SILENT -> AudioManager.RINGER_MODE_SILENT
-            })
+            // While a DND mode is active the ringer is already silenced more
+            // deeply than vibrate — and ANY app ringer write makes
+            // AudioService exit the user's zen mode (verified on Android 17:
+            // NORMAL and VIBRATE writes both clear an active DND/Bedtime
+            // mode). Hushing must never eat the user's DND, so the ringer is
+            // left alone; only media is muted and the hush remembered.
+            if (!isDndActive) {
+                applyRingerMode(when (settings.hushRinger) {
+                    ShhhSettings.HushRinger.VIBRATE -> AudioManager.RINGER_MODE_VIBRATE
+                    ShhhSettings.HushRinger.SILENT -> AudioManager.RINGER_MODE_SILENT
+                })
+            }
             val current = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
             if (current > 0) {
                 settings.previousMediaVolume = current
             }
             setMediaVolumeBestEffort(0)
+            settings.lastKnownQuiet = true
             Result.Success(quiet = true)
         } catch (_: SecurityException) {
             Result.NeedsDndAccess
@@ -81,6 +120,7 @@ class QuietModeController(
         return try {
             applyRingerMode(AudioManager.RINGER_MODE_NORMAL)
             setMediaVolumeBestEffort(restoreTargetVolume())
+            settings.lastKnownQuiet = false
             Result.Success(quiet = false)
         } catch (_: SecurityException) {
             Result.NeedsDndAccess
@@ -93,6 +133,18 @@ class QuietModeController(
      * the tile/widget immediately after this returns, and without the wait
      * those surfaces sometimes recompose against the old mode and freeze on a
      * stale state until their next scheduled update.
+     */
+    /**
+     * Waiting also matters when this write exits an active DND mode (the
+     * restore path): the zen exit and the ringer un-mask land asynchronously
+     * AFTER the interruption filter already reads "off". A caller reading
+     * [isQuiet] in that window would derive "quiet" from the still-masked
+     * SILENT ringer and re-poison [ShhhSettings.lastKnownQuiet] right after
+     * restoreSound cleared it — seen live on Android 17 as the tile showing
+     * ON at the next DND without any hush. Returning only once the target is
+     * readable (or the bounded timeout passes) closes that window. goQuiet
+     * never reaches here while DND is active, so the timeout cannot burn on
+     * a permanently-masked read.
      */
     private fun applyRingerMode(target: Int) {
         audioManager.ringerMode = target
@@ -124,7 +176,10 @@ class QuietModeController(
     }
 
     private companion object {
-        const val RINGER_SETTLE_TIMEOUT_MS = 200L
+        // 500ms covers the zen-exit + ringer-unmask propagation observed on
+        // Android 17 (a restore during DND settles well under this); the
+        // plain no-DND write settles in a few polls.
+        const val RINGER_SETTLE_TIMEOUT_MS = 500L
         const val RINGER_SETTLE_POLL_MS = 10L
     }
 

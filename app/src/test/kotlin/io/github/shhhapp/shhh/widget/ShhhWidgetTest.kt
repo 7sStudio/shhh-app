@@ -20,6 +20,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.github.shhhapp.shhh.MainActivity
 import io.github.shhhapp.shhh.R
 import io.github.shhhapp.shhh.ToggleActivity
+import io.github.shhhapp.shhh.core.QuietModeController
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import org.junit.Assert.assertNotNull
@@ -49,6 +50,9 @@ class ShhhWidgetTest {
         notificationManager =
             context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         shadowOf(notificationManager).setNotificationPolicyAccessGranted(true)
+        // SharedPreferences (the remembered hush state) outlive a single test
+        // in a Robolectric class run.
+        context.getSharedPreferences("shhh", Context.MODE_PRIVATE).edit().clear().commit()
         audioManager.ringerMode = AudioManager.RINGER_MODE_NORMAL
     }
 
@@ -95,6 +99,40 @@ class ShhhWidgetTest {
 
             onNode(hasTextEqualTo("Hushed")).assertExists()
             onNode(hasTextEqualTo("Shhh")).assertDoesNotExist()
+            onNode(hasImageResource(R.drawable.ic_vibration)).assertExists()
+        }
+
+    // While a zen mode is active, AudioService masks the readable ringer to
+    // SILENT (verified on Android 17); the widget must not mirror DND as
+    // "Hushed" — only shhh's own remembered state counts then.
+
+    @Test
+    fun `an active dnd mode alone does not show the widget hushed`() =
+        runGlanceAppWidgetUnitTest {
+            notificationManager.setInterruptionFilter(
+                NotificationManager.INTERRUPTION_FILTER_PRIORITY
+            )
+            audioManager.ringerMode = AudioManager.RINGER_MODE_SILENT
+
+            provideFromLiveState()
+
+            onNode(hasTextEqualTo("Shhh")).assertExists()
+            onNode(hasTextEqualTo("Hushed")).assertDoesNotExist()
+            onNode(hasImageResource(R.drawable.ic_volume_up)).assertExists()
+        }
+
+    @Test
+    fun `the widget stays hushed when dnd joins an active hush`() =
+        runGlanceAppWidgetUnitTest {
+            QuietModeController(context).goQuiet()
+            notificationManager.setInterruptionFilter(
+                NotificationManager.INTERRUPTION_FILTER_PRIORITY
+            )
+            audioManager.ringerMode = AudioManager.RINGER_MODE_SILENT
+
+            provideFromLiveState()
+
+            onNode(hasTextEqualTo("Hushed")).assertExists()
             onNode(hasImageResource(R.drawable.ic_vibration)).assertExists()
         }
 

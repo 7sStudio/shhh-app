@@ -79,14 +79,17 @@ fun ShhhApp() {
         onPauseOrDispose { }
     }
 
-    // Stay in sync with ringer changes made anywhere else.
+    // Stay in sync with ringer and Do Not Disturb changes made anywhere else.
     DisposableEffect(Unit) {
         val receiver = object : BroadcastReceiver() {
             override fun onReceive(c: Context?, i: Intent?) = refresh()
         }
         context.registerReceiver(
             receiver,
-            IntentFilter(AudioManager.RINGER_MODE_CHANGED_ACTION),
+            IntentFilter().apply {
+                addAction(AudioManager.RINGER_MODE_CHANGED_ACTION)
+                addAction(android.app.NotificationManager.ACTION_INTERRUPTION_FILTER_CHANGED)
+            },
             Context.RECEIVER_NOT_EXPORTED
         )
         onDispose { context.unregisterReceiver(receiver) }

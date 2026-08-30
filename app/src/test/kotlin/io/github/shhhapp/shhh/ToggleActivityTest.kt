@@ -51,6 +51,7 @@ class ToggleActivityTest {
         settings = ShhhSettings(context)
         settings.timerEndMillis = 0L
         settings.previousMediaVolume = ShhhSettings.NO_SAVED_VOLUME
+        settings.lastKnownQuiet = false
         settings.hushRinger = ShhhSettings.HushRinger.VIBRATE
         settings.restoreMode = ShhhSettings.RestoreMode.PREVIOUS
         settings.liveCountdownEnabled = false
@@ -68,6 +69,43 @@ class ToggleActivityTest {
     }
 
     private val mediaVolume: Int get() = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
+
+    // ---- Do Not Disturb ----
+    // Under an active DND mode the tile hands every tap to this activity,
+    // because only a visible activity's audio writes are honored then.
+
+    /** What the phone looks like to an app while Do Not Disturb is active. */
+    private fun simulateDnd() {
+        notificationManager.setInterruptionFilter(
+            NotificationManager.INTERRUPTION_FILTER_PRIORITY
+        )
+        audioManager.ringerMode = AudioManager.RINGER_MODE_SILENT
+    }
+
+    @Test
+    fun `toggling during dnd hushes without touching the ringer`() {
+        simulateDnd()
+
+        launch(null)
+
+        // No ringer write (one would exit the user's DND); media muted and
+        // the hush remembered for the masked state reads.
+        assertEquals(AudioManager.RINGER_MODE_SILENT, audioManager.ringerMode)
+        assertEquals(0, mediaVolume)
+        assertTrue(settings.lastKnownQuiet)
+    }
+
+    @Test
+    fun `toggling twice during dnd hushes then restores sound`() {
+        simulateDnd()
+
+        launch(null)
+        launch(null)
+
+        assertEquals(AudioManager.RINGER_MODE_NORMAL, audioManager.ringerMode)
+        assertEquals(8, mediaVolume)
+        assertTrue(!settings.lastKnownQuiet)
+    }
 
     // ---- ACTION_HUSH ----
 

@@ -39,6 +39,16 @@ class ShhhSettings(context: Context) {
         get() = prefs.getInt(KEY_PREVIOUS_MEDIA_VOLUME, NO_SAVED_VOLUME)
         set(value) = prefs.edit { putInt(KEY_PREVIOUS_MEDIA_VOLUME, value) }
 
+    /**
+     * Last quiet state observed while the ringer mode was still readable.
+     * While Do Not Disturb is active, Android masks the ringer mode every app
+     * sees to SILENT, so this remembered value is the only truthful answer to
+     * "is shhh on?" — see [QuietModeController.isQuiet].
+     */
+    var lastKnownQuiet: Boolean
+        get() = prefs.getBoolean(KEY_LAST_KNOWN_QUIET, false)
+        set(value) = prefs.edit { putBoolean(KEY_LAST_KNOWN_QUIET, value) }
+
     /** Countdown notification while a hush timer is running. */
     var liveCountdownEnabled: Boolean
         get() = prefs.getBoolean(KEY_LIVE_COUNTDOWN, true)
@@ -94,6 +104,7 @@ class ShhhSettings(context: Context) {
         private const val KEY_RESTORE_MODE = "restore_mode"
         private const val KEY_FIXED_RESTORE_PERCENT = "fixed_restore_percent"
         private const val KEY_PREVIOUS_MEDIA_VOLUME = "previous_media_volume"
+        private const val KEY_LAST_KNOWN_QUIET = "last_known_quiet"
         private const val KEY_LIVE_COUNTDOWN = "live_countdown_enabled"
         private const val KEY_HEADPHONES_RESTORE = "headphones_auto_restore"
         private const val KEY_TIMER_END = "timer_end_millis"

@@ -217,6 +217,114 @@ class QuietModeControllerTest {
             audioManager.getStreamVolume(AudioManager.STREAM_MUSIC))
     }
 
+    // ---- Do Not Disturb ----
+    // While any zen mode is active (the DND tile, Bedtime, driving),
+    // AudioService masks the ringer mode apps can read to SILENT no matter
+    // what the real ringer is (verified on Android 17 / Pixel: internal
+    // NORMAL, external SILENT). These tests recreate that masked view.
+
+    /** What the phone looks like to an app while Do Not Disturb is active. */
+    private fun simulateDnd(
+        filter: Int = NotificationManager.INTERRUPTION_FILTER_PRIORITY
+    ) {
+        val notificationManager =
+            context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.setInterruptionFilter(filter)
+        audioManager.ringerMode = AudioManager.RINGER_MODE_SILENT
+    }
+
+    @Test
+    fun `an active dnd mode alone does not read as quiet`() {
+        simulateDnd()
+
+        assertTrue(controller.isDndActive)
+        assertFalse(controller.isQuiet)
+    }
+
+    @Test
+    fun `every dnd filter masks the ringer the same way`() {
+        for (filter in intArrayOf(
+            NotificationManager.INTERRUPTION_FILTER_PRIORITY,
+            NotificationManager.INTERRUPTION_FILTER_ALARMS,
+            NotificationManager.INTERRUPTION_FILTER_NONE
+        )) {
+            simulateDnd(filter)
+            assertFalse("filter $filter must not read as quiet", controller.isQuiet)
+        }
+    }
+
+    @Test
+    fun `an unknown interruption filter trusts the readable ringer`() {
+        val notificationManager =
+            context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.setInterruptionFilter(
+            NotificationManager.INTERRUPTION_FILTER_UNKNOWN
+        )
+        audioManager.ringerMode = AudioManager.RINGER_MODE_VIBRATE
+
+        assertFalse(controller.isDndActive)
+        assertTrue(controller.isQuiet)
+    }
+
+    @Test
+    fun `a hush engaged before dnd stays quiet while dnd is active`() {
+        controller.goQuiet()
+
+        simulateDnd()
+
+        assertTrue(controller.isQuiet)
+    }
+
+    @Test
+    fun `a volume-key hush observed before dnd stays quiet during dnd`() {
+        // The user flips to vibrate with the volume keys; any surface reading
+        // the state afterwards (tile, widget, app) records what it saw.
+        audioManager.ringerMode = AudioManager.RINGER_MODE_VIBRATE
+        assertTrue(controller.isQuiet)
+
+        simulateDnd()
+
+        assertTrue(controller.isQuiet)
+    }
+
+    @Test
+    fun `goQuiet during dnd leaves the ringer alone but reports quiet`() {
+        simulateDnd()
+        audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, 7, 0)
+
+        val result = controller.goQuiet()
+
+        assertEquals(QuietModeController.Result.Success(quiet = true), result)
+        // No ringer write: one would make AudioService exit the user's DND.
+        // hushRinger is VIBRATE, so a write would be visible here.
+        assertEquals(AudioManager.RINGER_MODE_SILENT, audioManager.ringerMode)
+        assertEquals(0, audioManager.getStreamVolume(AudioManager.STREAM_MUSIC))
+        assertTrue(controller.isQuiet)
+    }
+
+    @Test
+    fun `restoring during dnd clears the remembered hush`() {
+        controller.goQuiet()
+        simulateDnd()
+
+        val result = controller.restoreSound()
+
+        assertEquals(QuietModeController.Result.Success(quiet = false), result)
+        assertFalse(controller.isQuiet)
+    }
+
+    @Test
+    fun `toggle during dnd hushes instead of restoring sound`() {
+        // Before the DND fallback, the masked SILENT ringer read as "shhh is
+        // on" and a tap here restored sound — killing the user's DND mode.
+        simulateDnd()
+
+        val result = controller.toggle()
+
+        assertEquals(QuietModeController.Result.Success(quiet = true), result)
+        assertTrue(controller.isQuiet)
+    }
+
     /** Wraps the app context so the audio service is [audio] instead. */
     private fun controllerWith(audio: AudioManager): QuietModeController {
         val wrapper = object : ContextWrapper(context) {
@@ -315,6 +423,33 @@ class QuietModeControllerTest {
 
         assertEquals(QuietModeController.Result.Success(quiet = false), result)
         verify(atLeast = 3) { lagging.ringerMode }
+    }
+
+    @Test
+    fun `restoreSound outlasts a lagging dnd unmask before clearing the remembered hush`() {
+        // Exiting DND un-masks the readable ringer asynchronously. The settle
+        // wait must cover that window, so that surface refreshes triggered
+        // right after restoreSound cannot re-derive "quiet" from a
+        // still-masked SILENT read and poison the remembered state.
+        ShhhSettings(context).lastKnownQuiet = true
+        val lagging = mockk<AudioManager>(relaxed = true)
+        every { lagging.getStreamVolume(any()) } returns 5
+        every { lagging.getStreamMaxVolume(any()) } returns 15
+        // Still masked for several reads after the NORMAL write, then unmasked.
+        every { lagging.ringerMode } returnsMany listOf(
+            AudioManager.RINGER_MODE_SILENT,
+            AudioManager.RINGER_MODE_SILENT,
+            AudioManager.RINGER_MODE_SILENT,
+            AudioManager.RINGER_MODE_NORMAL
+        )
+        val controller = controllerWith(lagging)
+
+        val result = controller.restoreSound()
+
+        assertEquals(QuietModeController.Result.Success(quiet = false), result)
+        verify(atLeast = 4) { lagging.ringerMode }
+        assertFalse(ShhhSettings(context).lastKnownQuiet)
+        assertFalse(controller.isQuiet)
     }
 
     @Test

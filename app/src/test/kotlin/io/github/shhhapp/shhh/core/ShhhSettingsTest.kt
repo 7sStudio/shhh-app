@@ -39,6 +39,16 @@ class ShhhSettingsTest {
         assertTrue(settings.liveCountdownEnabled)
         assertFalse(settings.headphonesAutoRestore)
         assertEquals(0L, settings.timerEndMillis)
+        assertFalse(settings.lastKnownQuiet)
+    }
+
+    @Test
+    fun `lastKnownQuiet round-trips`() {
+        settings.lastKnownQuiet = true
+        assertTrue(reloaded.lastKnownQuiet)
+
+        settings.lastKnownQuiet = false
+        assertFalse(reloaded.lastKnownQuiet)
     }
 
     @Test

@@ -1,8 +1,13 @@
 package io.github.shhhapp.shhh.tile
 
+import android.app.NotificationManager
 import android.app.PendingIntent
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.graphics.drawable.Icon
+import android.media.AudioManager
 import android.service.quicksettings.Tile
 import android.service.quicksettings.TileService
 import io.github.shhhapp.shhh.MainActivity
@@ -16,17 +21,61 @@ import io.github.shhhapp.shhh.core.QuietModeController
  *
  * The tile is passive — [onStartListening] runs every time the shade opens,
  * so the displayed state always reflects the phone's actual ringer mode.
+ * While the shade stays open, ringer and Do Not Disturb changes made
+ * elsewhere (volume keys, the DND tile, Bedtime mode) are picked up through
+ * a broadcast receiver that lives only for the listening window.
  */
 class ShhhTileService : TileService() {
 
+    private var stateReceiver: BroadcastReceiver? = null
+
     override fun onStartListening() {
+        if (stateReceiver == null) {
+            stateReceiver = object : BroadcastReceiver() {
+                override fun onReceive(context: Context?, intent: Intent?) = refreshTile()
+            }
+            registerReceiver(
+                stateReceiver,
+                IntentFilter().apply {
+                    addAction(AudioManager.RINGER_MODE_CHANGED_ACTION)
+                    addAction(NotificationManager.ACTION_INTERRUPTION_FILTER_CHANGED)
+                },
+                Context.RECEIVER_NOT_EXPORTED
+            )
+        }
         refreshTile()
+    }
+
+    override fun onStopListening() {
+        unregisterStateReceiver()
+    }
+
+    override fun onDestroy() {
+        // The system does not guarantee onStopListening before an unbind kill.
+        unregisterStateReceiver()
+        super.onDestroy()
+    }
+
+    private fun unregisterStateReceiver() {
+        stateReceiver?.let { unregisterReceiver(it) }
+        stateReceiver = null
     }
 
     override fun onClick() {
         val manager = HushManager(this)
         if (!manager.hasDndAccess) {
             launchActivity(Intent(this, MainActivity::class.java))
+            return
+        }
+
+        // While a DND mode is active, act only through the visible trampoline.
+        // Background audio writes are silently dropped under DND (verified on
+        // Android 17: a tile-side restore neither exited zen nor brought sound
+        // back), and with the ringer masked the remembered-state fallback would
+        // report the flip as applied anyway, hiding the dropped write from the
+        // retry check below.
+        if (manager.isDndActive) {
+            launchActivity(Intent(this, ToggleActivity::class.java))
             return
         }
 

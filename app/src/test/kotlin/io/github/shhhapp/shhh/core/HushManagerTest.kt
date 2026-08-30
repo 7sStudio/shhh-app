@@ -86,6 +86,26 @@ class HushManagerTest {
     }
 
     @Test
+    fun `timer firing during dnd still restores and clears the timer`() {
+        audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, 5, 0)
+        manager.hush(durationMinutes = 30)
+        // DND turns on mid-timer: the interruption filter goes active and the
+        // readable ringer is masked to SILENT (Android 17 behavior).
+        val notificationManager =
+            context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.setInterruptionFilter(
+            NotificationManager.INTERRUPTION_FILTER_PRIORITY
+        )
+        audioManager.ringerMode = AudioManager.RINGER_MODE_SILENT
+
+        manager.onTimerFired()
+
+        assertFalse(manager.isQuiet)
+        assertEquals(5, audioManager.getStreamVolume(AudioManager.STREAM_MUSIC))
+        assertEquals(0L, settings.timerEndMillis)
+    }
+
+    @Test
     fun `timer firing after manual unhush changes nothing`() {
         audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, 5, 0)
         manager.hush(durationMinutes = 30)
