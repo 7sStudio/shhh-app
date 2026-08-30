@@ -20,8 +20,9 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/7sStudio/shhh-app/releases/latest"><img src="https://img.shields.io/github/v/release/7sStudio/shhh-app?sort=semver&amp;style=for-the-badge&amp;logo=android&amp;logoColor=white&amp;label=%E2%AC%87%EF%B8%8F%20Download%20APK&amp;color=322B66" alt="Download the latest APK"></a>
-  <a href="https://apps.obtainium.imranr.dev/redirect.html?r=obtainium://add/https://github.com/7sStudio/shhh-app"><img src="https://raw.githubusercontent.com/ImranR98/Obtainium/main/assets/graphics/badge_obtainium.png" alt="Get it on Obtainium" height="28"></a>
+  <a href="https://apps.obtainium.imranr.dev/redirect.html?r=obtainium://add/https://github.com/7sStudio/shhh-app"><img src="https://raw.githubusercontent.com/ImranR98/Obtainium/main/assets/graphics/badge_obtainium.png" alt="Get it on Obtainium" height="56"></a>
+  <br>
+  <a href="https://github.com/7sStudio/shhh-app/releases/latest"><img src="https://img.shields.io/github/v/release/7sStudio/shhh-app?sort=semver&amp;style=for-the-badge&amp;logo=android&amp;logoColor=white&amp;label=%E2%AC%87%EF%B8%8F%20Download%20APK&amp;color=322B66" alt="Download the latest APK" height="56"></a>
 </p>
 
 A tiny, modern quiet-mode toggle for the moments you need silence *now*: meetings, movies, sleep. No accounts, no ads, no analytics — the network is touched only if you use the built-in updater, and then only to ask GitHub for the latest release.
