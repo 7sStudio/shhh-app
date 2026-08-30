@@ -19,6 +19,10 @@
   <img src="https://img.shields.io/badge/100%25%20AI--developed-322B66.svg" alt="100% AI-developed">
 </p>
 
+<p align="center">
+  <a href="https://github.com/7sStudio/shhh-app/releases/latest"><img src="https://img.shields.io/github/v/release/7sStudio/shhh-app?sort=semver&amp;style=for-the-badge&amp;logo=android&amp;logoColor=white&amp;label=%E2%AC%87%EF%B8%8F%20Download%20APK&amp;color=322B66" alt="Download the latest APK"></a>
+</p>
+
 A tiny, modern quiet-mode toggle for the moments you need silence *now*: meetings, movies, sleep. No accounts, no ads, no analytics — the network is touched only if you use the built-in updater, and then only to ask GitHub for the latest release.
 
 | Home | Timed hush | Settings | Quick Settings tile | Widget |
