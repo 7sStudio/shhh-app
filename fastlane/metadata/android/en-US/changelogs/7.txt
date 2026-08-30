@@ -1,0 +1,10 @@
+Added:
+• Five more languages — Hindi, Bengali, Russian, Urdu (with RTL) and German; thirteen total.
+
+Fixed:
+• Quick Settings tile now updates while Do Not Disturb is on.
+• A refused toggle can no longer leave the tile or widget showing the wrong state.
+
+Changed:
+• Optional update check now runs up to once an hour instead of once a day.
+• Tile and widget flip instantly on tap, like the Wi-Fi toggle.

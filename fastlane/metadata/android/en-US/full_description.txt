@@ -1,0 +1,18 @@
+A tiny, modern quiet-mode toggle for the moments you need silence <i>now</i>: meetings, movies, sleep. Tap once — ringer goes to vibrate and media volume to zero. Tap again and everything comes back, exactly as it was.
+
+<b>Features</b>
+
+<ul>
+<li><b>One-tap hush</b> from three surfaces: a Quick Settings tile, a home screen widget, or the app.</li>
+<li><b>Smart restore</b> — un-hushing brings media volume back to exactly what it was before (or a fixed level you choose).</li>
+<li><b>Timed hush</b> — 15 min, 30 min, 1 h or 2 h; sound returns on its own at the exact minute, with an optional Live Update countdown in the status bar.</li>
+<li><b>Quiet hours</b> — automatic schedule with start/end times and per-weekday control.</li>
+<li><b>Headphones option</b> — media un-mutes when Bluetooth headphones connect; the ringer stays hushed.</li>
+<li><b>Launcher shortcuts</b> — long-press the app icon: Toggle · Hush 30 min · Hush 1 hour.</li>
+<li><b>Automation friendly</b> — Tasker, MacroDroid and routines can trigger it.</li>
+<li><b>Thirteen languages</b>, including full RTL support.</li>
+</ul>
+
+<b>Private by design</b>
+
+No accounts, no ads, no analytics. The network is touched only if you use the optional built-in updater, and then only to ask GitHub for the latest release. Shhh never changes Do Not Disturb and never touches your alarms.
