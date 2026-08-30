@@ -29,8 +29,8 @@ android {
         // while-in-use requirement breaks the alarm → FGS → volume-change path
         // used for timed hush and quiet hours (see README architecture notes).
         targetSdk = 36
-        versionCode = 6
-        versionName = "1.4.0"
+        versionCode = 7
+        versionName = "1.5.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
