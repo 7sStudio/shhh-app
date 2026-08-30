@@ -83,6 +83,7 @@ class HomeScreenTest {
     private fun Screen(
         quiet: Boolean = false,
         hasDndAccess: Boolean = true,
+        canChangeSound: Boolean = true,
         canScheduleExact: Boolean = true,
         timerEndMillis: Long = 0L,
         settingsRevision: Int = 0
@@ -90,6 +91,7 @@ class HomeScreenTest {
         HomeScreen(
             quiet = quiet,
             hasDndAccess = hasDndAccess,
+            canChangeSound = canChangeSound,
             canScheduleExact = canScheduleExact,
             timerEndMillis = timerEndMillis,
             settings = settings,
@@ -155,14 +157,28 @@ class HomeScreenTest {
     }
 
     @Test
-    fun `disabled toggle does not fire onToggle`() {
-        composeTestRule.setContent { Screen(hasDndAccess = false) }
+    fun `the toggle is inert when sound cannot be changed`() {
+        composeTestRule.setContent { Screen(canChangeSound = false) }
 
         composeTestRule.onNodeWithContentDescription(str(R.string.tile_content_description))
             .performClick()
         composeTestRule.waitForIdle()
 
         assertEquals(0, rec.toggles)
+    }
+
+    @Test
+    fun `a missing DND grant alone does not disable the toggle`() {
+        // Outside a zen mode a volume write needs no permission at all, so the
+        // card is an offer, not a lock — canChangeSound is the gate.
+        composeTestRule.setContent { Screen(hasDndAccess = false, canChangeSound = true) }
+
+        composeTestRule.onNodeWithContentDescription(str(R.string.tile_content_description))
+            .performClick()
+        composeTestRule.waitForIdle()
+
+        assertEquals(1, rec.toggles)
+        composeTestRule.onNodeWithText(str(R.string.permission_title)).assertIsDisplayed()
     }
 
     // ------------------------------------------------------------ permission
@@ -179,6 +195,39 @@ class HomeScreenTest {
         composeTestRule.setContent { Screen(hasDndAccess = true) }
 
         composeTestRule.onNodeWithText(str(R.string.permission_title)).assertDoesNotExist()
+    }
+
+    @Test
+    fun `the card follows the grant and the controls follow the sound gate`() {
+        // The two flags are independent: the card asks for the permission,
+        // canChangeSound says whether Android would honour a write right now.
+        var grant by mutableStateOf(true)
+        var gate by mutableStateOf(true)
+        composeTestRule.setContent { Screen(hasDndAccess = grant, canChangeSound = gate) }
+
+        listOf(true to true, true to false, false to true, false to false).forEach { combo ->
+            composeTestRule.runOnIdle {
+                grant = combo.first
+                gate = combo.second
+            }
+            composeTestRule.waitForIdle()
+
+            val before = rec.toggles
+            composeTestRule.onNodeWithContentDescription(str(R.string.tile_content_description))
+                .performClick()
+            composeTestRule.waitForIdle()
+
+            assertEquals(
+                "hasDndAccess=${combo.first} canChangeSound=${combo.second}",
+                before + if (combo.second) 1 else 0,
+                rec.toggles
+            )
+            if (combo.first) {
+                composeTestRule.onNodeWithText(str(R.string.permission_title)).assertDoesNotExist()
+            } else {
+                composeTestRule.onNodeWithText(str(R.string.permission_title)).assertIsDisplayed()
+            }
+        }
     }
 
     @Test
@@ -254,8 +303,8 @@ class HomeScreenTest {
     }
 
     @Test
-    fun `chips are inert without DND access`() {
-        composeTestRule.setContent { Screen(hasDndAccess = false) }
+    fun `chips are inert when sound cannot be changed`() {
+        composeTestRule.setContent { Screen(canChangeSound = false) }
 
         composeTestRule.onNodeWithText(str(R.string.timer_chip_30))
             .performScrollTo()
@@ -443,9 +492,9 @@ class HomeScreenTest {
     }
 
     @Test
-    fun `chips follow DND access as it changes`() {
+    fun `chips follow the sound gate as it changes`() {
         var hasDnd by mutableStateOf(false)
-        composeTestRule.setContent { Screen(hasDndAccess = hasDnd) }
+        composeTestRule.setContent { Screen(canChangeSound = hasDnd) }
 
         composeTestRule.onNodeWithText(str(R.string.timer_chip_30))
             .performScrollTo()

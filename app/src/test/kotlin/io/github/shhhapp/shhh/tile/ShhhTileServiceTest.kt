@@ -3,7 +3,9 @@ package io.github.shhhapp.shhh.tile
 import android.app.Application
 import android.app.NotificationManager
 import android.app.PendingIntent
+import android.content.ComponentName
 import android.content.Context
+import android.content.ContextWrapper
 import android.content.Intent
 import android.media.AudioManager
 import android.os.Looper
@@ -15,6 +17,7 @@ import io.github.shhhapp.shhh.MainActivity
 import io.github.shhhapp.shhh.ToggleActivity
 import io.github.shhhapp.shhh.core.QuietModeController
 import io.github.shhhapp.shhh.core.ShhhSettings
+import io.github.shhhapp.shhh.schedule.HushService
 import java.lang.reflect.Proxy
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -30,31 +33,6 @@ import org.robolectric.annotation.Implementation
 import org.robolectric.annotation.Implements
 import org.robolectric.shadows.ShadowAudioManager
 import org.robolectric.util.ReflectionHelpers
-
-/**
- * Replacement shadow that swallows ringer changes the way Android 16+ audio
- * hardening does for background processes: [android.media.AudioManager.setRingerMode]
- * reports no error but nothing happens. This is exactly the situation the tile's
- * trampoline fallback exists for.
- */
-@Implements(AudioManager::class)
-class ShadowHardenedAudioManager : ShadowAudioManager() {
-    @Implementation
-    override fun setRingerMode(mode: Int) {
-        if (failRingerChanges) throw SecurityException("Not allowed to change Do Not Disturb state")
-        if (!dropRingerChanges) super.setRingerMode(mode)
-    }
-
-    companion object {
-        /** Ringer changes are accepted and then quietly ignored. */
-        @JvmStatic
-        var dropRingerChanges: Boolean = false
-
-        /** Ringer changes are refused outright (DND access revoked mid-flight). */
-        @JvmStatic
-        var failRingerChanges: Boolean = false
-    }
-}
 
 /** Replacement shadow for a tile service that has no attached tile yet. */
 @Implements(TileService::class)
@@ -77,7 +55,7 @@ class ShadowDestroyableTileService : org.robolectric.shadows.ShadowTileService()
 
 /**
  * The Quick Settings tile is a background surface, so every path is asserted
- * against the phone's real ringer state and the real intents it hands back to
+ * against the phone's real volume state and the real intents it hands back to
  * the system.
  */
 @RunWith(AndroidJUnit4::class)
@@ -97,20 +75,28 @@ class ShhhTileServiceTest {
             context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
         shadowOf(notificationManager).setNotificationPolicyAccessGranted(true)
-        ShadowHardenedAudioManager.dropRingerChanges = false
-        ShadowHardenedAudioManager.failRingerChanges = false
+        notificationManager.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALL)
 
         settings = ShhhSettings(context)
         settings.timerEndMillis = 0L
         settings.previousMediaVolume = ShhhSettings.NO_SAVED_VOLUME
+        settings.previousRingVolume = ShhhSettings.NO_SAVED_VOLUME
         settings.lastKnownQuiet = false
-        settings.hushRinger = ShhhSettings.HushRinger.VIBRATE
         settings.restoreMode = ShhhSettings.RestoreMode.PREVIOUS
         settings.liveCountdownEnabled = false
 
         audioManager.ringerMode = AudioManager.RINGER_MODE_NORMAL
-        audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, 8, 0)
+        ring = 3
+        media = 8
     }
+
+    private var ring: Int
+        get() = audioManager.getStreamVolume(AudioManager.STREAM_RING)
+        set(value) = audioManager.setStreamVolume(AudioManager.STREAM_RING, value, 0)
+
+    private var media: Int
+        get() = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
+        set(value) = audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, value, 0)
 
     private fun buildService(): ShhhTileService =
         Robolectric.buildService(ShhhTileService::class.java).create().get()
@@ -136,6 +122,16 @@ class ShhhTileServiceTest {
         get() = shadowOf(ApplicationProvider.getApplicationContext<Application>())
             .nextStartedActivity
 
+    /** What the phone looks like to an app while a zen mode is running. */
+    private fun simulateDnd(
+        filter: Int = NotificationManager.INTERRUPTION_FILTER_PRIORITY
+    ) {
+        notificationManager.setInterruptionFilter(filter)
+        // The legacy ringer mode every app reads is masked to SILENT under any
+        // zen; the tile must not mistake that for a hush.
+        audioManager.ringerMode = AudioManager.RINGER_MODE_SILENT
+    }
+
     // ---- onStartListening ----
 
     @Test
@@ -154,7 +150,7 @@ class ShhhTileServiceTest {
 
     @Test
     fun `listening on a hushed phone shows the active tile`() {
-        audioManager.ringerMode = AudioManager.RINGER_MODE_VIBRATE
+        ring = 0
         val service = buildService()
 
         service.onStartListening()
@@ -176,44 +172,92 @@ class ShhhTileServiceTest {
 
     // ---- onClick ----
 
+    /** The service the tile hands every sound change to, or null if it started none. */
+    private val startedService: Intent?
+        get() = shadowOf(ApplicationProvider.getApplicationContext<Application>())
+            .nextStartedService
+
     @Test
-    fun `clicking a loud phone hushes it and flips the tile`() {
+    fun `clicking hands the toggle to the foreground service and never collapses`() {
+        // The reported bug: the tile used to bounce through ToggleActivity, and
+        // a tile can only start an activity via startActivityAndCollapse, which
+        // closes the shade by definition. A toggle tile must behave like Wi-Fi
+        // or the torch and leave the panel open, so the work goes to the
+        // momentary foreground service instead — no activity, no collapse.
         val service = buildService()
+        val collapsed = recordCollapsedActivities(service)
         service.onStartListening()
 
         service.onClick()
 
-        assertEquals(AudioManager.RINGER_MODE_VIBRATE, audioManager.ringerMode)
-        assertEquals(0, audioManager.getStreamVolume(AudioManager.STREAM_MUSIC))
-        assertEquals(Tile.STATE_ACTIVE, service.qsTile.state)
-        assertEquals("On", service.qsTile.subtitle.toString())
-        assertNull(startedActivity)
+        val started = startedService
+        assertEquals(HushService::class.java.name, started?.component?.className)
+        assertEquals(HushService.ACTION_TOGGLE, started?.action)
+        assertTrue("the shade must never be collapsed by a toggle", collapsed.isEmpty())
+        assertNull("no activity may be started either", startedActivity)
     }
 
     @Test
-    fun `clicking a hushed phone restores sound and flips the tile back`() {
+    fun `clicking a hushed phone hands off the same way`() {
         settings.previousMediaVolume = 7
-        audioManager.ringerMode = AudioManager.RINGER_MODE_VIBRATE
-        audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, 0, 0)
+        settings.previousRingVolume = 4
+        ring = 0
+        media = 0
+        val service = buildService()
+        val collapsed = recordCollapsedActivities(service)
+        service.onStartListening()
+
+        service.onClick()
+
+        assertEquals(HushService.ACTION_TOGGLE, startedService?.action)
+        assertTrue(collapsed.isEmpty())
+    }
+
+    @Test
+    fun `the tile never writes volume from its own background context`() {
+        // Measured on Android 17: a write made here is silently dropped by
+        // audio hardening, and the dropped write is what forced the old
+        // activity fallback. The tile must not attempt one at all.
         val service = buildService()
         service.onStartListening()
 
         service.onClick()
 
-        assertEquals(AudioManager.RINGER_MODE_NORMAL, audioManager.ringerMode)
-        assertEquals(7, audioManager.getStreamVolume(AudioManager.STREAM_MUSIC))
-        assertEquals(Tile.STATE_INACTIVE, service.qsTile.state)
+        assertEquals("the tile must not touch the ring volume", 3, ring)
+        assertEquals("the tile must not touch the media volume", 8, media)
+    }
+
+    // ---- the four (dnd access, zen running) combinations ----
+
+    @Test
+    fun `clicking without DND access but with no zen running still hands off`() {
+        // Volume writes need no permission outside a zen mode, so there is
+        // nothing here to send the user to the app for.
+        shadowOf(notificationManager).setNotificationPolicyAccessGranted(false)
+        val service = buildService()
+        val collapsed = recordCollapsedActivities(service)
+        service.onStartListening()
+
+        service.onClick()
+
+        assertEquals(HushService.ACTION_TOGGLE, startedService?.action)
+        assertTrue("nothing needed launching", collapsed.isEmpty())
     }
 
     @Test
-    fun `clicking without DND access opens the app instead of touching the ringer`() {
+    fun `clicking with a zen running and no DND access opens the app`() {
+        // Android refuses every ring-volume write in this state; the app is
+        // where the grant can be offered. Opening an app is the one thing a
+        // tile is allowed to collapse the shade for.
+        simulateDnd()
         shadowOf(notificationManager).setNotificationPolicyAccessGranted(false)
         val service = buildService()
         val collapsed = recordCollapsedActivities(service)
 
         service.onClick()
 
-        assertEquals(AudioManager.RINGER_MODE_NORMAL, audioManager.ringerMode)
+        assertEquals("nothing may be touched from the tile", 3, ring)
+        assertNull("no sound change may be attempted", startedService)
         val launched = shadowOf(collapsed.single()).savedIntent
         assertEquals(MainActivity::class.java.name, launched.component?.className)
         assertTrue(launched.flags and Intent.FLAG_ACTIVITY_NEW_TASK != 0)
@@ -221,35 +265,47 @@ class ShhhTileServiceTest {
     }
 
     @Test
-    @Config(shadows = [ShadowHardenedAudioManager::class])
-    fun `a silently dropped ringer change retries through the trampoline`() {
+    fun `clicking under every zen filter hands off without collapsing`() {
+        for (filter in intArrayOf(
+            NotificationManager.INTERRUPTION_FILTER_PRIORITY,
+            NotificationManager.INTERRUPTION_FILTER_ALARMS,
+            NotificationManager.INTERRUPTION_FILTER_NONE
+        )) {
+            simulateDnd(filter)
+            val service = buildService()
+            val collapsed = recordCollapsedActivities(service)
+
+            service.onClick()
+
+            assertEquals(
+                "filter $filter",
+                HushService.ACTION_TOGGLE,
+                startedService?.action
+            )
+            assertTrue("filter $filter collapsed the shade", collapsed.isEmpty())
+        }
+    }
+
+    @Test
+    fun `an OEM that refuses the service start falls back to the trampoline`() {
+        // Some builds refuse a foreground-service start from a background
+        // context. The tile must not crash SystemUI's binding over it; falling
+        // back costs the user the open shade, but not the toggle itself.
         val service = buildService()
         val collapsed = recordCollapsedActivities(service)
-        ShadowHardenedAudioManager.dropRingerChanges = true
+        val refusing = object : ContextWrapper(context) {
+            override fun startForegroundService(service: Intent): ComponentName? =
+                throw IllegalStateException("ForegroundServiceStartNotAllowedException")
+        }
+        ReflectionHelpers.setField(ContextWrapper::class.java, service, "mBase", refusing)
 
         service.onClick()
 
-        // The ringer never moved, so the tile must hand the work to the
-        // visible trampoline activity instead of reporting a fake success.
-        assertEquals(AudioManager.RINGER_MODE_NORMAL, audioManager.ringerMode)
         val launched = shadowOf(collapsed.single()).savedIntent
         assertEquals(ToggleActivity::class.java.name, launched.component?.className)
-        assertTrue(launched.flags and Intent.FLAG_ACTIVITY_NEW_TASK != 0)
     }
 
-    // ---- Do Not Disturb ----
-    // While a zen mode is active, AudioService masks the readable ringer to
-    // SILENT (verified on Android 17). The tile must not mirror DND as "on",
-    // and a tap during DND must hush — not restore, which would make
-    // AudioService exit the user's DND mode.
-
-    /** What the phone looks like to an app while Do Not Disturb is active. */
-    private fun simulateDnd() {
-        notificationManager.setInterruptionFilter(
-            NotificationManager.INTERRUPTION_FILTER_PRIORITY
-        )
-        audioManager.ringerMode = AudioManager.RINGER_MODE_SILENT
-    }
+    // ---- Do Not Disturb reflected in the tile state ----
 
     @Test
     fun `an active dnd mode alone leaves the tile off`() {
@@ -274,35 +330,15 @@ class ShhhTileServiceTest {
         assertEquals("On", service.qsTile.subtitle.toString())
     }
 
-    @Test
-    fun `clicking during dnd always routes through the trampoline`() {
-        // Background audio writes are silently dropped while DND is active,
-        // and the masked ringer hides the drop from the applied-check — so
-        // the tile must not even try; only the visible activity may act.
-        simulateDnd()
-        audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, 8, 0)
-        val service = buildService()
-        val collapsed = recordCollapsedActivities(service)
-        service.onStartListening()
-
-        service.onClick()
-
-        val launched = shadowOf(collapsed.single()).savedIntent
-        assertEquals(ToggleActivity::class.java.name, launched.component?.className)
-        // Nothing was touched from the tile's own (background) context.
-        assertEquals(AudioManager.RINGER_MODE_SILENT, audioManager.ringerMode)
-        assertEquals(8, audioManager.getStreamVolume(AudioManager.STREAM_MUSIC))
-    }
-
     // ---- live refresh while the shade is open ----
 
     @Test
-    fun `a ringer change while the shade is open refreshes the tile`() {
+    fun `a volume change while the shade is open refreshes the tile`() {
         val service = buildService()
         service.onStartListening()
         assertEquals(Tile.STATE_INACTIVE, service.qsTile.state)
 
-        audioManager.ringerMode = AudioManager.RINGER_MODE_VIBRATE
+        ring = 0
         context.sendBroadcast(Intent(AudioManager.RINGER_MODE_CHANGED_ACTION))
         shadowOf(Looper.getMainLooper()).idle()
 
@@ -331,7 +367,7 @@ class ShhhTileServiceTest {
         service.onStartListening()
         service.onStopListening()
 
-        audioManager.ringerMode = AudioManager.RINGER_MODE_VIBRATE
+        ring = 0
         context.sendBroadcast(Intent(AudioManager.RINGER_MODE_CHANGED_ACTION))
         shadowOf(Looper.getMainLooper()).idle()
 
@@ -347,7 +383,7 @@ class ShhhTileServiceTest {
         // The system may unbind-kill the service without onStopListening first.
         service.onDestroy()
 
-        audioManager.ringerMode = AudioManager.RINGER_MODE_VIBRATE
+        ring = 0
         context.sendBroadcast(Intent(AudioManager.RINGER_MODE_CHANGED_ACTION))
         shadowOf(Looper.getMainLooper()).idle()
 
@@ -364,7 +400,7 @@ class ShhhTileServiceTest {
         service.onStartListening()
         service.onStartListening()
 
-        audioManager.ringerMode = AudioManager.RINGER_MODE_VIBRATE
+        ring = 0
         context.sendBroadcast(Intent(AudioManager.RINGER_MODE_CHANGED_ACTION))
         shadowOf(Looper.getMainLooper()).idle()
 
@@ -372,20 +408,7 @@ class ShhhTileServiceTest {
         service.onStopListening()
     }
 
-    @Test
-    @Config(shadows = [ShadowHardenedAudioManager::class])
-    fun `a refused ringer change retries through the trampoline`() {
-        val service = buildService()
-        val collapsed = recordCollapsedActivities(service)
-        // DND access reads as granted but the change itself is refused — the
-        // grant can be revoked between the check and the call.
-        ShadowHardenedAudioManager.failRingerChanges = true
+    // ---- background writes that do not take ----
 
-        service.onClick()
-
-        assertEquals(AudioManager.RINGER_MODE_NORMAL, audioManager.ringerMode)
-        val launched = shadowOf(collapsed.single()).savedIntent
-        assertEquals(ToggleActivity::class.java.name, launched.component?.className)
-    }
 
 }

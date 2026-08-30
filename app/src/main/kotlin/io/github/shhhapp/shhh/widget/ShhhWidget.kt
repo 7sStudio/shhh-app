@@ -58,14 +58,14 @@ import kotlinx.coroutines.launch
 internal object WidgetUiState {
     var quiet by mutableStateOf(false)
         private set
-    var hasDndAccess by mutableStateOf(true)
+    var canChangeSound by mutableStateOf(true)
         private set
 
     /** Re-reads reality; the composition recomposes when a value changes. */
     fun refreshFrom(context: Context) {
         val controller = QuietModeController(context)
         quiet = controller.isQuiet
-        hasDndAccess = controller.hasDndAccess
+        canChangeSound = controller.canChangeSound
     }
 }
 
@@ -77,7 +77,7 @@ class ShhhWidget : GlanceAppWidget() {
             GlanceTheme {
                 WidgetContent(
                     quiet = WidgetUiState.quiet,
-                    hasDndAccess = WidgetUiState.hasDndAccess
+                    canChangeSound = WidgetUiState.canChangeSound
                 )
             }
         }
@@ -104,16 +104,17 @@ class ShhhWidgetReceiver : GlanceAppWidgetReceiver() {
 }
 
 @Composable
-internal fun WidgetContent(quiet: Boolean, hasDndAccess: Boolean) {
+internal fun WidgetContent(quiet: Boolean, canChangeSound: Boolean) {
     val context = LocalContext.current
 
     val background = if (quiet) GlanceTheme.colors.primary else GlanceTheme.colors.widgetBackground
     val content = if (quiet) GlanceTheme.colors.onPrimary else GlanceTheme.colors.onSurface
 
     // Taps go through an invisible foreground trampoline: Android 16+ audio
-    // hardening drops ringer/volume changes made from background callbacks.
-    // Without DND access the tap opens the app to request it instead.
-    val clickAction = if (hasDndAccess) {
+    // hardening drops volume changes made from background callbacks. When a
+    // zen mode is running without DND access every write would be refused, so
+    // the tap opens the app to explain instead.
+    val clickAction = if (canChangeSound) {
         actionStartActivity<ToggleActivity>()
     } else {
         actionStartActivity<MainActivity>()

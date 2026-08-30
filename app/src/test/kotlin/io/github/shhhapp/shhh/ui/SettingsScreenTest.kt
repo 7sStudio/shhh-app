@@ -71,7 +71,6 @@ class SettingsScreenTest {
         context = ApplicationProvider.getApplicationContext()
         settings = ShhhSettings(context).apply {
             // SharedPreferences survive between tests in one class run.
-            hushRinger = ShhhSettings.HushRinger.VIBRATE
             restoreMode = ShhhSettings.RestoreMode.PREVIOUS
             fixedRestorePercent = 50
             quietHoursEnabled = false
@@ -188,22 +187,15 @@ class SettingsScreenTest {
     }
 
     // ---- Ringer ----
+    // The Vibrate/Silent selector is gone: shhh moves volume sliders only, and
+    // setRingerMode(SILENT) — the only way to reach silent — starts a zen mode.
 
     @Test
-    fun `ringer toggle persists silent and back to vibrate`() {
+    fun `no ringer selector is offered any more`() {
         setScreen()
 
-        composeTestRule.onNodeWithText("Silent").performScrollTo().performClick()
-        composeTestRule.waitForIdle()
-
-        assertEquals(ShhhSettings.HushRinger.SILENT, settings.hushRinger)
-        assertEquals(1, settingChanges)
-
-        composeTestRule.onNodeWithText("Vibrate").performClick()
-        composeTestRule.waitForIdle()
-
-        assertEquals(ShhhSettings.HushRinger.VIBRATE, settings.hushRinger)
-        assertEquals(2, settingChanges)
+        composeTestRule.onNodeWithText("Silent").assertDoesNotExist()
+        composeTestRule.onNodeWithText("Vibrate").assertDoesNotExist()
     }
 
     // ---- Restore level ----

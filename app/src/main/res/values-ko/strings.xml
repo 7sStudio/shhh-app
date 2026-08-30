@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Shhh</string>
+    <string name="app_tagline">한 번의 탭으로 휴대폰을 조용하게</string>
+
+    <string name="status_quiet_on">진동 · 미디어 음소거</string>
+    <string name="status_quiet_off">소리 켜짐 · 미디어 복원됨</string>
+
+    <string name="tile_label">Shhh</string>
+    <string name="tile_subtitle_on">켜짐</string>
+    <string name="tile_subtitle_off">꺼짐</string>
+    <string name="tile_content_description">무음 모드 전환</string>
+
+    <string name="widget_label_on">무음 중</string>
+    <string name="widget_label_off">Shhh</string>
+    <string name="widget_description">한 번의 탭: 진동 및 미디어 음소거</string>
+
+    <string name="permission_title">선택 사항: 방해 금지 모드 액세스</string>
+    <string name="permission_body">Shhh는 이 권한 없이도 작동합니다. 방해 금지, 취침 시간,
+        운전 모드가 실행 중일 때만 Android가 Shhh를 차단합니다. 아래에서 권한을 허용하면
+        그때도 Shhh가 계속 작동합니다. Shhh는 이러한 모드를 켜거나 끄지 않습니다.</string>
+    <string name="permission_button">권한 허용</string>
+
+    <string name="setup_add_tile">빠른 설정 타일</string>
+    <string name="setup_add_widget">홈 화면 위젯</string>
+
+    <!-- Timed hush -->
+    <string name="timer_section_title">잠시 무음으로</string>
+    <string name="timer_section_hint">소리가 저절로 돌아옵니다</string>
+    <string name="timer_chip_15">15분</string>
+    <string name="timer_chip_30">30분</string>
+    <string name="timer_chip_60">1시간</string>
+    <string name="timer_chip_120">2시간</string>
+    <string name="timer_running_until">%1$s에 소리가 돌아옵니다</string>
+    <string name="timer_end_now">지금 종료</string>
+
+    <!-- Countdown notification -->
+    <string name="countdown_title">무음 중</string>
+    <string name="countdown_text">%1$s에 소리가 돌아옵니다</string>
+    <string name="countdown_action_restore">지금 복원</string>
+    <string name="channel_countdown_name">무음 상태</string>
+    <string name="channel_countdown_description">무음 타이머가 실행되는 동안의 카운트다운</string>
+    <string name="channel_service_name">예약된 변경</string>
+    <string name="channel_service_description">예약된 변경을 적용하는 동안 표시되는 짧은 기술 알림</string>
+    <string name="service_notification_title">소리를 조정하는 중…</string>
+
+    <!-- Headphones -->
+    <string name="headphones_notification_title">헤드폰 연결됨</string>
+    <string name="headphones_notification_text">탭하여 미디어 음량 복원 — 벨소리는 계속 무음</string>
+
+    <!-- Quiet hours -->
+    <string name="quiet_hours_title">무음 시간대</string>
+    <string name="quiet_hours_hint">일정에 따라 자동으로 무음</string>
+    <string name="quiet_hours_starts">시작</string>
+    <string name="quiet_hours_ends">종료</string>
+    <string name="quiet_days_every_day">매일</string>
+    <string name="quiet_days_none">선택된 요일 없음</string>
+
+    <!-- Exact alarm access -->
+    <string name="exact_alarm_title">알람 및 리마인더 허용</string>
+    <string name="exact_alarm_body">타이머와 무음 시간대는 Android의 \"알람 및 리마인더\"
+        액세스가 필요합니다. 휴대폰이 절전 상태여도 정확한 시각에 소리가 돌아옵니다.
+        스위치 하나, 한 번이면 됩니다.</string>
+    <string name="exact_alarm_grant">설정 열기</string>
+
+    <!-- Settings screen -->
+    <string name="settings_title">설정</string>
+    <string name="settings_back">뒤로</string>
+    <string name="settings_behavior_header">동작</string>
+    <string name="settings_restore_title">음량 복원 대상</string>
+    <string name="settings_restore_hint">무음 해제 후의 미디어 음량</string>
+    <string name="settings_restore_previous">이전 음량</string>
+    <string name="settings_restore_fixed">고정 음량</string>
+    <string name="settings_restore_fixed_value">고정 음량 · %1$d%%</string>
+    <string name="settings_notifications_header">알림</string>
+    <string name="settings_countdown_title">실시간 카운트다운</string>
+    <string name="settings_countdown_hint">타이머가 실행되는 동안 남은 시간을 표시합니다</string>
+    <string name="settings_headphones_header">헤드폰</string>
+    <string name="settings_headphones_title">헤드폰 연결 시 미디어 복원</string>
+    <string name="settings_headphones_hint">블루투스 헤드폰을 연결하면 미디어 음량이 돌아옵니다 — 벨소리는 계속 무음</string>
+    <string name="settings_quick_access_header">빠른 액세스</string>
+    <string name="settings_automation_title">자동화</string>
+    <string name="settings_automation_hint">Tasker, 루틴, 바로가기에서 Shhh를 제어하세요</string>
+    <string name="settings_about_header">정보</string>
+    <string name="settings_version">버전 %1$s</string>
+    <string name="settings_source_title">소스 코드</string>
+    <string name="settings_source_hint">Apache-2.0, GitHub에서 공개</string>
+
+    <string name="settings_troubleshooting_title">문제 해결</string>
+    <string name="settings_troubleshooting_hint">일부 기기에서 타이머가 실행되지 않는 문제를 해결합니다</string>
+    <string name="settings_contact_title">개발자에게 문의</string>
+    <string name="settings_contact_hint">버그, 기능 제안, 문의 — 이메일 앱이 열립니다</string>
+    <string name="contact_email_subject">Shhh %1$s — 피드백</string>
+
+    <!-- Updates -->
+    <string name="settings_updates_header">업데이트</string>
+    <string name="settings_auto_update_title">자동으로 업데이트 확인</string>
+    <string name="settings_auto_update_hint">앱을 열 때 하루에 한 번만 GitHub에 새 버전이 있는지 확인합니다. 사용자에 관한 정보는 전송되지 않습니다.</string>
+    <string name="settings_check_update_title">업데이트 확인</string>
+    <string name="settings_check_update_idle">탭하여 GitHub의 최신 릴리스를 확인하세요</string>
+    <string name="settings_check_update_checking">확인 중…</string>
+    <string name="settings_check_update_none">최신 버전입니다</string>
+    <string name="settings_check_update_error">GitHub에 연결할 수 없습니다 — 연결 상태를 확인한 뒤 다시 시도하세요</string>
+    <string name="settings_check_update_available">버전 %1$s 사용 가능 — 탭하여 업데이트</string>
+    <string name="update_dialog_title">업데이트 사용 가능</string>
+    <string name="update_dialog_version">Shhh %1$s를 다운로드할 수 있습니다.</string>
+    <string name="update_dialog_download">다운로드</string>
+    <string name="update_dialog_downloading">다운로드 중… %1$d%%</string>
+    <string name="update_dialog_downloading_unknown">다운로드 중…</string>
+    <string name="update_dialog_install">설치</string>
+    <string name="update_dialog_failed">다운로드에 실패했습니다 — 연결 상태를 확인한 뒤 다시 시도하세요.</string>
+    <string name="update_dialog_retry">다시 시도</string>
+    <string name="update_dialog_later">나중에</string>
+    <string name="update_permission_body">Shhh가 자체 업데이트를 설치하려면 Android가 한 번만 권한을 요청합니다. 아래를 탭하고 \"알 수 없는 앱 설치\"를 허용한 뒤 돌아오세요.</string>
+    <string name="update_permission_grant">설치 허용</string>
+
+    <!-- Automation sheet -->
+    <string name="automation_sheet_title">자동화 인텐트</string>
+    <string name="automation_sheet_body">액티비티를 시작할 수 있는 자동화 앱
+        (Tasker, MacroDroid, 루틴)이라면 Shhh를 제어할 수 있습니다. 다음 작업 중 하나로
+        io.github.shhhapp.shhh/.ToggleActivity를 시작하세요:</string>
+    <string name="automation_action_hush">…action.HUSH — 지금 무음 (선택 추가값 duration_minutes)</string>
+    <string name="automation_action_unhush">…action.UNHUSH — 소리 복원</string>
+    <string name="automation_action_toggle">…action.TOGGLE — 현재 상태 전환</string>
+    <string name="automation_action_media">…action.RESTORE_MEDIA — 미디어 음량만</string>
+
+    <!-- Launcher shortcuts -->
+    <string name="shortcut_toggle_short">전환</string>
+    <string name="shortcut_toggle_long">무음 전환</string>
+    <string name="shortcut_hush30_short">30분</string>
+    <string name="shortcut_hush30_long">30분 동안 무음</string>
+    <string name="shortcut_hush60_short">1시간</string>
+    <string name="shortcut_hush60_long">1시간 동안 무음</string>
+
+    <!-- Dial labels -->
+    <string name="dial_label_12am">0:00</string>
+    <string name="dial_label_6am">6:00</string>
+    <string name="dial_label_12pm">12:00</string>
+    <string name="dial_label_6pm">18:00</string>
+    <string name="duration_hours">%1$d시간</string>
+    <string name="duration_minutes">%1$d분</string>
+    <string name="duration_full">%1$d시간 %2$d분</string>
+</resources>

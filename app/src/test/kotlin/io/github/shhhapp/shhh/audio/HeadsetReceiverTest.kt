@@ -49,7 +49,8 @@ class HeadsetReceiverTest {
         settings.previousMediaVolume = 6
 
         shadowOf(audioManager).setStreamMaxVolume(ShadowAudioManager.DEFAULT_MAX_VOLUME)
-        audioManager.ringerMode = AudioManager.RINGER_MODE_VIBRATE
+        // Hushed means "ring volume 0" — the slider shhh reads and writes.
+        audioManager.setStreamVolume(AudioManager.STREAM_RING, 0, 0)
         audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, 0, 0)
     }
 
@@ -99,7 +100,7 @@ class HeadsetReceiverTest {
 
     @Test
     fun `nothing happens when the phone is not hushed`() {
-        audioManager.ringerMode = AudioManager.RINGER_MODE_NORMAL
+        audioManager.setStreamVolume(AudioManager.STREAM_RING, 3, 0)
 
         receiver.onReceive(context, connectedIntent())
 
@@ -112,7 +113,11 @@ class HeadsetReceiverTest {
         receiver.onReceive(context, connectedIntent())
 
         assertEquals(6, audioManager.getStreamVolume(AudioManager.STREAM_MUSIC))
-        assertEquals(AudioManager.RINGER_MODE_VIBRATE, audioManager.ringerMode)
+        assertEquals(
+            "the ringer must stay hushed",
+            0,
+            audioManager.getStreamVolume(AudioManager.STREAM_RING)
+        )
         assertTrue("no notification is needed when the change went through", postedNotifications.isEmpty())
     }
 

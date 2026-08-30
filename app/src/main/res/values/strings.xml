@@ -15,9 +15,10 @@
     <string name="widget_label_off">Shhh</string>
     <string name="widget_description">One tap: vibrate and mute media</string>
 
-    <string name="permission_title">One-time setup needed</string>
-    <string name="permission_body">Android requires Do Not Disturb access to switch
-        ringer modes. Tap below, find Shhh in the list, and turn it on — that\'s it.</string>
+    <string name="permission_title">Optional: Do Not Disturb access</string>
+    <string name="permission_body">Shhh already works without it. Android only blocks
+        Shhh while a Do Not Disturb, Bedtime or driving mode is running — grant access
+        below and Shhh keeps working then too. Shhh never turns those modes on or off.</string>
     <string name="permission_button">Grant access</string>
 
     <string name="setup_add_tile">Quick Settings tile</string>
@@ -66,10 +67,6 @@
     <string name="settings_title">Settings</string>
     <string name="settings_back">Back</string>
     <string name="settings_behavior_header">Hush behavior</string>
-    <string name="settings_ringer_title">Ringer while hushed</string>
-    <string name="settings_ringer_hint">What incoming calls do when Shhh is on</string>
-    <string name="settings_ringer_vibrate">Vibrate</string>
-    <string name="settings_ringer_silent">Silent</string>
     <string name="settings_restore_title">Bring volume back to</string>
     <string name="settings_restore_hint">Media level after un-hushing</string>
     <string name="settings_restore_previous">Previous level</string>

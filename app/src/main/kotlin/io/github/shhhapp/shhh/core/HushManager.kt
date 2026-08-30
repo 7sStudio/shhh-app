@@ -24,6 +24,7 @@ class HushManager(private val context: Context) {
     val isQuiet: Boolean get() = controller.isQuiet
     val hasDndAccess: Boolean get() = controller.hasDndAccess
     val isDndActive: Boolean get() = controller.isDndActive
+    val canChangeSound: Boolean get() = controller.canChangeSound
 
     /** End of the running hush timer (epoch millis), or 0 when none. */
     val activeTimerEnd: Long

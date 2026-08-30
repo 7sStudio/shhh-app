@@ -53,8 +53,15 @@ class ShhhWidgetTest {
         // SharedPreferences (the remembered hush state) outlive a single test
         // in a Robolectric class run.
         context.getSharedPreferences("shhh", Context.MODE_PRIVATE).edit().clear().commit()
+        notificationManager.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALL)
         audioManager.ringerMode = AudioManager.RINGER_MODE_NORMAL
+        ringVolume = 3
     }
+
+    /** Quiet mode is exactly "ring volume 0" — the slider shhh reads and writes. */
+    private var ringVolume: Int
+        get() = audioManager.getStreamVolume(AudioManager.STREAM_RING)
+        set(value) = audioManager.setStreamVolume(AudioManager.STREAM_RING, value, 0)
 
     private fun hasImageResource(resId: Int) =
         GlanceNodeMatcher<MappedNode>("image showing resource $resId") { node ->
@@ -73,7 +80,7 @@ class ShhhWidgetTest {
             CompositionLocalProvider(LocalContext provides context) {
                 WidgetContent(
                     quiet = WidgetUiState.quiet,
-                    hasDndAccess = WidgetUiState.hasDndAccess
+                    canChangeSound = WidgetUiState.canChangeSound
                 )
             }
         }
@@ -93,7 +100,7 @@ class ShhhWidgetTest {
     @Test
     fun `a hushed phone shows the hushed label and the vibration glyph`() =
         runGlanceAppWidgetUnitTest {
-            audioManager.ringerMode = AudioManager.RINGER_MODE_VIBRATE
+            ringVolume = 0
 
             provideFromLiveState()
 
@@ -102,9 +109,9 @@ class ShhhWidgetTest {
             onNode(hasImageResource(R.drawable.ic_vibration)).assertExists()
         }
 
-    // While a zen mode is active, AudioService masks the readable ringer to
-    // SILENT (verified on Android 17); the widget must not mirror DND as
-    // "Hushed" — only shhh's own remembered state counts then.
+    // A zen mode alone is not a shhh hush: plain Do Not Disturb leaves the ring
+    // slider truthful, and under "alarms only" / "total silence" the platform
+    // zeroes it, so only shhh's own remembered state counts there.
 
     @Test
     fun `an active dnd mode alone does not show the widget hushed`() =
@@ -112,6 +119,8 @@ class ShhhWidgetTest {
             notificationManager.setInterruptionFilter(
                 NotificationManager.INTERRUPTION_FILTER_PRIORITY
             )
+            // Every zen masks the legacy ringer mode to SILENT; the widget must
+            // not mirror that as a hush.
             audioManager.ringerMode = AudioManager.RINGER_MODE_SILENT
 
             provideFromLiveState()
@@ -119,6 +128,22 @@ class ShhhWidgetTest {
             onNode(hasTextEqualTo("Shhh")).assertExists()
             onNode(hasTextEqualTo("Hushed")).assertDoesNotExist()
             onNode(hasImageResource(R.drawable.ic_volume_up)).assertExists()
+        }
+
+    @Test
+    fun `alarms only with shhh off does not show the widget hushed`() =
+        runGlanceAppWidgetUnitTest {
+            // The platform hands every app a ring volume of 0 here; only the
+            // remembered state can say shhh is off.
+            notificationManager.setInterruptionFilter(
+                NotificationManager.INTERRUPTION_FILTER_ALARMS
+            )
+            ringVolume = 0
+
+            provideFromLiveState()
+
+            onNode(hasTextEqualTo("Shhh")).assertExists()
+            onNode(hasTextEqualTo("Hushed")).assertDoesNotExist()
         }
 
     @Test
@@ -137,7 +162,7 @@ class ShhhWidgetTest {
         }
 
     @Test
-    fun `with DND access the widget taps through to the trampoline activity`() =
+    fun `the widget taps through to the trampoline activity`() =
         runGlanceAppWidgetUnitTest {
             provideFromLiveState()
 
@@ -145,8 +170,38 @@ class ShhhWidgetTest {
         }
 
     @Test
-    fun `without DND access the widget taps through to the app`() =
+    fun `without DND access but no zen running the widget still toggles`() =
         runGlanceAppWidgetUnitTest {
+            // A volume write outside a zen mode needs no permission, so there
+            // is nothing to open the app for.
+            shadowOf(notificationManager).setNotificationPolicyAccessGranted(false)
+
+            provideFromLiveState()
+
+            onNode(hasStartActivityClickAction<ToggleActivity>()).assertExists()
+            onNode(hasStartActivityClickAction<MainActivity>()).assertDoesNotExist()
+        }
+
+    @Test
+    fun `with a zen running and DND access the widget still toggles`() =
+        runGlanceAppWidgetUnitTest {
+            notificationManager.setInterruptionFilter(
+                NotificationManager.INTERRUPTION_FILTER_PRIORITY
+            )
+
+            provideFromLiveState()
+
+            onNode(hasStartActivityClickAction<ToggleActivity>()).assertExists()
+        }
+
+    @Test
+    fun `with a zen running and no DND access the widget taps through to the app`() =
+        runGlanceAppWidgetUnitTest {
+            // The only state Android refuses outright, so the tap has to lead
+            // somewhere the grant can be offered.
+            notificationManager.setInterruptionFilter(
+                NotificationManager.INTERRUPTION_FILTER_PRIORITY
+            )
             shadowOf(notificationManager).setNotificationPolicyAccessGranted(false)
 
             provideFromLiveState()

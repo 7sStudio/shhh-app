@@ -15,8 +15,8 @@
     <string name="widget_label_off">Shhh</string>
     <string name="widget_description">Une tape : vibreur et média coupé</string>
 
-    <string name="permission_title">Configuration nécessaire</string>
-    <string name="permission_body">Android nécessite l\'accès Ne pas déranger pour changer les modes de sonnerie. Appuyez ci-dessous, trouvez Shhh dans la liste et activez-le.</string>
+    <string name="permission_title">Facultatif : accès Ne pas déranger</string>
+    <string name="permission_body">Shhh fonctionne déjà sans cet accès. Android le bloque uniquement pendant qu\'un mode Ne pas déranger, Coucher ou Conduite est actif — accordez l\'accès ci-dessous et Shhh continuera de fonctionner alors aussi. Shhh n\'active ni ne désactive jamais ces modes.</string>
     <string name="permission_button">Accorder l\'accès</string>
 
     <string name="setup_add_tile">Tuile de paramètres rapides</string>
@@ -57,10 +57,6 @@
     <string name="settings_title">Paramètres</string>
     <string name="settings_back">Retour</string>
     <string name="settings_behavior_header">Comportement du silence</string>
-    <string name="settings_ringer_title">Sonnerie en mode silence</string>
-    <string name="settings_ringer_hint">Appels entrants quand Shhh est activé</string>
-    <string name="settings_ringer_vibrate">Vibreur</string>
-    <string name="settings_ringer_silent">Silencieux</string>
     <string name="settings_restore_title">Restaurer le volume à</string>
     <string name="settings_restore_hint">Niveau média après désactivation</string>
     <string name="settings_restore_previous">Niveau précédent</string>

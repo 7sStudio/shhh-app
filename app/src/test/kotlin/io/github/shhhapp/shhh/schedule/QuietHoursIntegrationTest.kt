@@ -46,6 +46,9 @@ class QuietHoursIntegrationTest {
         settings = ShhhSettings(context)
         manager = HushManager(context)
         audioManager.ringerMode = AudioManager.RINGER_MODE_NORMAL
+        // Hushed means "ring volume 0" — start audible.
+        audioManager.setStreamVolume(AudioManager.STREAM_RING, 3, 0)
+        audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, 5, 0)
         
         // Reset quiet hours settings
         settings.quietHoursEnabled = false

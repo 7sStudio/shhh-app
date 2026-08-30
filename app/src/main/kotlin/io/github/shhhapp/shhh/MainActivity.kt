@@ -29,7 +29,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import io.github.shhhapp.shhh.core.HushManager
-import io.github.shhhapp.shhh.core.QuietModeController
 import io.github.shhhapp.shhh.core.ShhhSettings
 import io.github.shhhapp.shhh.schedule.HushAlarms
 import io.github.shhhapp.shhh.ui.HomeScreen
@@ -65,6 +64,7 @@ fun ShhhApp(updateChecker: UpdateChecker = remember { UpdateChecker() }) {
     var screen by rememberSaveable { mutableStateOf(Screen.HOME) }
     var quiet by remember { mutableStateOf(manager.isQuiet) }
     var hasDndAccess by remember { mutableStateOf(manager.hasDndAccess) }
+    var canChangeSound by remember { mutableStateOf(manager.canChangeSound) }
     var timerEnd by remember { mutableLongStateOf(manager.activeTimerEnd) }
     var canScheduleExact by remember { mutableStateOf(HushAlarms.canScheduleExact(context)) }
     // Bumped whenever persisted settings change so summaries recompose.
@@ -73,6 +73,7 @@ fun ShhhApp(updateChecker: UpdateChecker = remember { UpdateChecker() }) {
     fun refresh() {
         quiet = manager.isQuiet
         hasDndAccess = manager.hasDndAccess
+        canChangeSound = manager.canChangeSound
         timerEnd = manager.activeTimerEnd
         canScheduleExact = HushAlarms.canScheduleExact(context)
         settingsRevision++
@@ -168,14 +169,17 @@ fun ShhhApp(updateChecker: UpdateChecker = remember { UpdateChecker() }) {
             Screen.HOME -> HomeScreen(
                 quiet = quiet,
                 hasDndAccess = hasDndAccess,
+                canChangeSound = canChangeSound,
                 canScheduleExact = canScheduleExact,
                 timerEndMillis = timerEnd,
                 settings = settings,
                 settingsRevision = settingsRevision,
                 onToggle = {
-                    if (manager.toggle() == QuietModeController.Result.NeedsDndAccess) {
-                        hasDndAccess = false
-                    }
+                    // No need to record the refusal: refresh() re-reads both
+                    // flags from the manager, and a NeedsDndAccess result means
+                    // the grant is missing under an active zen — exactly the
+                    // state that re-read reports anyway.
+                    manager.toggle()
                     refresh()
                 },
                 onHushFor = { minutes ->

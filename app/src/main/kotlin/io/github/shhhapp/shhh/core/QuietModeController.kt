@@ -9,14 +9,21 @@ import android.os.SystemClock
  * Applies and reads the quiet-mode state. Pure audio logic — timers, alarms
  * and notifications are orchestrated one level up in [HushManager].
  *
- * Quiet ON  = ringer set to vibrate (or silent, per settings) + media muted.
- * Quiet OFF = ringer set to normal + media restored (previous level or a
- *             fixed percentage, per settings).
+ * Quiet ON  = ring volume 0 + media volume 0.
+ * Quiet OFF = ring volume restored + media volume restored (previous level or
+ *             a fixed percentage, per settings).
  *
- * "Quiet" is defined by what the phone is actually doing right now, so the
- * toggle can never drift out of sync with changes made through the volume
- * keys or system settings. The one exception is while Do Not Disturb is
- * active, when the ringer mode apps can read is masked — see [isQuiet].
+ * Shhh moves volume sliders and nothing else. It deliberately never calls
+ * [AudioManager.setRingerMode]: that is AOSP's *external* ringer path, wired
+ * straight into ZenModeHelper.onSetRingerModeExternal, where a NORMAL or
+ * VIBRATE target ends whatever Do Not Disturb / Bedtime / driving mode the
+ * user has running, and a SILENT target starts one. Stream-volume writes take
+ * the *internal* path instead, which leaves zen untouched in both directions
+ * (verified on Android 17 / Pixel: ring volume 0 and back, zen stayed on).
+ *
+ * Consequence, and the intended behaviour: while a Do Not Disturb mode is
+ * active, DND wins. Un-hushing restores the sliders but the phone stays as
+ * quiet as the user's own DND policy says it should be.
  */
 class QuietModeController(
     context: Context,
@@ -29,8 +36,10 @@ class QuietModeController(
         context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
     /**
-     * Ringer-mode transitions require Do Not Disturb access on modern Android;
-     * without it [AudioManager.setRingerMode] can throw [SecurityException].
+     * Do Not Disturb access, needed ONLY to move the ring volume across the
+     * silent boundary while a zen mode is already active — AudioService throws
+     * SecurityException("Not allowed to change Do Not Disturb state") there.
+     * With no zen running, shhh works without this permission entirely.
      */
     val hasDndAccess: Boolean
         get() = notificationManager.isNotificationPolicyAccessGranted
@@ -38,7 +47,7 @@ class QuietModeController(
     /**
      * True while any Do Not Disturb mode is active (the DND tile, Bedtime,
      * driving — all zen modes). UNKNOWN reads as inactive so a filter the
-     * system cannot report never blanks out the real ringer state.
+     * system cannot report never blanks out the real state.
      */
     val isDndActive: Boolean
         get() = when (notificationManager.currentInterruptionFilter) {
@@ -48,22 +57,55 @@ class QuietModeController(
         }
 
     /**
-     * True when the ringer is anything other than normal (vibrate or silent).
+     * False only in the one situation Android actually refuses shhh: a zen
+     * mode is running AND Do Not Disturb access was never granted, so every
+     * ring-volume write across the silent boundary throws. With no zen
+     * running shhh needs no permission at all.
+     */
+    val canChangeSound: Boolean
+        get() = hasDndAccess || !isDndActive || zenOwnsRingVolume
+
+    /**
+     * True under the zen modes that take the ring stream over completely.
      *
-     * While Do Not Disturb is active the ringer mode cannot be trusted:
-     * AudioService masks the value reported to apps to SILENT for every zen
-     * mode, even when the underlying ringer is untouched (verified on
-     * Android 17 / Pixel — internal NORMAL, external SILENT). Reading it
-     * directly made the tile/widget light up whenever DND or Bedtime mode
-     * turned on. So under DND this falls back to the last state observed
-     * while the ringer was still readable — which is also what the ringer
-     * returns to when DND ends. Outside DND the remembered value is kept in
-     * sync on every read, so volume-key changes are picked up as before.
+     * Measured on Android 17 / Pixel. A priority-filter zen (plain Do Not
+     * Disturb, Bedtime) only masks the legacy *external* ringer mode to
+     * SILENT: the internal mode and the ring volume stay real, so shhh can
+     * read and write them normally. "Alarms only" and "Total silence" instead
+     * pin the *internal* ringer mode to SILENT and drive the ring volume to 0.
+     *
+     * Under those two the slider is untouchable in both directions:
+     *  - reading it always yields 0, so it cannot say whether shhh is on;
+     *  - writing it makes AudioService recompute the internal ringer mode
+     *    (0 -> VIBRATE, >0 -> NORMAL) and hand that to
+     *    ZenModeHelper.onSetRingerModeInternal, which ends the zen the moment
+     *    the internal mode leaves SILENT. That kills the user's mode just as
+     *    surely as the setRingerMode call this class was written to avoid, and
+     *    it snoozes automatic rules such as Bedtime for the rest of their run.
+     *
+     * So under these two filters shhh leaves the ring alone entirely — the zen
+     * already silences it more deeply than a hush would — mutes media only,
+     * and trusts the remembered state. The platform hands the user's own ring
+     * volume back untouched when the zen ends.
+     */
+    private val zenOwnsRingVolume: Boolean
+        get() = when (notificationManager.currentInterruptionFilter) {
+            NotificationManager.INTERRUPTION_FILTER_ALARMS,
+            NotificationManager.INTERRUPTION_FILTER_NONE -> true
+            else -> false
+        }
+
+    /**
+     * True when the ring volume is at zero — the same slider shhh writes, so
+     * the toggle can never drift out of sync with the volume keys or system
+     * settings. Under a zen that owns the ring (see [zenOwnsRingVolume]) this
+     * falls back to the last state observed while the slider was readable.
+     * Everywhere else the remembered value is kept in sync on every read.
      */
     val isQuiet: Boolean
         get() {
-            if (isDndActive) return settings.lastKnownQuiet
-            val quiet = audioManager.ringerMode != AudioManager.RINGER_MODE_NORMAL
+            if (zenOwnsRingVolume) return settings.lastKnownQuiet
+            val quiet = audioManager.getStreamVolume(AudioManager.STREAM_RING) == 0
             if (settings.lastKnownQuiet != quiet) settings.lastKnownQuiet = quiet
             return quiet
         }
@@ -80,94 +122,82 @@ class QuietModeController(
     fun toggle(): Result = if (isQuiet) restoreSound() else goQuiet()
 
     /**
-     * The ringer moves FIRST and its outcome alone decides the result, because
-     * the ringer is what [isQuiet] reads. If it is refused nothing has changed
-     * yet, so [Result.NeedsDndAccess] is honest; if it succeeds the transition
-     * really happened, and a media-volume write refused afterwards must not
-     * turn that into a reported failure — callers treat failure as "nothing to
-     * clean up" and would strand the timer and the tile/widget out of sync.
+     * The ring volume moves FIRST and its outcome alone decides the result,
+     * because the ring volume is what [isQuiet] reads. If it is refused
+     * nothing has changed yet, so [Result.NeedsDndAccess] is honest; if it
+     * succeeds the transition really happened, and a media-volume write
+     * refused afterwards must not turn that into a reported failure — callers
+     * treat failure as "nothing to clean up" and would strand the timer and
+     * the tile/widget out of sync.
+     *
+     * No up-front permission check: the write is simply attempted, so the
+     * common case (no zen running) needs no Do Not Disturb access at all.
      */
-    fun goQuiet(): Result {
-        if (!hasDndAccess) return Result.NeedsDndAccess
-        return try {
-            // While a DND mode is active the ringer is already silenced more
-            // deeply than vibrate — and ANY app ringer write makes
-            // AudioService exit the user's zen mode (verified on Android 17:
-            // NORMAL and VIBRATE writes both clear an active DND/Bedtime
-            // mode). Hushing must never eat the user's DND, so the ringer is
-            // left alone; only media is muted and the hush remembered.
-            if (!isDndActive) {
-                applyRingerMode(when (settings.hushRinger) {
-                    ShhhSettings.HushRinger.VIBRATE -> AudioManager.RINGER_MODE_VIBRATE
-                    ShhhSettings.HushRinger.SILENT -> AudioManager.RINGER_MODE_SILENT
-                })
-            }
-            val current = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
-            if (current > 0) {
-                settings.previousMediaVolume = current
-            }
-            setMediaVolumeBestEffort(0)
-            settings.lastKnownQuiet = true
-            Result.Success(quiet = true)
-        } catch (_: SecurityException) {
-            Result.NeedsDndAccess
-        }
+    fun goQuiet(): Result = try {
+        val ring = audioManager.getStreamVolume(AudioManager.STREAM_RING)
+        applyRingVolume(0)
+        // Persisted only after the write went through, so a refused hush
+        // really does leave every stored value alone.
+        if (ring > 0) settings.previousRingVolume = ring
+
+        val media = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
+        if (media > 0) settings.previousMediaVolume = media
+        setMediaVolumeBestEffort(0)
+
+        settings.lastKnownQuiet = true
+        Result.Success(quiet = true)
+    } catch (_: SecurityException) {
+        Result.NeedsDndAccess
     }
 
-    /** Mirror of [goQuiet]: ringer first, media volume best-effort after it. */
-    fun restoreSound(): Result {
-        if (!hasDndAccess) return Result.NeedsDndAccess
-        return try {
-            applyRingerMode(AudioManager.RINGER_MODE_NORMAL)
-            setMediaVolumeBestEffort(restoreTargetVolume())
-            settings.lastKnownQuiet = false
-            Result.Success(quiet = false)
-        } catch (_: SecurityException) {
-            Result.NeedsDndAccess
-        }
+    /** Mirror of [goQuiet]: ring volume first, media volume best-effort after it. */
+    fun restoreSound(): Result = try {
+        applyRingVolume(restoreTargetRingVolume())
+        setMediaVolumeBestEffort(restoreTargetVolume())
+        settings.lastKnownQuiet = false
+        Result.Success(quiet = false)
+    } catch (_: SecurityException) {
+        Result.NeedsDndAccess
     }
 
     /**
-     * Writes the ringer mode, then waits (bounded) until AudioService reflects
+     * Writes the ring volume, then waits (bounded) until AudioService reflects
      * it. The write is applied asynchronously by the system; callers refresh
      * the tile/widget immediately after this returns, and without the wait
-     * those surfaces sometimes recompose against the old mode and freeze on a
+     * those surfaces sometimes recompose against the old value and freeze on a
      * stale state until their next scheduled update.
+     *
+     * Skipped entirely when [zenOwnsRingVolume]: there the write would end the
+     * user's zen mode, and the ring is already silenced more deeply than a
+     * hush would make it.
      */
-    /**
-     * Waiting also matters when this write exits an active DND mode (the
-     * restore path): the zen exit and the ringer un-mask land asynchronously
-     * AFTER the interruption filter already reads "off". A caller reading
-     * [isQuiet] in that window would derive "quiet" from the still-masked
-     * SILENT ringer and re-poison [ShhhSettings.lastKnownQuiet] right after
-     * restoreSound cleared it — seen live on Android 17 as the tile showing
-     * ON at the next DND without any hush. Returning only once the target is
-     * readable (or the bounded timeout passes) closes that window. goQuiet
-     * never reaches here while DND is active, so the timeout cannot burn on
-     * a permanently-masked read.
-     */
-    private fun applyRingerMode(target: Int) {
-        audioManager.ringerMode = target
-        val deadline = SystemClock.uptimeMillis() + RINGER_SETTLE_TIMEOUT_MS
-        while (audioManager.ringerMode != target && SystemClock.uptimeMillis() < deadline) {
-            SystemClock.sleep(RINGER_SETTLE_POLL_MS)
+    private fun applyRingVolume(target: Int) {
+        // Never write while the zen owns the ring: the write would end it.
+        if (zenOwnsRingVolume) return
+        audioManager.setStreamVolume(AudioManager.STREAM_RING, target, 0)
+        val deadline = SystemClock.uptimeMillis() + VOLUME_SETTLE_TIMEOUT_MS
+        while (audioManager.getStreamVolume(AudioManager.STREAM_RING) != target &&
+            SystemClock.uptimeMillis() < deadline
+        ) {
+            SystemClock.sleep(VOLUME_SETTLE_POLL_MS)
         }
     }
 
     /**
-     * Media volume is a nice-to-have next to the ringer change: Android can
-     * refuse it on its own (DND policy, background audio hardening) and that
-     * must not invalidate a ringer transition that already went through.
+     * Media volume is a nice-to-have next to the ring volume: Android can
+     * refuse it on its own (Total silence drops media writes outright,
+     * background audio hardening) and that must not invalidate a ring
+     * transition that already went through.
      */
     private fun setMediaVolumeBestEffort(target: Int) {
         try {
             audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, target, 0)
         } catch (_: SecurityException) {
-            // Ringer already moved; nothing to undo.
+            // Ring volume already moved; nothing to undo.
         }
     }
 
-    /** Restores ONLY the media volume, leaving the ringer hushed (headphones case). */
+    /** Restores ONLY the media volume, leaving the ring hushed (headphones case). */
     fun restoreMediaVolumeOnly(): Boolean = try {
         audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, restoreTargetVolume(), 0)
         audioManager.getStreamVolume(AudioManager.STREAM_MUSIC) > 0
@@ -176,11 +206,17 @@ class QuietModeController(
     }
 
     private companion object {
-        // 500ms covers the zen-exit + ringer-unmask propagation observed on
-        // Android 17 (a restore during DND settles well under this); the
-        // plain no-DND write settles in a few polls.
-        const val RINGER_SETTLE_TIMEOUT_MS = 500L
-        const val RINGER_SETTLE_POLL_MS = 10L
+        // A stream-volume write settles in a few polls; the ceiling only
+        // exists so a refused or masked write can never block a caller.
+        const val VOLUME_SETTLE_TIMEOUT_MS = 500L
+        const val VOLUME_SETTLE_POLL_MS = 10L
+    }
+
+    /** The ring level to come back to; half of max when nothing was saved. */
+    private fun restoreTargetRingVolume(): Int {
+        val max = audioManager.getStreamMaxVolume(AudioManager.STREAM_RING)
+        val saved = settings.previousRingVolume
+        return if (saved in 1..max) saved else (max / 2).coerceAtLeast(1)
     }
 
     private fun restoreTargetVolume(): Int {

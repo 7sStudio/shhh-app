@@ -10,6 +10,7 @@ import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.isToggleable
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
@@ -22,6 +23,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.github.shhhapp.shhh.R
 import io.github.shhhapp.shhh.ShhhApp
+import io.github.shhhapp.shhh.core.ShadowRefusingAudioManager
 import io.github.shhhapp.shhh.core.ShhhSettings
 import io.github.shhhapp.shhh.update.UpdateChecker
 import java.time.DayOfWeek
@@ -67,11 +69,13 @@ class ShhhAppTest {
 
         shadowOf(notificationManager).setNotificationPolicyAccessGranted(true)
         ShadowAlarmManager.setCanScheduleExactAlarms(true)
+        ShadowRefusingAudioManager.refusedStreams = emptySet()
 
         settings = ShhhSettings(context)
         settings.timerEndMillis = 0L
         settings.previousMediaVolume = ShhhSettings.NO_SAVED_VOLUME
-        settings.hushRinger = ShhhSettings.HushRinger.VIBRATE
+        settings.previousRingVolume = ShhhSettings.NO_SAVED_VOLUME
+        settings.lastKnownQuiet = false
         settings.restoreMode = ShhhSettings.RestoreMode.PREVIOUS
         settings.liveCountdownEnabled = false
         settings.headphonesAutoRestore = false
@@ -80,8 +84,10 @@ class ShhhAppTest {
         settings.lastUpdateCheckMillis = 0L
         settings.lastPromptedUpdateVersion = ""
 
+        notificationManager.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALL)
         audioManager.ringerMode = AudioManager.RINGER_MODE_NORMAL
-        audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, 8, 0)
+        ringVolume = 3
+        mediaVolume = 8
     }
 
     @After
@@ -98,7 +104,14 @@ class ShhhAppTest {
 
     private fun string(resId: Int) = context.getString(resId)
 
-    private val mediaVolume: Int get() = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
+    private var mediaVolume: Int
+        get() = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
+        set(value) = audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, value, 0)
+
+    /** Quiet mode is exactly "ring volume 0" — the slider shhh reads and writes. */
+    private var ringVolume: Int
+        get() = audioManager.getStreamVolume(AudioManager.STREAM_RING)
+        set(value) = audioManager.setStreamVolume(AudioManager.STREAM_RING, value, 0)
 
     private fun grant(permission: String) {
         shadowOf(ApplicationProvider.getApplicationContext<Application>())
@@ -159,8 +172,8 @@ class ShhhAppTest {
     // ---- the big toggle ----
 
     @Test
-    fun `the home screen shows the phone's actual ringer state`() {
-        audioManager.ringerMode = AudioManager.RINGER_MODE_VIBRATE
+    fun `the home screen shows the phone's actual sound state`() {
+        ringVolume = 0
 
         launchApp()
 
@@ -176,7 +189,7 @@ class ShhhAppTest {
             .performClick()
         composeTestRule.waitForIdle()
 
-        assertEquals(AudioManager.RINGER_MODE_VIBRATE, audioManager.ringerMode)
+        assertEquals(0, ringVolume)
         assertEquals(0, mediaVolume)
         composeTestRule.onNodeWithText(string(R.string.status_quiet_on)).assertIsDisplayed()
 
@@ -185,7 +198,7 @@ class ShhhAppTest {
             .performClick()
         composeTestRule.waitForIdle()
 
-        assertEquals(AudioManager.RINGER_MODE_NORMAL, audioManager.ringerMode)
+        assertEquals(3, ringVolume)
         assertEquals(8, mediaVolume)
         composeTestRule.onNodeWithText(string(R.string.status_quiet_off)).assertIsDisplayed()
     }
@@ -201,8 +214,85 @@ class ShhhAppTest {
             .performClick()
         composeTestRule.waitForIdle()
 
-        assertEquals(AudioManager.RINGER_MODE_NORMAL, audioManager.ringerMode)
+        // With no zen mode running the hush itself needs no permission, so it
+        // goes through; the card is the standing offer to grant access for the
+        // one case that does need it.
+        assertEquals(0, ringVolume)
+        composeTestRule.onNodeWithText(string(R.string.status_quiet_on)).assertIsDisplayed()
         composeTestRule.onNodeWithText(string(R.string.permission_title)).assertIsDisplayed()
+    }
+
+    @Test
+    fun `a zen mode without DND access disables the toggle and the chips`() {
+        // The one state Android refuses outright: every ring-volume write
+        // throws until access is granted, so the controls go inert.
+        notificationManager.setInterruptionFilter(
+            NotificationManager.INTERRUPTION_FILTER_PRIORITY
+        )
+        shadowOf(notificationManager).setNotificationPolicyAccessGranted(false)
+
+        launchApp()
+
+        composeTestRule
+            .onNodeWithContentDescription(string(R.string.tile_content_description))
+            .performClick()
+        composeTestRule.waitForIdle()
+
+        assertEquals("the toggle must be inert", 3, ringVolume)
+        composeTestRule.onNodeWithText(string(R.string.timer_chip_30))
+            .performScrollTo()
+            .assertIsNotEnabled()
+        composeTestRule.onNodeWithText(string(R.string.permission_title)).assertIsDisplayed()
+    }
+
+    @Test
+    @Config(shadows = [ShadowRefusingAudioManager::class])
+    fun `a toggle Android refuses surfaces the setup card`() {
+        // The grant can disappear between the screen reading it and the write
+        // reaching AudioService — a zen mode is running, so the refused
+        // ring-volume write is the first the app hears of it.
+        notificationManager.setInterruptionFilter(
+            NotificationManager.INTERRUPTION_FILTER_PRIORITY
+        )
+        launchApp()
+        composeTestRule.onNodeWithText(string(R.string.permission_title)).assertDoesNotExist()
+
+        shadowOf(notificationManager).setNotificationPolicyAccessGranted(false)
+        ShadowRefusingAudioManager.refusedStreams =
+            setOf(AudioManager.STREAM_RING, AudioManager.STREAM_MUSIC)
+        composeTestRule
+            .onNodeWithContentDescription(string(R.string.tile_content_description))
+            .performClick()
+        composeTestRule.waitForIdle()
+
+        assertEquals("nothing may have moved", 3, ringVolume)
+        composeTestRule.onNodeWithText(string(R.string.status_quiet_off)).assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.permission_title)).assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.timer_chip_30))
+            .performScrollTo()
+            .assertIsNotEnabled()
+    }
+
+    @Test
+    fun `a zen mode with DND access keeps the toggle live`() {
+        notificationManager.setInterruptionFilter(
+            NotificationManager.INTERRUPTION_FILTER_PRIORITY
+        )
+
+        launchApp()
+
+        composeTestRule
+            .onNodeWithContentDescription(string(R.string.tile_content_description))
+            .performClick()
+        composeTestRule.waitForIdle()
+
+        assertEquals(0, ringVolume)
+        composeTestRule.onNodeWithText(string(R.string.status_quiet_on)).assertIsDisplayed()
+        assertEquals(
+            "the user's Do Not Disturb must be left running",
+            NotificationManager.INTERRUPTION_FILTER_PRIORITY,
+            notificationManager.currentInterruptionFilter
+        )
     }
 
     // ---- timers ----
@@ -217,7 +307,7 @@ class ShhhAppTest {
             .performClick()
         composeTestRule.waitForIdle()
 
-        assertEquals(AudioManager.RINGER_MODE_VIBRATE, audioManager.ringerMode)
+        assertEquals(0, ringVolume)
         assertEquals(0, mediaVolume)
         assertTrue(settings.timerEndMillis >= before + 30 * 60_000L)
         assertTrue(settings.timerEndMillis <= System.currentTimeMillis() + 30 * 60_000L)
@@ -243,7 +333,7 @@ class ShhhAppTest {
             .performClick()
         composeTestRule.waitForIdle()
 
-        assertEquals(AudioManager.RINGER_MODE_NORMAL, audioManager.ringerMode)
+        assertEquals(3, ringVolume)
         assertEquals(0L, settings.timerEndMillis)
         composeTestRule.onNodeWithText(string(R.string.timer_end_now)).assertDoesNotExist()
     }
@@ -259,7 +349,7 @@ class ShhhAppTest {
         composeTestRule.waitForIdle()
 
         composeTestRule.onNodeWithText(string(R.string.exact_alarm_title)).assertIsDisplayed()
-        assertEquals(AudioManager.RINGER_MODE_NORMAL, audioManager.ringerMode)
+        assertEquals("nothing may be hushed before the alarm can be armed", 3, ringVolume)
 
         composeTestRule.onNodeWithText(string(R.string.exact_alarm_grant)).performClick()
         composeTestRule.waitForIdle()
@@ -281,7 +371,7 @@ class ShhhAppTest {
         composeTestRule.waitForIdle()
 
         assertTrue(settings.quietHoursEnabled)
-        assertEquals(AudioManager.RINGER_MODE_VIBRATE, audioManager.ringerMode)
+        assertEquals(0, ringVolume)
         assertTrue(settings.timerEndMillis >= before + 50 * 60_000L)
         assertTrue(settings.timerEndMillis <= before + 61 * 60_000L)
     }
@@ -295,7 +385,7 @@ class ShhhAppTest {
         composeTestRule.waitForIdle()
 
         assertTrue(settings.quietHoursEnabled)
-        assertEquals(AudioManager.RINGER_MODE_NORMAL, audioManager.ringerMode)
+        assertEquals(3, ringVolume)
         assertEquals(0L, settings.timerEndMillis)
     }
 
@@ -307,13 +397,13 @@ class ShhhAppTest {
             .onNodeWithContentDescription(string(R.string.tile_content_description))
             .performClick()
         composeTestRule.waitForIdle()
-        assertEquals(AudioManager.RINGER_MODE_VIBRATE, audioManager.ringerMode)
+        assertEquals(0, ringVolume)
 
         composeTestRule.onNode(isToggleable()).performScrollTo().performClick()
         composeTestRule.waitForIdle()
 
         assertTrue(settings.quietHoursEnabled)
-        assertEquals(AudioManager.RINGER_MODE_VIBRATE, audioManager.ringerMode)
+        assertEquals(0, ringVolume)
         // The phone is already quiet, so the window end must not overwrite the
         // (absent) manual timer.
         assertEquals(0L, settings.timerEndMillis)
@@ -331,18 +421,18 @@ class ShhhAppTest {
 
         assertFalse(settings.quietHoursEnabled)
         // Disabling the schedule must not un-hush a phone that is already quiet.
-        assertEquals(AudioManager.RINGER_MODE_VIBRATE, audioManager.ringerMode)
+        assertEquals(0, ringVolume)
     }
 
     // ---- ringer changes made elsewhere ----
 
     @Test
-    fun `a ringer change made outside the app updates the screen`() {
+    fun `a volume change made outside the app updates the screen`() {
         launchApp()
         composeTestRule.onNodeWithText(string(R.string.status_quiet_off)).assertIsDisplayed()
 
         composeTestRule.runOnUiThread {
-            audioManager.ringerMode = AudioManager.RINGER_MODE_VIBRATE
+            ringVolume = 0
             context.sendBroadcast(Intent(AudioManager.RINGER_MODE_CHANGED_ACTION))
         }
         shadowOf(android.os.Looper.getMainLooper()).idle()
@@ -416,7 +506,7 @@ class ShhhAppTest {
         composeTestRule.waitForIdle()
 
         assertTrue(settings.quietHoursEnabled)
-        assertEquals(AudioManager.RINGER_MODE_VIBRATE, audioManager.ringerMode)
+        assertEquals(0, ringVolume)
         assertTrue(settings.timerEndMillis >= before + 50 * 60_000L)
         assertTrue(
             lastPermissionRequest?.contains(Manifest.permission.POST_NOTIFICATIONS) == true

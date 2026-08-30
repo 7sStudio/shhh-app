@@ -15,8 +15,8 @@
     <string name="widget_label_off">Shhh</string>
     <string name="widget_description">نقرة واحدة: اهتزاز وكتم الوسائط</string>
 
-    <string name="permission_title">مطلوب إعداد لمرة واحدة</string>
-    <string name="permission_body">يتطلب أندرويد الوصول إلى "عدم الإزعاج" لتبديل أوضاع الرنين. اضغط أدناه، وابحث عن Shhh في القائمة، وقم بتفعيله.</string>
+    <string name="permission_title">اختياري: الوصول إلى «عدم الإزعاج»</string>
+    <string name="permission_body">يعمل Shhh بالفعل بدون هذا الإذن. لا يمنعه أندرويد إلا أثناء تفعيل وضع «عدم الإزعاج» أو «وقت النوم» أو «القيادة» — امنح الإذن أدناه ليواصل Shhh عمله حينها أيضًا. لا يقوم Shhh أبدًا بتفعيل هذه الأوضاع أو إيقافها.</string>
     <string name="permission_button">منح الإذن</string>
 
     <string name="setup_add_tile">زر الإعدادات السريعة</string>
@@ -57,10 +57,6 @@
     <string name="settings_title">الإعدادات</string>
     <string name="settings_back">رجوع</string>
     <string name="settings_behavior_header">سلوك الهدوء</string>
-    <string name="settings_ringer_title">الرنين أثناء الهدوء</string>
-    <string name="settings_ringer_hint">ما تفعله المكالمات الواردة عند تفعيل Shhh</string>
-    <string name="settings_ringer_vibrate">اهتزاز</string>
-    <string name="settings_ringer_silent">صامت</string>
     <string name="settings_restore_title">استعادة الصوت إلى</string>
     <string name="settings_restore_hint">مستوى الوسائط بعد إلغاء الهدوء</string>
     <string name="settings_restore_previous">المستوى السابق</string>

@@ -27,7 +27,7 @@ A tiny, modern quiet-mode toggle for the moments you need silence *now*: meeting
 
 ## Features
 
-- **One-tap hush** from three surfaces: a **Quick Settings tile**, a **home screen widget**, or the app — ringer to vibrate (or silent), media volume to 0.
+- **One-tap hush** from three surfaces: a **Quick Settings tile**, a **home screen widget**, or the app — ring volume to 0, media volume to 0.
 - **Smart restore** — un-hushing brings media volume back to exactly what it was before (or a fixed level you choose).
 - **Timed hush** — 15 min, 30 min, 1 h or 2 h; sound returns on its own at the exact minute, with an optional **Live Update countdown** in the status bar and a "Restore now" action.
 - **Quiet hours** — automatic schedule with start/end times and per-weekday control.
@@ -35,8 +35,10 @@ A tiny, modern quiet-mode toggle for the moments you need silence *now*: meeting
 - **Launcher shortcuts** — long-press the app icon: Toggle · Hush 30 min · Hush 1 hour.
 - **Automation friendly** — Tasker, MacroDroid and routines can trigger it (see below).
 - **True to reality** — the toggle reads the phone's *actual* state, so it never drifts out of sync with the volume keys or system settings.
+- **Alarms always ring** — Shhh only ever moves the ring and media sliders. The alarm stream is a separate one it never touches, so a hushed phone still wakes you at full alarm volume. (Android's own "Total silence" mode does silence alarms — that is your setting doing it, not Shhh.)
+- **Never touches Do Not Disturb** — Shhh moves two volume sliders and nothing else. It never switches ringer modes, so it can neither start nor end a Do Not Disturb, Bedtime or driving mode. If one of yours is running, it wins: un-hushing restores the sliders and your mode keeps the phone as quiet as you told it to.
 - **Material 3 Expressive** — dynamic Material You colors from your wallpaper and palette, light/dark, themed icon, springy shape-morphing UI.
-- **Multilingual** — fully translated into **French** and **Arabic**, with full Right-to-Left (RTL) support.
+- **Multilingual** — fully translated into **French**, **Arabic**, **Spanish**, **Portuguese**, **Simplified Chinese**, **Japanese** and **Korean**, with full Right-to-Left (RTL) support for Arabic.
 - **Built-in updater** — an optional once-a-day check against this repo's [latest release](https://github.com/7sStudio/shhh-app/releases/latest) (off by default), plus a manual "Check for updates" in Settings that downloads the APK and hands it to Android's installer.
 
 ## What access it needs, and why
@@ -45,7 +47,7 @@ All grants are official Android switches — no root, no Shizuku, no ADB.
 
 | Access | Why | Required? |
 | --- | --- | --- |
-| **Do Not Disturb access** | Android requires it for any app that switches ringer modes | Yes — the one required grant |
+| **Do Not Disturb access** | Android refuses volume changes across the silent boundary *while a Do Not Disturb, Bedtime or driving mode is running*. Shhh never turns those modes on or off — it just needs this to keep working during one | Optional; only needed to hush or un-hush while such a mode is active |
 | **Alarms & reminders** | So timers and quiet hours fire at the exact minute, even in Doze | Only for timed hush / quiet hours |
 | **Notifications** | The optional countdown and the headphones tap-to-restore offer | Optional |
 | **Nearby devices** | Only to hear "Bluetooth headphones connected" | Only for the headphones option |
@@ -79,10 +81,12 @@ am start -n io.github.shhhapp.shhh/.ToggleActivity \
 
 ### The Android 16+ audio-hardening design
 
-Since Android 16/17, the OS **silently ignores** volume and ringer changes from backgrounded processes (`AS.HardeningEnforcer`) — and tile taps, widget taps and alarm receivers are all background. Shhh uses the two officially sanctioned paths:
+Since Android 16/17, the OS **silently ignores** volume changes from backgrounded processes (`AS.HardeningEnforcer`) — and tile taps, widget taps and alarm receivers are all background. Shhh uses the two officially sanctioned paths:
 
-- **User taps** (tile, widget, shortcuts, notification actions) route through [`ToggleActivity`](app/src/main/kotlin/io/github/shhhapp/shhh/ToggleActivity.kt) — an invisible, zero-animation activity that toggles and finishes in the same frame. A visible activity is always allowed.
-- **Scheduled transitions** (timer expiry, quiet-hours start) fire an exact alarm whose receipt permits starting [`HushService`](app/src/main/kotlin/io/github/shhhapp/shhh/schedule/HushService.kt) — a foreground service that lives for under a second, applies the change, and stops.
+- **A visible activity is always allowed.** Widget taps, launcher shortcuts, notification actions and automation intents route through [`ToggleActivity`](app/src/main/kotlin/io/github/shhhapp/shhh/ToggleActivity.kt) — invisible, zero-animation, toggles and finishes in the same frame.
+- **A foreground service is always allowed.** Scheduled transitions (timer expiry, quiet-hours start) fire an exact alarm whose receipt permits starting [`HushService`](app/src/main/kotlin/io/github/shhhapp/shhh/schedule/HushService.kt) — it lives for under a second, applies the change, and stops.
+
+The **Quick Settings tile** takes the service path rather than the activity one, and that is deliberate. A tile can only launch an activity through `startActivityAndCollapse`, which closes the notification shade by definition — so routing tile taps through `ToggleActivity` made the panel slam shut on every tap. Handing the work to `HushService` applies the change with no UI at all, so the tile behaves like Wi-Fi or the torch and the shade stays exactly where you left it. (Opening the app to grant Do Not Disturb access still collapses the shade, which is what a tile is meant to do when it opens an app.)
 
 > ⚠️ Contributors: do **not** bump `targetSdk` to 37 without a redesign — Android 17's while-in-use requirement breaks the alarm → FGS → volume path (`app/build.gradle.kts` has the note).
 

@@ -84,7 +84,6 @@ fun SettingsScreen(
     val chipLocale: Locale =
         androidx.compose.ui.platform.LocalConfiguration.current.locales[0]
 
-    var hushRinger by remember { mutableStateOf(settings.hushRinger) }
     var restoreMode by remember { mutableStateOf(settings.restoreMode) }
     var fixedPercent by remember { mutableIntStateOf(settings.fixedRestorePercent) }
     var quietEnabled by remember { mutableStateOf(settings.quietHoursEnabled) }
@@ -153,32 +152,6 @@ fun SettingsScreen(
             // ---- Hush behavior ----
             SectionHeader(stringResource(R.string.settings_behavior_header))
             SettingsGroup {
-                Column(Modifier.padding(horizontal = 20.dp, vertical = 14.dp)) {
-                    RowTitle(
-                        stringResource(R.string.settings_ringer_title),
-                        stringResource(R.string.settings_ringer_hint)
-                    )
-                    Spacer(Modifier.height(12.dp))
-                    ExpressiveToggleGroup(
-                        options = listOf(
-                            ToggleOption(
-                                stringResource(R.string.settings_ringer_vibrate),
-                                R.drawable.ic_vibration
-                            ),
-                            ToggleOption(
-                                stringResource(R.string.settings_ringer_silent),
-                                R.drawable.ic_notifications_off
-                            )
-                        ),
-                        selectedIndex = hushRinger.ordinal,
-                        onSelect = { index ->
-                            hushRinger = ShhhSettings.HushRinger.entries[index]
-                            settings.hushRinger = hushRinger
-                            onSettingChanged()
-                        }
-                    )
-                }
-                GroupDivider()
                 Column(Modifier.padding(horizontal = 20.dp, vertical = 14.dp)) {
                     RowTitle(
                         stringResource(R.string.settings_restore_title),

@@ -74,6 +74,7 @@ import io.github.shhhapp.shhh.core.TimeFormat
 fun HomeScreen(
     quiet: Boolean,
     hasDndAccess: Boolean,
+    canChangeSound: Boolean,
     canScheduleExact: Boolean,
     timerEndMillis: Long,
     settings: ShhhSettings,
@@ -124,7 +125,7 @@ fun HomeScreen(
 
             Spacer(Modifier.height(32.dp))
 
-            QuietToggle(quiet = quiet, enabled = hasDndAccess, onToggle = onToggle)
+            QuietToggle(quiet = quiet, enabled = canChangeSound, onToggle = onToggle)
 
             Spacer(Modifier.height(18.dp))
 
@@ -162,7 +163,7 @@ fun HomeScreen(
             }
 
             TimerChips(
-                enabled = hasDndAccess,
+                enabled = canChangeSound,
                 onHushFor = { minutes ->
                     if (canScheduleExact) onHushFor(minutes) else showExactAlarmDialog = true
                 }
@@ -415,23 +416,26 @@ private fun QuietHoursCard(
 @Composable
 private fun PermissionCard() {
     val context = LocalContext.current
+    // Informational, not an error: shhh works without this grant, and the card
+    // only offers to widen it to cover Do Not Disturb. secondaryContainer keeps
+    // it calm and distinct from the countdown card's primaryContainer.
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.errorContainer
+            containerColor = MaterialTheme.colorScheme.secondaryContainer
         )
     ) {
         Column(Modifier.padding(20.dp)) {
             Text(
                 text = stringResource(R.string.permission_title),
                 style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onErrorContainer
+                color = MaterialTheme.colorScheme.onSecondaryContainer
             )
             Spacer(Modifier.height(8.dp))
             Text(
                 text = stringResource(R.string.permission_body),
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onErrorContainer
+                color = MaterialTheme.colorScheme.onSecondaryContainer
             )
             Spacer(Modifier.height(16.dp))
             Button(onClick = {

@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Shhh</string>
+    <string name="app_tagline">Silencia tu teléfono con un toque</string>
+
+    <string name="status_quiet_on">Vibración · multimedia silenciado</string>
+    <string name="status_quiet_off">Sonido activado · multimedia restaurado</string>
+
+    <string name="tile_label">Shhh</string>
+    <string name="tile_subtitle_on">Activado</string>
+    <string name="tile_subtitle_off">Desactivado</string>
+    <string name="tile_content_description">Activar o desactivar el modo silencio</string>
+
+    <string name="widget_label_on">Silenciado</string>
+    <string name="widget_label_off">Shhh</string>
+    <string name="widget_description">Un toque: vibración y multimedia sin volumen</string>
+
+    <string name="permission_title">Opcional: acceso a No molestar</string>
+    <string name="permission_body">Shhh ya funciona sin este permiso. Android solo lo
+        bloquea mientras está activo un modo No molestar, Hora de dormir o Conducción:
+        concede el acceso abajo y Shhh seguirá funcionando también entonces. Shhh nunca
+        activa ni desactiva esos modos.</string>
+    <string name="permission_button">Conceder acceso</string>
+
+    <string name="setup_add_tile">Mosaico de Ajustes rápidos</string>
+    <string name="setup_add_widget">Widget en la pantalla de inicio</string>
+
+    <!-- Timed hush -->
+    <string name="timer_section_title">Silenciar un rato</string>
+    <string name="timer_section_hint">El sonido vuelve solo</string>
+    <string name="timer_chip_15">15 min</string>
+    <string name="timer_chip_30">30 min</string>
+    <string name="timer_chip_60">1 hora</string>
+    <string name="timer_chip_120">2 horas</string>
+    <string name="timer_running_until">El sonido vuelve a las %1$s</string>
+    <string name="timer_end_now">Terminar ahora</string>
+
+    <!-- Countdown notification -->
+    <string name="countdown_title">Silenciado</string>
+    <string name="countdown_text">El sonido vuelve a las %1$s</string>
+    <string name="countdown_action_restore">Restaurar ahora</string>
+    <string name="channel_countdown_name">Estado del silencio</string>
+    <string name="channel_countdown_description">Cuenta atrás mientras hay un temporizador activo</string>
+    <string name="channel_service_name">Cambios programados</string>
+    <string name="channel_service_description">Notificación técnica breve mientras se aplica un cambio programado</string>
+    <string name="service_notification_title">Ajustando el sonido…</string>
+
+    <!-- Headphones -->
+    <string name="headphones_notification_title">Auriculares conectados</string>
+    <string name="headphones_notification_text">Toca para recuperar el volumen multimedia: el timbre sigue silenciado</string>
+
+    <!-- Quiet hours -->
+    <string name="quiet_hours_title">Horario de silencio</string>
+    <string name="quiet_hours_hint">Silenciar automáticamente según un horario</string>
+    <string name="quiet_hours_starts">Empieza</string>
+    <string name="quiet_hours_ends">Termina</string>
+    <string name="quiet_days_every_day">Todos los días</string>
+    <string name="quiet_days_none">Ningún día seleccionado</string>
+
+    <!-- Exact alarm access -->
+    <string name="exact_alarm_title">Permitir alarmas y recordatorios</string>
+    <string name="exact_alarm_body">Los temporizadores y el horario de silencio necesitan
+        el acceso «Alarmas y recordatorios» de Android para que el sonido vuelva en el
+        minuto exacto, incluso con el teléfono en reposo. Un interruptor, una sola vez.</string>
+    <string name="exact_alarm_grant">Abrir ajustes</string>
+
+    <!-- Settings screen -->
+    <string name="settings_title">Ajustes</string>
+    <string name="settings_back">Atrás</string>
+    <string name="settings_behavior_header">Comportamiento</string>
+    <string name="settings_restore_title">Recuperar el volumen a</string>
+    <string name="settings_restore_hint">Nivel multimedia al quitar el silencio</string>
+    <string name="settings_restore_previous">Nivel anterior</string>
+    <string name="settings_restore_fixed">Nivel fijo</string>
+    <string name="settings_restore_fixed_value">Nivel fijo · %1$d%%</string>
+    <string name="settings_notifications_header">Notificaciones</string>
+    <string name="settings_countdown_title">Cuenta atrás en vivo</string>
+    <string name="settings_countdown_hint">Ver el tiempo restante mientras hay un temporizador activo</string>
+    <string name="settings_headphones_header">Auriculares</string>
+    <string name="settings_headphones_title">Recuperar multimedia con auriculares</string>
+    <string name="settings_headphones_hint">El audio vuelve al conectar auriculares Bluetooth: el timbre sigue silenciado</string>
+    <string name="settings_quick_access_header">Acceso rápido</string>
+    <string name="settings_automation_title">Automatización</string>
+    <string name="settings_automation_hint">Controla Shhh desde Tasker, rutinas y accesos directos</string>
+    <string name="settings_about_header">Acerca de</string>
+    <string name="settings_version">Versión %1$s</string>
+    <string name="settings_source_title">Código fuente</string>
+    <string name="settings_source_hint">Apache-2.0, en GitHub</string>
+
+    <string name="settings_troubleshooting_title">Solución de problemas</string>
+    <string name="settings_troubleshooting_hint">Corrige temporizadores que no se activan en algunos dispositivos</string>
+    <string name="settings_contact_title">Contactar con el desarrollador</string>
+    <string name="settings_contact_hint">Errores, sugerencias, dudas: abre tu app de correo</string>
+    <string name="contact_email_subject">Shhh %1$s — comentarios</string>
+
+    <!-- Updates -->
+    <string name="settings_updates_header">Actualizaciones</string>
+    <string name="settings_auto_update_title">Buscar actualizaciones automáticamente</string>
+    <string name="settings_auto_update_hint">Una vez al día al abrir la app, se consulta a GitHub si hay una versión más reciente. No se envía nada sobre ti.</string>
+    <string name="settings_check_update_title">Buscar actualizaciones</string>
+    <string name="settings_check_update_idle">Toca para consultar la última versión en GitHub</string>
+    <string name="settings_check_update_checking">Comprobando…</string>
+    <string name="settings_check_update_none">Ya tienes la última versión</string>
+    <string name="settings_check_update_error">No se pudo conectar con GitHub: revisa tu conexión e inténtalo de nuevo</string>
+    <string name="settings_check_update_available">La versión %1$s está disponible: toca para actualizar</string>
+    <string name="update_dialog_title">Actualización disponible</string>
+    <string name="update_dialog_version">Shhh %1$s está lista para descargar.</string>
+    <string name="update_dialog_download">Descargar</string>
+    <string name="update_dialog_downloading">Descargando… %1$d%%</string>
+    <string name="update_dialog_downloading_unknown">Descargando…</string>
+    <string name="update_dialog_install">Instalar</string>
+    <string name="update_dialog_failed">Error en la descarga: revisa tu conexión y vuelve a intentarlo.</string>
+    <string name="update_dialog_retry">Reintentar</string>
+    <string name="update_dialog_later">Más tarde</string>
+    <string name="update_permission_body">Android pide permiso una sola vez antes de que Shhh pueda instalar sus propias actualizaciones. Toca abajo, permite «Instalar apps desconocidas» y vuelve.</string>
+    <string name="update_permission_grant">Permitir instalaciones</string>
+
+    <!-- Automation sheet -->
+    <string name="automation_sheet_title">Intents de automatización</string>
+    <string name="automation_sheet_body">Cualquier app de automatización capaz de iniciar
+        una actividad (Tasker, MacroDroid, rutinas) puede controlar Shhh. Inicia la
+        actividad io.github.shhhapp.shhh/.ToggleActivity con una de estas acciones:</string>
+    <string name="automation_action_hush">…action.HUSH — silenciar ahora (extra opcional duration_minutes)</string>
+    <string name="automation_action_unhush">…action.UNHUSH — restaurar el sonido</string>
+    <string name="automation_action_toggle">…action.TOGGLE — invertir el estado actual</string>
+    <string name="automation_action_media">…action.RESTORE_MEDIA — solo volumen multimedia</string>
+
+    <!-- Launcher shortcuts -->
+    <string name="shortcut_toggle_short">Alternar</string>
+    <string name="shortcut_toggle_long">Alternar silencio</string>
+    <string name="shortcut_hush30_short">30 min</string>
+    <string name="shortcut_hush30_long">Silenciar 30 min</string>
+    <string name="shortcut_hush60_short">1 hora</string>
+    <string name="shortcut_hush60_long">Silenciar 1 hora</string>
+
+    <!-- Dial labels -->
+    <string name="dial_label_12am">00:00</string>
+    <string name="dial_label_6am">06:00</string>
+    <string name="dial_label_12pm">12:00</string>
+    <string name="dial_label_6pm">18:00</string>
+    <string name="duration_hours">%1$d h</string>
+    <string name="duration_minutes">%1$d min</string>
+    <string name="duration_full">%1$d h %2$d min</string>
+</resources>

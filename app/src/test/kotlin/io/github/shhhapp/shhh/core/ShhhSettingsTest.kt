@@ -31,11 +31,11 @@ class ShhhSettingsTest {
     }
 
     @Test
-    fun `defaults are a vibrate hush that restores the previous volume`() {
-        assertEquals(ShhhSettings.HushRinger.VIBRATE, settings.hushRinger)
+    fun `defaults restore the previous volume and remember no levels yet`() {
         assertEquals(ShhhSettings.RestoreMode.PREVIOUS, settings.restoreMode)
         assertEquals(50, settings.fixedRestorePercent)
         assertEquals(ShhhSettings.NO_SAVED_VOLUME, settings.previousMediaVolume)
+        assertEquals(ShhhSettings.NO_SAVED_VOLUME, settings.previousRingVolume)
         assertTrue(settings.liveCountdownEnabled)
         assertFalse(settings.headphonesAutoRestore)
         assertEquals(0L, settings.timerEndMillis)
@@ -84,15 +84,6 @@ class ShhhSettingsTest {
     }
 
     @Test
-    fun `hushRinger round-trips`() {
-        settings.hushRinger = ShhhSettings.HushRinger.SILENT
-        assertEquals(ShhhSettings.HushRinger.SILENT, reloaded.hushRinger)
-
-        settings.hushRinger = ShhhSettings.HushRinger.VIBRATE
-        assertEquals(ShhhSettings.HushRinger.VIBRATE, reloaded.hushRinger)
-    }
-
-    @Test
     fun `restoreMode round-trips`() {
         settings.restoreMode = ShhhSettings.RestoreMode.FIXED
         assertEquals(ShhhSettings.RestoreMode.FIXED, reloaded.restoreMode)
@@ -120,6 +111,26 @@ class ShhhSettingsTest {
 
         settings.previousMediaVolume = ShhhSettings.NO_SAVED_VOLUME
         assertEquals(ShhhSettings.NO_SAVED_VOLUME, reloaded.previousMediaVolume)
+    }
+
+    @Test
+    fun `previousRingVolume round-trips`() {
+        settings.previousRingVolume = 4
+        assertEquals(4, reloaded.previousRingVolume)
+
+        settings.previousRingVolume = ShhhSettings.NO_SAVED_VOLUME
+        assertEquals(ShhhSettings.NO_SAVED_VOLUME, reloaded.previousRingVolume)
+    }
+
+    @Test
+    fun `the ring and media levels are stored under separate keys`() {
+        // One shared key would have the media restore drag the ringer back to
+        // a media level (and the other way round) on the next un-hush.
+        settings.previousRingVolume = 2
+        settings.previousMediaVolume = 11
+
+        assertEquals(2, reloaded.previousRingVolume)
+        assertEquals(11, reloaded.previousMediaVolume)
     }
 
     @Test

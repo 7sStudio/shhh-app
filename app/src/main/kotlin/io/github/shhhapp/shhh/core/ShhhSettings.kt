@@ -15,15 +15,8 @@ class ShhhSettings(context: Context) {
     private val prefs: SharedPreferences =
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
-    /** What "hushed" does to the ringer. */
-    enum class HushRinger { VIBRATE, SILENT }
-
     /** How the media volume comes back when un-hushing. */
     enum class RestoreMode { PREVIOUS, FIXED }
-
-    var hushRinger: HushRinger
-        get() = HushRinger.entries[prefs.getInt(KEY_HUSH_RINGER, HushRinger.VIBRATE.ordinal)]
-        set(value) = prefs.edit { putInt(KEY_HUSH_RINGER, value.ordinal) }
 
     var restoreMode: RestoreMode
         get() = RestoreMode.entries[prefs.getInt(KEY_RESTORE_MODE, RestoreMode.PREVIOUS.ordinal)]
@@ -39,11 +32,16 @@ class ShhhSettings(context: Context) {
         get() = prefs.getInt(KEY_PREVIOUS_MEDIA_VOLUME, NO_SAVED_VOLUME)
         set(value) = prefs.edit { putInt(KEY_PREVIOUS_MEDIA_VOLUME, value) }
 
+    /** Ring volume captured right before hushing; [NO_SAVED_VOLUME] when unknown. */
+    var previousRingVolume: Int
+        get() = prefs.getInt(KEY_PREVIOUS_RING_VOLUME, NO_SAVED_VOLUME)
+        set(value) = prefs.edit { putInt(KEY_PREVIOUS_RING_VOLUME, value) }
+
     /**
-     * Last quiet state observed while the ringer mode was still readable.
-     * While Do Not Disturb is active, Android masks the ringer mode every app
-     * sees to SILENT, so this remembered value is the only truthful answer to
-     * "is shhh on?" — see [QuietModeController.isQuiet].
+     * Last quiet state observed while the ring volume was still readable.
+     * "Alarms only" and "Total silence" zen modes drive the ring volume every
+     * app sees to 0, so under those two this remembered value is the only
+     * truthful answer to "is shhh on?" — see [QuietModeController.isQuiet].
      */
     var lastKnownQuiet: Boolean
         get() = prefs.getBoolean(KEY_LAST_KNOWN_QUIET, false)
@@ -117,10 +115,10 @@ class ShhhSettings(context: Context) {
         private const val ALL_DAYS_MASK = 0b1111111
 
         private const val PREFS_NAME = "shhh"
-        private const val KEY_HUSH_RINGER = "hush_ringer"
         private const val KEY_RESTORE_MODE = "restore_mode"
         private const val KEY_FIXED_RESTORE_PERCENT = "fixed_restore_percent"
         private const val KEY_PREVIOUS_MEDIA_VOLUME = "previous_media_volume"
+        private const val KEY_PREVIOUS_RING_VOLUME = "previous_ring_volume"
         private const val KEY_LAST_KNOWN_QUIET = "last_known_quiet"
         private const val KEY_LIVE_COUNTDOWN = "live_countdown_enabled"
         private const val KEY_HEADPHONES_RESTORE = "headphones_auto_restore"

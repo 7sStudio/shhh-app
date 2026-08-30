@@ -7,6 +7,37 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning: [S
 
 _Nothing yet._
 
+## [1.4.0] - 2026-08-30
+
+### Fixed
+- 🌙 **Shhh no longer switches your Do Not Disturb off.** With DND, Bedtime or a
+  driving mode already running, hushing and then un-hushing used to end it, and
+  the phone came back fully audible. Shhh now moves the ring and media volume
+  sliders and nothing else, so it can neither start nor end those modes — under
+  every kind of DND, including "Alarms only" and "Total silence".
+- 🔊 **Hushing during Do Not Disturb now really hushes.** It used to leave the
+  ringer alone and lean on your DND for the silence.
+- 📱 **The Quick Settings tile no longer closes the notification panel.** It now
+  behaves like Wi-Fi or the torch: it flips, and the panel stays where you left it.
+
+### Added
+- 🌍 **Five more languages** — Spanish, Portuguese, Simplified Chinese, Japanese
+  and Korean, joining English, French and Arabic.
+- ⏰ **Alarms are guaranteed untouched.** Shhh never changes alarm volume, so a
+  hushed phone still wakes you. Now locked down by tests.
+
+### Changed
+- 🔓 **Do Not Disturb access is no longer required.** Shhh works with no special
+  permission. The grant is only needed to hush while one of your DND modes is
+  already running, and the setup card now says so instead of looking like an error.
+- 🤝 **Your Do Not Disturb wins.** While one of your modes is on, un-hushing
+  restores the sliders but the phone stays as quiet as that mode says.
+
+### Removed
+- 🔕 **The "Silent" hush option.** Hushing is always vibrate now. Reaching a truly
+  silent ringer forces Android to switch Do Not Disturb on — and off again
+  afterwards — which is exactly the interference this release removes.
+
 ## [1.3.0] - 2026-08-30
 
 ### Added

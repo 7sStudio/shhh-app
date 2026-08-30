@@ -53,7 +53,14 @@ class HushServiceTest {
         context.getSharedPreferences("shhh", Context.MODE_PRIVATE).edit().clear().commit()
         settings = ShhhSettings(context)
         audioManager.ringerMode = AudioManager.RINGER_MODE_NORMAL
+        ring = 3
+        audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, 5, 0)
     }
+
+    /** Hushed means "ring volume 0" — the slider shhh reads and writes. */
+    private var ring: Int
+        get() = audioManager.getStreamVolume(AudioManager.STREAM_RING)
+        set(value) = audioManager.setStreamVolume(AudioManager.STREAM_RING, value, 0)
 
     private fun service(): HushService = Robolectric.buildService(HushService::class.java).create().get()
 
@@ -65,12 +72,13 @@ class HushServiceTest {
     @Test
     fun `ACTION_TIMER_RESTORE triggers unhush`() {
         // Setup: phone is quiet
-        audioManager.ringerMode = AudioManager.RINGER_MODE_VIBRATE
+        ring = 0
+        settings.previousRingVolume = 4
         settings.timerEndMillis = System.currentTimeMillis() + 1000
 
         service().handleIntent(Intent(HushAlarms.ACTION_TIMER_RESTORE))
 
-        assertEquals(AudioManager.RINGER_MODE_NORMAL, audioManager.ringerMode)
+        assertEquals(4, ring)
         assertEquals(0L, settings.timerEndMillis)
     }
 
@@ -116,23 +124,115 @@ class HushServiceTest {
         )
     }
 
+    // ---- The tile's actions ----
+    //
+    // The Quick Settings tile hands its work here rather than to an activity:
+    // a tile can only start an activity via startActivityAndCollapse, which
+    // closes the shade, and a toggle tile must leave the panel open. Its own
+    // process is background for audio purposes, so it cannot write the volume
+    // itself; this momentary foreground service can.
+
+    @Test
+    fun `ACTION_TOGGLE hushes a phone that is making noise`() {
+        val intent = HushService.intent(context, HushService.ACTION_TOGGLE)
+
+        service().handleIntent(intent)
+
+        assertEquals(0, ring)
+        assertEquals(0, audioManager.getStreamVolume(AudioManager.STREAM_MUSIC))
+        assertTrue(HushManager(context).isQuiet)
+    }
+
+    @Test
+    fun `ACTION_TOGGLE restores a phone that is already hushed`() {
+        settings.previousRingVolume = 4
+        settings.previousMediaVolume = 7
+        ring = 0
+        audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, 0, 0)
+
+        service().handleIntent(HushService.intent(context, HushService.ACTION_TOGGLE))
+
+        assertEquals(4, ring)
+        assertEquals(7, audioManager.getStreamVolume(AudioManager.STREAM_MUSIC))
+        assertFalse(HushManager(context).isQuiet)
+    }
+
+    @Test
+    fun `ACTION_HUSH with a duration hushes and arms the timer`() {
+        val intent = HushService.intent(context, HushService.ACTION_HUSH)
+            .putExtra(HushService.EXTRA_DURATION_MINUTES, 30)
+
+        service().handleIntent(intent)
+
+        assertEquals(0, ring)
+        assertTrue("the timer should be armed", settings.timerEndMillis > System.currentTimeMillis())
+        assertNotNull(shadowOf(alarmManager).nextScheduledAlarm)
+    }
+
+    @Test
+    fun `ACTION_HUSH accepts a string duration extra like am and automation apps send`() {
+        val intent = HushService.intent(context, HushService.ACTION_HUSH)
+            .putExtra(HushService.EXTRA_DURATION_MINUTES, "15")
+
+        service().handleIntent(intent)
+
+        assertEquals(0, ring)
+        assertTrue(settings.timerEndMillis > System.currentTimeMillis())
+    }
+
+    @Test
+    fun `ACTION_HUSH without a duration hushes without arming anything`() {
+        service().handleIntent(HushService.intent(context, HushService.ACTION_HUSH))
+
+        assertEquals(0, ring)
+        assertEquals(0L, settings.timerEndMillis)
+    }
+
+    @Test
+    fun `ACTION_UNHUSH restores sound and disarms a running timer`() {
+        // The hush saves whatever level it finds, so that is what comes back.
+        ring = 4
+        service().handleIntent(
+            HushService.intent(context, HushService.ACTION_HUSH)
+                .putExtra(HushService.EXTRA_DURATION_MINUTES, 30)
+        )
+        assertEquals(0, ring)
+
+        service().handleIntent(HushService.intent(context, HushService.ACTION_UNHUSH))
+
+        assertEquals(4, ring)
+        assertEquals("the timer must be disarmed", 0L, settings.timerEndMillis)
+    }
+
+    @Test
+    fun `ACTION_RESTORE_MEDIA brings media back and leaves the ring hushed`() {
+        audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, 6, 0)
+        service().handleIntent(HushService.intent(context, HushService.ACTION_TOGGLE))
+        assertEquals(0, ring)
+
+        service().handleIntent(HushService.intent(context, HushService.ACTION_RESTORE_MEDIA))
+
+        assertEquals("the ring must stay hushed", 0, ring)
+        assertEquals(6, audioManager.getStreamVolume(AudioManager.STREAM_MUSIC))
+    }
+
     @Test
     fun `a null intent changes nothing`() {
-        audioManager.ringerMode = AudioManager.RINGER_MODE_VIBRATE
+        ring = 0
 
         service().handleIntent(null)
 
-        assertEquals(AudioManager.RINGER_MODE_VIBRATE, audioManager.ringerMode)
+        assertEquals(0, ring)
         assertNull(shadowOf(alarmManager).peekNextScheduledAlarm())
     }
 
     @Test
     fun `an unknown action changes nothing`() {
-        audioManager.ringerMode = AudioManager.RINGER_MODE_VIBRATE
+        ring = 0
 
         service().handleIntent(Intent("io.github.shhhapp.shhh.alarm.NOPE"))
 
-        assertEquals(AudioManager.RINGER_MODE_VIBRATE, audioManager.ringerMode)
+        assertEquals(0, ring)
         assertNull(shadowOf(alarmManager).peekNextScheduledAlarm())
     }
 

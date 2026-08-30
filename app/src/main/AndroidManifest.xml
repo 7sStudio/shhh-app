@@ -2,8 +2,12 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Required to switch ringer modes; granted by the user via an official
-         Settings toggle (Do Not Disturb access). -->
+    <!-- Shhh only moves the ring and media volume sliders and never switches
+         ringer modes, so it never starts or ends a Do Not Disturb / Bedtime /
+         driving mode. Android still refuses a volume write across the silent
+         boundary WHILE one of those modes is running, which is the only thing
+         this grant unlocks. Optional: with no such mode active Shhh works
+         without it. Granted via an official Settings toggle. -->
     <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
     <!-- Countdown + headphones notifications (runtime permission on 13+). -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />

@@ -15,12 +15,17 @@ import io.github.shhhapp.shhh.R
 import io.github.shhhapp.shhh.ToggleActivity
 import io.github.shhhapp.shhh.core.HushManager
 import io.github.shhhapp.shhh.core.QuietModeController
+import io.github.shhhapp.shhh.schedule.HushService
 
 /**
  * Quick Settings tile: one tap flips quiet mode.
  *
+ * Taps never close the shade: the work goes to a momentary foreground
+ * service, so the tile behaves like Wi-Fi or the torch rather than like a
+ * shortcut that dismisses the panel.
+ *
  * The tile is passive — [onStartListening] runs every time the shade opens,
- * so the displayed state always reflects the phone's actual ringer mode.
+ * so the displayed state always reflects the phone's actual volume.
  * While the shade stays open, ringer and Do Not Disturb changes made
  * elsewhere (volume keys, the DND tile, Bedtime mode) are picked up through
  * a broadcast receiver that lives only for the listening window.
@@ -63,33 +68,36 @@ class ShhhTileService : TileService() {
 
     override fun onClick() {
         val manager = HushManager(this)
-        if (!manager.hasDndAccess) {
+
+        // The one case worth leaving the shade for: while a zen mode runs
+        // without Do Not Disturb access Android refuses every write, and the
+        // app is where that is explained and granted. Opening an app is what a
+        // tile is allowed to collapse the shade for.
+        if (!manager.canChangeSound) {
             launchActivity(Intent(this, MainActivity::class.java))
             return
         }
 
-        // While a DND mode is active, act only through the visible trampoline.
-        // Background audio writes are silently dropped under DND (verified on
-        // Android 17: a tile-side restore neither exited zen nor brought sound
-        // back), and with the ringer masked the remembered-state fallback would
-        // report the flip as applied anyway, hiding the dropped write from the
-        // retry check below.
-        if (manager.isDndActive) {
-            launchActivity(Intent(this, ToggleActivity::class.java))
-            return
-        }
-
-        val before = manager.isQuiet
-        val result = manager.toggle()
-        val applied =
-            result is QuietModeController.Result.Success && manager.isQuiet != before
-
-        if (applied) {
-            refreshTile()
-        } else {
-            // Android 16+ audio hardening silently drops ringer/volume changes
-            // from background processes. Retry through an invisible foreground
-            // trampoline, which is always allowed to apply them.
+        // Everything else stays in the shade. A toggle tile must behave like
+        // Wi-Fi or the torch: flip, and leave the panel exactly where the user
+        // left it. That rules out the obvious route, because a tile can only
+        // start an activity via startActivityAndCollapse, which closes the
+        // shade by definition.
+        //
+        // Writing the volume here instead does not work either: a tile's
+        // process is background for audio purposes and Android 16+ audio
+        // hardening silently drops the write (measured on Android 17 — the
+        // tile's own toggle never landed, which is why this used to bounce
+        // through the invisible ToggleActivity and collapse the shade).
+        //
+        // The momentary foreground service is the sanctioned path: it is
+        // allowed to change volume, and it has no UI, so nothing touches the
+        // shade. It refreshes this tile itself once the change has landed.
+        try {
+            startForegroundService(HushService.intent(this, HushService.ACTION_TOGGLE))
+        } catch (_: Exception) {
+            // Some OEM builds refuse a background foreground-service start.
+            // Falling back costs the user the open shade, but not the toggle.
             launchActivity(Intent(this, ToggleActivity::class.java))
         }
     }

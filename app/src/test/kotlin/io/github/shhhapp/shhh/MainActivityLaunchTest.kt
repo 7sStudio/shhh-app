@@ -43,10 +43,11 @@ class MainActivityLaunchTest {
             timerEndMillis = 0L
             quietHoursEnabled = false
             previousMediaVolume = ShhhSettings.NO_SAVED_VOLUME
-            hushRinger = ShhhSettings.HushRinger.VIBRATE
+            previousRingVolume = ShhhSettings.NO_SAVED_VOLUME
             liveCountdownEnabled = false
         }
         audioManager.ringerMode = AudioManager.RINGER_MODE_NORMAL
+        audioManager.setStreamVolume(AudioManager.STREAM_RING, 3, 0)
         audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, 8, 0)
     }
 
@@ -70,7 +71,7 @@ class MainActivityLaunchTest {
             .performClick()
         composeTestRule.waitForIdle()
 
-        assertEquals(AudioManager.RINGER_MODE_VIBRATE, audioManager.ringerMode)
+        assertEquals(0, audioManager.getStreamVolume(AudioManager.STREAM_RING))
         assertEquals(0, audioManager.getStreamVolume(AudioManager.STREAM_MUSIC))
         composeTestRule
             .onNodeWithText(context.getString(R.string.status_quiet_on))
