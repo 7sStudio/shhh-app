@@ -25,3 +25,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "Shhh"
 include(":app")
+include(":smoke")

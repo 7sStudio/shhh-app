@@ -2,6 +2,9 @@ package io.github.shhhapp.shhh.widget
 
 import android.content.Context
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.glance.GlanceId
@@ -43,12 +46,39 @@ import kotlinx.coroutines.launch
  * quiet state. Tapping flips it; if Do Not Disturb access is missing, tapping
  * opens the app so the user can grant it.
  */
+/**
+ * Snapshot-backed mirror of the phone's sound state, the only thing the
+ * widget composition reads. Glance keeps a widget's composition alive between
+ * updates and only re-executes composables whose OBSERVED state changed;
+ * reading AudioManager directly inside the composition is invisible to the
+ * snapshot system, so recomposition skipped the body and every update while a
+ * session was alive re-published the old UI — the widget froze on a stale
+ * state until the session expired (seen as "stuck on Hushed" after un-hush).
+ */
+internal object WidgetUiState {
+    var quiet by mutableStateOf(false)
+        private set
+    var hasDndAccess by mutableStateOf(true)
+        private set
+
+    /** Re-reads reality; the composition recomposes when a value changes. */
+    fun refreshFrom(context: Context) {
+        val controller = QuietModeController(context)
+        quiet = controller.isQuiet
+        hasDndAccess = controller.hasDndAccess
+    }
+}
+
 class ShhhWidget : GlanceAppWidget() {
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
+        WidgetUiState.refreshFrom(context)
         provideContent {
             GlanceTheme {
-                WidgetContent()
+                WidgetContent(
+                    quiet = WidgetUiState.quiet,
+                    hasDndAccess = WidgetUiState.hasDndAccess
+                )
             }
         }
     }
@@ -59,7 +89,12 @@ class ShhhWidget : GlanceAppWidget() {
         /** Fire-and-forget refresh of every placed widget (safe from any surface). */
         fun requestRefresh(context: Context) {
             val appContext = context.applicationContext
-            refreshScope.launch { ShhhWidget().updateAll(appContext) }
+            refreshScope.launch {
+                // Seed the observable state BEFORE updateAll so live sessions
+                // recompose against the new values.
+                WidgetUiState.refreshFrom(appContext)
+                ShhhWidget().updateAll(appContext)
+            }
         }
     }
 }
@@ -69,10 +104,8 @@ class ShhhWidgetReceiver : GlanceAppWidgetReceiver() {
 }
 
 @Composable
-internal fun WidgetContent() {
+internal fun WidgetContent(quiet: Boolean, hasDndAccess: Boolean) {
     val context = LocalContext.current
-    val controller = QuietModeController(context)
-    val quiet = controller.isQuiet
 
     val background = if (quiet) GlanceTheme.colors.primary else GlanceTheme.colors.widgetBackground
     val content = if (quiet) GlanceTheme.colors.onPrimary else GlanceTheme.colors.onSurface
@@ -80,7 +113,7 @@ internal fun WidgetContent() {
     // Taps go through an invisible foreground trampoline: Android 16+ audio
     // hardening drops ringer/volume changes made from background callbacks.
     // Without DND access the tap opens the app to request it instead.
-    val clickAction = if (controller.hasDndAccess) {
+    val clickAction = if (hasDndAccess) {
         actionStartActivity<ToggleActivity>()
     } else {
         actionStartActivity<MainActivity>()

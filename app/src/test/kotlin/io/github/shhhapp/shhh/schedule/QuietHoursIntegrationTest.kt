@@ -110,8 +110,11 @@ class QuietHoursIntegrationTest {
         settings.quietEndMinutes = 7 * 60
         settings.quietHoursEnabled = true
         
-        // Current time: 23:00 (inside window)
-        val now = LocalDateTime.of(2026, 8, 27, 23, 0)
+        // Current time: 23:00 today (inside window). Built from the real clock
+        // because hushUntil stores an absolute epoch and activeTimerEnd
+        // compares it against System.currentTimeMillis() — a hard-coded date
+        // turns into a time bomb once it passes.
+        val now = LocalDateTime.now().withHour(23).withMinute(0)
         
         // This logic is in MainActivity.onQuietHoursChanged
         HushAlarms.syncQuietHoursAlarm(context, now)

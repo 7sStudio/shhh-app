@@ -3,6 +3,7 @@ package io.github.shhhapp.shhh.core
 import android.app.NotificationManager
 import android.content.Context
 import android.media.AudioManager
+import android.os.SystemClock
 
 /**
  * Applies and reads the quiet-mode state. Pure audio logic — timers, alarms
@@ -59,10 +60,10 @@ class QuietModeController(
     fun goQuiet(): Result {
         if (!hasDndAccess) return Result.NeedsDndAccess
         return try {
-            audioManager.ringerMode = when (settings.hushRinger) {
+            applyRingerMode(when (settings.hushRinger) {
                 ShhhSettings.HushRinger.VIBRATE -> AudioManager.RINGER_MODE_VIBRATE
                 ShhhSettings.HushRinger.SILENT -> AudioManager.RINGER_MODE_SILENT
-            }
+            })
             val current = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
             if (current > 0) {
                 settings.previousMediaVolume = current
@@ -78,11 +79,26 @@ class QuietModeController(
     fun restoreSound(): Result {
         if (!hasDndAccess) return Result.NeedsDndAccess
         return try {
-            audioManager.ringerMode = AudioManager.RINGER_MODE_NORMAL
+            applyRingerMode(AudioManager.RINGER_MODE_NORMAL)
             setMediaVolumeBestEffort(restoreTargetVolume())
             Result.Success(quiet = false)
         } catch (_: SecurityException) {
             Result.NeedsDndAccess
+        }
+    }
+
+    /**
+     * Writes the ringer mode, then waits (bounded) until AudioService reflects
+     * it. The write is applied asynchronously by the system; callers refresh
+     * the tile/widget immediately after this returns, and without the wait
+     * those surfaces sometimes recompose against the old mode and freeze on a
+     * stale state until their next scheduled update.
+     */
+    private fun applyRingerMode(target: Int) {
+        audioManager.ringerMode = target
+        val deadline = SystemClock.uptimeMillis() + RINGER_SETTLE_TIMEOUT_MS
+        while (audioManager.ringerMode != target && SystemClock.uptimeMillis() < deadline) {
+            SystemClock.sleep(RINGER_SETTLE_POLL_MS)
         }
     }
 
@@ -105,6 +121,11 @@ class QuietModeController(
         audioManager.getStreamVolume(AudioManager.STREAM_MUSIC) > 0
     } catch (_: SecurityException) {
         false
+    }
+
+    private companion object {
+        const val RINGER_SETTLE_TIMEOUT_MS = 200L
+        const val RINGER_SETTLE_POLL_MS = 10L
     }
 
     private fun restoreTargetVolume(): Int {

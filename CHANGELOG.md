@@ -7,6 +7,34 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning: [S
 
 _Nothing yet._
 
+## [1.2.1] - 2026-08-30
+
+### Fixed
+- **The home-screen widget no longer shows "Can't load widget"** in release
+  builds (reported on a Pixel 10 running Android 17, but affected every
+  device). R8 stripped the zero-argument constructor of WorkManager's
+  `OverwritingInputMerger`, which WorkManager instantiates reflectively, so
+  every Glance widget-update worker crashed before publishing the widget's
+  views. A ProGuard keep rule for `androidx.work.InputMerger` subclasses fixes
+  it.
+- **The widget no longer freezes on a stale state after a toggle** (e.g. stuck
+  on "Hushed" after a successful un-hush, until its next half-hourly update).
+  Glance keeps a widget's composition alive between updates and only
+  re-executes it when state it can observe changes; the widget read
+  AudioManager directly inside the composition, which the snapshot system
+  cannot see, so refreshes while a session was alive skipped recomposition and
+  re-published the old UI. The composition now reads a snapshot-backed state
+  holder that every refresh re-seeds from the phone's live state. As added
+  hardening, the controller also waits — bounded at 200 ms — for an
+  asynchronously-applied ringer write to be readable before surfaces refresh.
+
+### Added
+- **Release smoke tests** (`scripts/release-smoke-test.sh`, and a CI job) that
+  run a minified, shrunk release build on a device/emulator: cold start plus
+  the full widget pipeline (receiver → WorkManager → Glance → RemoteViews).
+  All other tests exercise debug artifacts, so R8/resource-shrinker breakage
+  was previously invisible until a release reached a phone.
+
 ## [1.2.0] - 2026-08-27
 
 ### Added

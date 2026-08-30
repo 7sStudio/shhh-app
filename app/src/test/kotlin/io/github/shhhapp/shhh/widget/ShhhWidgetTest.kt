@@ -59,12 +59,26 @@ class ShhhWidgetTest {
                 (emittable.provider as? AndroidResourceImageProvider)?.resId == resId
         }
 
+    /**
+     * Seeds [WidgetUiState] from the phone's live state — the production path —
+     * and composes from it, mirroring provideGlance/requestRefresh.
+     */
+    private fun androidx.glance.appwidget.testing.unit.GlanceAppWidgetUnitTest.provideFromLiveState() {
+        WidgetUiState.refreshFrom(context)
+        provideComposable {
+            CompositionLocalProvider(LocalContext provides context) {
+                WidgetContent(
+                    quiet = WidgetUiState.quiet,
+                    hasDndAccess = WidgetUiState.hasDndAccess
+                )
+            }
+        }
+    }
+
     @Test
     fun `a loud phone shows the idle label and the speaker glyph`() =
         runGlanceAppWidgetUnitTest {
-            provideComposable {
-                CompositionLocalProvider(LocalContext provides context) { WidgetContent() }
-            }
+            provideFromLiveState()
 
             onNode(hasTextEqualTo("Shhh")).assertExists()
             onNode(hasTextEqualTo("Hushed")).assertDoesNotExist()
@@ -77,9 +91,7 @@ class ShhhWidgetTest {
         runGlanceAppWidgetUnitTest {
             audioManager.ringerMode = AudioManager.RINGER_MODE_VIBRATE
 
-            provideComposable {
-                CompositionLocalProvider(LocalContext provides context) { WidgetContent() }
-            }
+            provideFromLiveState()
 
             onNode(hasTextEqualTo("Hushed")).assertExists()
             onNode(hasTextEqualTo("Shhh")).assertDoesNotExist()
@@ -89,9 +101,7 @@ class ShhhWidgetTest {
     @Test
     fun `with DND access the widget taps through to the trampoline activity`() =
         runGlanceAppWidgetUnitTest {
-            provideComposable {
-                CompositionLocalProvider(LocalContext provides context) { WidgetContent() }
-            }
+            provideFromLiveState()
 
             onNode(hasStartActivityClickAction<ToggleActivity>()).assertExists()
         }
@@ -101,9 +111,7 @@ class ShhhWidgetTest {
         runGlanceAppWidgetUnitTest {
             shadowOf(notificationManager).setNotificationPolicyAccessGranted(false)
 
-            provideComposable {
-                CompositionLocalProvider(LocalContext provides context) { WidgetContent() }
-            }
+            provideFromLiveState()
 
             onNode(hasStartActivityClickAction<MainActivity>()).assertExists()
             onNode(hasStartActivityClickAction<ToggleActivity>()).assertDoesNotExist()

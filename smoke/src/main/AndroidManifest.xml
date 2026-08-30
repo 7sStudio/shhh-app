@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Package-visibility filtering would otherwise hide the app under test:
+         getLaunchIntentForPackage returns null without this. -->
+    <queries>
+        <package android:name="io.github.shhhapp.shhh" />
+    </queries>
+</manifest>

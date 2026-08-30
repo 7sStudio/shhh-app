@@ -4,10 +4,12 @@ import android.app.NotificationManager
 import android.content.Context
 import android.content.ContextWrapper
 import android.media.AudioManager
+import android.os.SystemClock
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.verify
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -289,5 +291,44 @@ class QuietModeControllerTest {
     @Test
     fun `restoreMediaVolumeOnly reports failure when the volume change is refused`() {
         assertFalse(controllerRefusingVolumeChanges().restoreMediaVolumeOnly())
+    }
+
+    // AudioService applies ringer writes asynchronously. The controller must
+    // not return until the new mode is readable, because HushManager refreshes
+    // the tile/widget immediately afterwards — recomposing against the old
+    // mode freezes those surfaces on a stale state (seen on a Pixel 10 /
+    // Android 17: widget stuck on "Hushed" after a successful un-hush).
+
+    @Test
+    fun `restoreSound waits until the ringer write is readable before returning`() {
+        val lagging = mockk<AudioManager>(relaxed = true)
+        every { lagging.getStreamVolume(any()) } returns 5
+        every { lagging.getStreamMaxVolume(any()) } returns 15
+        // Two stale reads, then AudioService catches up.
+        every { lagging.ringerMode } returnsMany listOf(
+            AudioManager.RINGER_MODE_VIBRATE,
+            AudioManager.RINGER_MODE_VIBRATE,
+            AudioManager.RINGER_MODE_NORMAL
+        )
+
+        val result = controllerWith(lagging).restoreSound()
+
+        assertEquals(QuietModeController.Result.Success(quiet = false), result)
+        verify(atLeast = 3) { lagging.ringerMode }
+    }
+
+    @Test
+    fun `settle wait is bounded when the ringer never reflects the write`() {
+        val stuck = mockk<AudioManager>(relaxed = true)
+        every { stuck.getStreamVolume(any()) } returns 5
+        every { stuck.getStreamMaxVolume(any()) } returns 15
+        // Never reaches VIBRATE — the wait must give up, not hang.
+        every { stuck.ringerMode } returns AudioManager.RINGER_MODE_NORMAL
+
+        val before = SystemClock.uptimeMillis()
+        val result = controllerWith(stuck).goQuiet()
+
+        assertEquals(QuietModeController.Result.Success(quiet = true), result)
+        assertTrue(SystemClock.uptimeMillis() - before <= 1_000)
     }
 }

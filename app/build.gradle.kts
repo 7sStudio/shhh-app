@@ -14,6 +14,10 @@ val keystoreProperties = Properties().apply {
     }
 }
 
+// Set by scripts/release-smoke-test.sh: the :smoke module needs an installable
+// release APK, so release signing may fall back to the debug key (see below).
+val releaseSmokeRun = providers.gradleProperty("releaseSmoke").isPresent
+
 android {
     namespace = "io.github.shhhapp.shhh"
     compileSdk = 37
@@ -25,8 +29,8 @@ android {
         // while-in-use requirement breaks the alarm → FGS → volume-change path
         // used for timed hush and quiet hours (see README architecture notes).
         targetSdk = 36
-        versionCode = 3
-        versionName = "1.2.0"
+        versionCode = 4
+        versionName = "1.2.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -50,7 +54,12 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            // Real keystore when present; for release smoke-test runs on
+            // machines/CI without one, fall back to the debug key so the
+            // minified APK is installable. Published releases always come from
+            // a machine with keystore.properties, so they are never debug-signed.
             signingConfig = signingConfigs.findByName("release")
+                ?: if (releaseSmokeRun) signingConfigs.getByName("debug") else null
         }
     }
 
