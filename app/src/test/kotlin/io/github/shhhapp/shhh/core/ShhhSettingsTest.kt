@@ -40,6 +40,30 @@ class ShhhSettingsTest {
         assertFalse(settings.headphonesAutoRestore)
         assertEquals(0L, settings.timerEndMillis)
         assertFalse(settings.lastKnownQuiet)
+        assertFalse("update checks are opt-in", settings.autoUpdateCheckEnabled)
+        assertEquals(0L, settings.lastUpdateCheckMillis)
+        assertEquals("", settings.lastPromptedUpdateVersion)
+    }
+
+    @Test
+    fun `autoUpdateCheckEnabled round-trips`() {
+        settings.autoUpdateCheckEnabled = true
+        assertTrue(reloaded.autoUpdateCheckEnabled)
+
+        settings.autoUpdateCheckEnabled = false
+        assertFalse(reloaded.autoUpdateCheckEnabled)
+    }
+
+    @Test
+    fun `lastUpdateCheckMillis round-trips`() {
+        settings.lastUpdateCheckMillis = 1_234_567L
+        assertEquals(1_234_567L, reloaded.lastUpdateCheckMillis)
+    }
+
+    @Test
+    fun `lastPromptedUpdateVersion round-trips`() {
+        settings.lastPromptedUpdateVersion = "1.3.0"
+        assertEquals("1.3.0", reloaded.lastPromptedUpdateVersion)
     }
 
     @Test

@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.drawable.Icon
 import android.text.format.DateFormat
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -41,6 +42,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -55,10 +57,14 @@ import io.github.shhhapp.shhh.BuildConfig
 import io.github.shhhapp.shhh.R
 import io.github.shhhapp.shhh.core.ShhhSettings
 import io.github.shhhapp.shhh.tile.ShhhTileService
+import io.github.shhhapp.shhh.update.CheckResult
+import io.github.shhhapp.shhh.update.ReleaseInfo
+import io.github.shhhapp.shhh.update.UpdateChecker
 import io.github.shhhapp.shhh.widget.ShhhWidgetReceiver
 import java.time.DayOfWeek
 import java.time.format.TextStyle
 import java.util.Locale
+import kotlinx.coroutines.launch
 
 @Composable
 fun SettingsScreen(
@@ -69,7 +75,8 @@ fun SettingsScreen(
     onSettingChanged: () -> Unit,
     onRequestNotificationPermission: () -> Unit,
     onRequestBluetoothPermission: () -> Unit,
-    onRequestExactAlarmAccess: () -> Unit
+    onRequestExactAlarmAccess: () -> Unit,
+    updateChecker: UpdateChecker = remember { UpdateChecker() }
 ) {
     var showExactAlarmDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
@@ -86,10 +93,38 @@ fun SettingsScreen(
     var quietDays by remember { mutableStateOf(settings.quietDays) }
     var liveCountdown by remember { mutableStateOf(settings.liveCountdownEnabled) }
     var headphones by remember { mutableStateOf(settings.headphonesAutoRestore) }
+    var autoUpdate by remember { mutableStateOf(settings.autoUpdateCheckEnabled) }
 
     var showStartPicker by remember { mutableStateOf(false) }
     var showEndPicker by remember { mutableStateOf(false) }
     var showAutomationSheet by remember { mutableStateOf(false) }
+
+    val updateScope = rememberCoroutineScope()
+    var checkState by remember { mutableStateOf(UpdateCheckState.IDLE) }
+    var availableRelease by remember { mutableStateOf<ReleaseInfo?>(null) }
+    var showUpdateDialog by remember { mutableStateOf(false) }
+
+    fun checkForUpdates() {
+        // A found release is kept until the dialog handles it; re-tapping the
+        // row reopens the dialog instead of re-checking.
+        if (availableRelease != null) {
+            showUpdateDialog = true
+            return
+        }
+        updateScope.launch {
+            checkState = UpdateCheckState.CHECKING
+            when (val result = updateChecker.check(BuildConfig.VERSION_NAME)) {
+                is CheckResult.UpdateAvailable -> {
+                    availableRelease = result.release
+                    checkState = UpdateCheckState.AVAILABLE
+                    showUpdateDialog = true
+                }
+
+                CheckResult.UpToDate -> checkState = UpdateCheckState.NONE
+                CheckResult.Error -> checkState = UpdateCheckState.ERROR
+            }
+        }
+    }
 
     Scaffold { innerPadding ->
         Column(
@@ -174,8 +209,10 @@ fun SettingsScreen(
                             onSettingChanged()
                         }
                     )
-                    androidx.compose.animation.AnimatedVisibility(
-                        visible = restoreMode == ShhhSettings.RestoreMode.FIXED
+                    AnimatedVisibility(
+                        visible = restoreMode == ShhhSettings.RestoreMode.FIXED,
+                        enter = RevealEnter,
+                        exit = RevealExit
                     ) {
                         Slider(
                             value = fixedPercent.toFloat(),
@@ -210,7 +247,11 @@ fun SettingsScreen(
                     if (checked) onRequestNotificationPermission()
                     onQuietHoursChanged()
                 }
-                androidx.compose.animation.AnimatedVisibility(visible = quietEnabled) {
+                AnimatedVisibility(
+                    visible = quietEnabled,
+                    enter = RevealEnter,
+                    exit = RevealExit
+                ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         GroupDivider()
                         QuietHoursDial(
@@ -313,6 +354,42 @@ fun SettingsScreen(
                 ) { showAutomationSheet = true }
             }
 
+            // ---- Updates ----
+            SectionHeader(stringResource(R.string.settings_updates_header))
+            SettingsGroup {
+                SwitchRow(
+                    title = stringResource(R.string.settings_auto_update_title),
+                    hint = stringResource(R.string.settings_auto_update_hint),
+                    checked = autoUpdate,
+                    modifier = Modifier.testTag("toggle_auto_update")
+                ) { checked ->
+                    autoUpdate = checked
+                    settings.autoUpdateCheckEnabled = checked
+                    onSettingChanged()
+                }
+                GroupDivider()
+                // if-chain, not an exhaustive when: a when-expression would
+                // compile in a dead NoWhenBranchMatched throw the coverage
+                // gate counts as a missed line.
+                ClickRow(
+                    title = stringResource(R.string.settings_check_update_title),
+                    hint = if (checkState == UpdateCheckState.CHECKING) {
+                        stringResource(R.string.settings_check_update_checking)
+                    } else if (checkState == UpdateCheckState.NONE) {
+                        stringResource(R.string.settings_check_update_none)
+                    } else if (checkState == UpdateCheckState.ERROR) {
+                        stringResource(R.string.settings_check_update_error)
+                    } else if (checkState == UpdateCheckState.AVAILABLE) {
+                        stringResource(
+                            R.string.settings_check_update_available,
+                            availableRelease?.versionName.orEmpty()
+                        )
+                    } else {
+                        stringResource(R.string.settings_check_update_idle)
+                    }
+                ) { checkForUpdates() }
+            }
+
             // ---- About ----
             SectionHeader(stringResource(R.string.settings_about_header))
             SettingsGroup {
@@ -338,6 +415,26 @@ fun SettingsScreen(
                     context.startActivity(
                         Intent(Intent.ACTION_VIEW, TROUBLESHOOTING_URL.toUri())
                     )
+                }
+                GroupDivider()
+                val contactSubject = stringResource(
+                    R.string.contact_email_subject, BuildConfig.VERSION_NAME
+                )
+                ClickRow(
+                    title = stringResource(R.string.settings_contact_title),
+                    hint = stringResource(R.string.settings_contact_hint)
+                ) {
+                    // No email app is a real possibility; failing silently
+                    // beats crashing Settings.
+                    runCatching {
+                        context.startActivity(
+                            Intent(Intent.ACTION_SENDTO).apply {
+                                data = "mailto:".toUri()
+                                putExtra(Intent.EXTRA_EMAIL, arrayOf(DEVELOPER_EMAIL))
+                                putExtra(Intent.EXTRA_SUBJECT, contactSubject)
+                            }
+                        )
+                    }
                 }
             }
 
@@ -371,6 +468,14 @@ fun SettingsScreen(
     }
     if (showAutomationSheet) {
         AutomationSheet(onDismiss = { showAutomationSheet = false })
+    }
+    val releaseToShow = availableRelease
+    if (showUpdateDialog && releaseToShow != null) {
+        UpdateDialog(
+            release = releaseToShow,
+            checker = updateChecker,
+            onDismiss = { showUpdateDialog = false }
+        )
     }
     if (showExactAlarmDialog) {
         ExactAlarmDialog(
@@ -542,5 +647,8 @@ private fun requestPinWidget(context: Context) {
     }
 }
 
+private enum class UpdateCheckState { IDLE, CHECKING, NONE, ERROR, AVAILABLE }
+
 private const val SOURCE_URL = "https://github.com/7sStudio/shhh-app"
 private const val TROUBLESHOOTING_URL = "https://dontkillmyapp.com"
+private const val DEVELOPER_EMAIL = "7sStudio@tutamail.com"

@@ -12,6 +12,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.isToggleable
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -22,8 +23,12 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.github.shhhapp.shhh.R
 import io.github.shhhapp.shhh.ShhhApp
 import io.github.shhhapp.shhh.core.ShhhSettings
+import io.github.shhhapp.shhh.update.UpdateChecker
 import java.time.DayOfWeek
 import java.time.LocalTime
+import okhttp3.mockwebserver.MockResponse
+import okhttp3.mockwebserver.MockWebServer
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -71,9 +76,17 @@ class ShhhAppTest {
         settings.liveCountdownEnabled = false
         settings.headphonesAutoRestore = false
         settings.quietHoursEnabled = false
+        settings.autoUpdateCheckEnabled = false
+        settings.lastUpdateCheckMillis = 0L
+        settings.lastPromptedUpdateVersion = ""
 
         audioManager.ringerMode = AudioManager.RINGER_MODE_NORMAL
         audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, 8, 0)
+    }
+
+    @After
+    fun tearDown() {
+        server?.shutdown()
     }
 
     // ---- helpers ----
@@ -111,6 +124,36 @@ class ShhhAppTest {
     private fun openSettings() {
         composeTestRule.onNodeWithContentDescription(string(R.string.settings_title)).performClick()
         composeTestRule.waitForIdle()
+    }
+
+    // ---- update auto-check plumbing ----
+
+    /** Started lazily; only the update tests need a server. */
+    private var server: MockWebServer? = null
+
+    private fun startServer(): MockWebServer =
+        MockWebServer().also { it.start(); server = it }
+
+    private fun launchAppWithChecker(server: MockWebServer) {
+        composeTestRule.setContent {
+            ShhhApp(updateChecker = UpdateChecker(server.url("/latest").toString()))
+        }
+        composeTestRule.waitForIdle()
+    }
+
+    private fun releaseJson(tag: String) = """
+        {
+          "tag_name": "$tag",
+          "body": "Shiny new things.",
+          "assets": [{"name": "shhh.apk",
+            "browser_download_url": "https://example.invalid/shhh.apk", "size": 10}]
+        }
+    """.trimIndent()
+
+    private fun awaitText(text: String) {
+        composeTestRule.waitUntil(timeoutMillis = 5_000) {
+            composeTestRule.onAllNodesWithText(text).fetchSemanticsNodes().isNotEmpty()
+        }
     }
 
     // ---- the big toggle ----
@@ -433,5 +476,79 @@ class ShhhAppTest {
 
         assertTrue(settings.headphonesAutoRestore)
         assertNull(lastPermissionRequest)
+    }
+
+    // ---- automatic update check ----
+
+    @Test
+    fun `no update check happens while the option is off`() {
+        val server = startServer()
+        launchAppWithChecker(server)
+
+        composeTestRule.onNodeWithText(string(R.string.update_dialog_title)).assertDoesNotExist()
+        assertEquals(0, server.requestCount)
+        assertEquals(0L, settings.lastUpdateCheckMillis)
+    }
+
+    @Test
+    fun `a due check that finds a newer release prompts once and remembers it`() {
+        settings.autoUpdateCheckEnabled = true
+        val before = System.currentTimeMillis()
+        val server = startServer()
+        server.enqueue(MockResponse().setBody(releaseJson("v99.0.0")))
+
+        launchAppWithChecker(server)
+        awaitText(string(R.string.update_dialog_title))
+
+        assertEquals(1, server.requestCount)
+        assertEquals("99.0.0", settings.lastPromptedUpdateVersion)
+        assertTrue(settings.lastUpdateCheckMillis >= before)
+
+        composeTestRule.onNodeWithText(string(R.string.update_dialog_later)).performClick()
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText(string(R.string.update_dialog_title)).assertDoesNotExist()
+    }
+
+    @Test
+    fun `a recent check is not repeated`() {
+        settings.autoUpdateCheckEnabled = true
+        settings.lastUpdateCheckMillis = System.currentTimeMillis()
+        val server = startServer()
+
+        launchAppWithChecker(server)
+
+        assertEquals(0, server.requestCount)
+        composeTestRule.onNodeWithText(string(R.string.update_dialog_title)).assertDoesNotExist()
+    }
+
+    @Test
+    fun `an already prompted version does not prompt again`() {
+        settings.autoUpdateCheckEnabled = true
+        settings.lastPromptedUpdateVersion = "99.0.0"
+        val server = startServer()
+        server.enqueue(MockResponse().setBody(releaseJson("v99.0.0")))
+
+        launchAppWithChecker(server)
+        composeTestRule.waitUntil(timeoutMillis = 5_000) { server.requestCount == 1 }
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText(string(R.string.update_dialog_title)).assertDoesNotExist()
+    }
+
+    @Test
+    fun `being up to date prompts nothing`() {
+        settings.autoUpdateCheckEnabled = true
+        val server = startServer()
+        server.enqueue(
+            MockResponse().setBody(releaseJson("v${io.github.shhhapp.shhh.BuildConfig.VERSION_NAME}"))
+        )
+
+        launchAppWithChecker(server)
+        composeTestRule.waitUntil(timeoutMillis = 5_000) { server.requestCount == 1 }
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText(string(R.string.update_dialog_title)).assertDoesNotExist()
+        assertEquals("", settings.lastPromptedUpdateVersion)
     }
 }

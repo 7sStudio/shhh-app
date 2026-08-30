@@ -128,7 +128,11 @@ fun HomeScreen(
 
             Spacer(Modifier.height(18.dp))
 
-            AnimatedContent(targetState = quiet, label = "status") { isQuiet ->
+            AnimatedContent(
+                targetState = quiet,
+                transitionSpec = { RevealEnter togetherWith RevealExit },
+                label = "status"
+            ) { isQuiet ->
                 Text(
                     text = stringResource(
                         if (isQuiet) R.string.status_quiet_on else R.string.status_quiet_off
@@ -146,7 +150,11 @@ fun HomeScreen(
                 Spacer(Modifier.height(16.dp))
             }
 
-            AnimatedVisibility(visible = timerEndMillis > 0) {
+            AnimatedVisibility(
+                visible = timerEndMillis > 0,
+                enter = RevealEnter,
+                exit = RevealExit
+            ) {
                 Column {
                     CountdownCard(timerEndMillis, onEndTimer)
                     Spacer(Modifier.height(16.dp))

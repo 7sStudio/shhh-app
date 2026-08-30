@@ -81,6 +81,31 @@
     <string name="settings_source_hint">Apache-2.0, sur GitHub</string>
     <string name="settings_troubleshooting_title">Dépannage</string>
     <string name="settings_troubleshooting_hint">Résoudre les problèmes de minuteries sur certains appareils</string>
+    <string name="settings_contact_title">Contacter le développeur</string>
+    <string name="settings_contact_hint">Bugs, suggestions, questions — ouvre votre application d\'e-mail</string>
+    <string name="contact_email_subject">Shhh %1$s — retour d\'expérience</string>
+
+    <!-- Updates -->
+    <string name="settings_updates_header">Mises à jour</string>
+    <string name="settings_auto_update_title">Vérifier automatiquement les mises à jour</string>
+    <string name="settings_auto_update_hint">Une fois par jour à l\'ouverture de l\'application, demande à GitHub si une version plus récente existe. Rien vous concernant n\'est envoyé.</string>
+    <string name="settings_check_update_title">Rechercher des mises à jour</string>
+    <string name="settings_check_update_idle">Touchez pour vérifier la dernière version sur GitHub</string>
+    <string name="settings_check_update_checking">Vérification…</string>
+    <string name="settings_check_update_none">Vous êtes à jour</string>
+    <string name="settings_check_update_error">Impossible de joindre GitHub — vérifiez votre connexion et réessayez</string>
+    <string name="settings_check_update_available">La version %1$s est disponible — touchez pour mettre à jour</string>
+    <string name="update_dialog_title">Mise à jour disponible</string>
+    <string name="update_dialog_version">Shhh %1$s est prêt à être téléchargé.</string>
+    <string name="update_dialog_download">Télécharger</string>
+    <string name="update_dialog_downloading">Téléchargement… %1$d%%</string>
+    <string name="update_dialog_downloading_unknown">Téléchargement…</string>
+    <string name="update_dialog_install">Installer</string>
+    <string name="update_dialog_failed">Échec du téléchargement — vérifiez votre connexion et réessayez.</string>
+    <string name="update_dialog_retry">Réessayer</string>
+    <string name="update_dialog_later">Plus tard</string>
+    <string name="update_permission_body">Android demande une seule fois votre autorisation avant que Shhh puisse installer ses propres mises à jour. Touchez ci-dessous, autorisez « Installer des applis inconnues », puis revenez.</string>
+    <string name="update_permission_grant">Autoriser l\'installation</string>
 
     <string name="automation_sheet_title">Intents d\'automatisation</string>
     <string name="automation_sheet_body">Toute application pouvant lancer une activité peut contrôler Shhh via io.github.shhhapp.shhh/.ToggleActivity :</string>

@@ -64,6 +64,18 @@ class ShadowDetachedTileService {
 }
 
 /**
+ * Robolectric's ShadowTileService is not a ShadowService, so letting
+ * `super.onDestroy()` reach Service.onDestroy crashes on a shadow cast.
+ * Production Service.onDestroy is a no-op anyway; swallowing it here lets the
+ * unbind-kill path of [ShhhTileService.onDestroy] run.
+ */
+@Implements(TileService::class)
+class ShadowDestroyableTileService : org.robolectric.shadows.ShadowTileService() {
+    @Implementation
+    protected fun onDestroy() = Unit
+}
+
+/**
  * The Quick Settings tile is a background surface, so every path is asserted
  * against the phone's real ringer state and the real intents it hands back to
  * the system.
@@ -326,9 +338,22 @@ class ShhhTileServiceTest {
         assertEquals(Tile.STATE_INACTIVE, service.qsTile.state)
     }
 
-    // onDestroy also unregisters defensively, but Robolectric cannot invoke
-    // TileService.onDestroy (its shadow is not a ShadowService), so only the
-    // stop/start cycles are exercised here.
+    @Test
+    @Config(shadows = [ShadowDestroyableTileService::class])
+    fun `an unbind kill without onStopListening still drops the receiver`() {
+        val service = buildService()
+        service.onStartListening()
+
+        // The system may unbind-kill the service without onStopListening first.
+        service.onDestroy()
+
+        audioManager.ringerMode = AudioManager.RINGER_MODE_VIBRATE
+        context.sendBroadcast(Intent(AudioManager.RINGER_MODE_CHANGED_ACTION))
+        shadowOf(Looper.getMainLooper()).idle()
+
+        assertEquals(Tile.STATE_INACTIVE, service.qsTile.state)
+    }
+
     @Test
     fun `repeated listening cycles neither double-register nor crash`() {
         val service = buildService()

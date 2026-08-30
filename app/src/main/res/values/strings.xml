@@ -91,6 +91,31 @@
 
     <string name="settings_troubleshooting_title">Troubleshooting</string>
     <string name="settings_troubleshooting_hint">Fix issues with timers not firing on some devices</string>
+    <string name="settings_contact_title">Contact the developer</string>
+    <string name="settings_contact_hint">Bugs, feature requests, questions — opens your email app</string>
+    <string name="contact_email_subject">Shhh %1$s — feedback</string>
+
+    <!-- Updates -->
+    <string name="settings_updates_header">Updates</string>
+    <string name="settings_auto_update_title">Check for updates automatically</string>
+    <string name="settings_auto_update_hint">Once a day when you open the app, ask GitHub whether a newer version exists. Nothing about you is sent.</string>
+    <string name="settings_check_update_title">Check for updates</string>
+    <string name="settings_check_update_idle">Tap to check the latest release on GitHub</string>
+    <string name="settings_check_update_checking">Checking…</string>
+    <string name="settings_check_update_none">You\'re up to date</string>
+    <string name="settings_check_update_error">Couldn\'t reach GitHub — check your connection and try again</string>
+    <string name="settings_check_update_available">Version %1$s is available — tap to update</string>
+    <string name="update_dialog_title">Update available</string>
+    <string name="update_dialog_version">Shhh %1$s is ready to download.</string>
+    <string name="update_dialog_download">Download</string>
+    <string name="update_dialog_downloading">Downloading… %1$d%%</string>
+    <string name="update_dialog_downloading_unknown">Downloading…</string>
+    <string name="update_dialog_install">Install</string>
+    <string name="update_dialog_failed">Download failed — check your connection and retry.</string>
+    <string name="update_dialog_retry">Retry</string>
+    <string name="update_dialog_later">Later</string>
+    <string name="update_permission_body">Android asks once for permission before Shhh may install its own updates. Tap below, then allow "Install unknown apps", and come back.</string>
+    <string name="update_permission_grant">Allow installs</string>
 
     <!-- Automation sheet -->
     <string name="automation_sheet_title">Automation intents</string>

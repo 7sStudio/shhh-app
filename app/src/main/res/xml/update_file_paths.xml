@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Only the updater's download directory is ever shared, read-only, with the
+     system package installer. -->
+<paths>
+    <cache-path name="updates" path="updates/" />
+</paths>

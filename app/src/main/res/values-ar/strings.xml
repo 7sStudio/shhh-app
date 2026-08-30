@@ -81,6 +81,31 @@
     <string name="settings_source_hint">Apache-2.0، على GitHub</string>
     <string name="settings_troubleshooting_title">استكشاف الأخطاء وإصلاحها</string>
     <string name="settings_troubleshooting_hint">حل مشاكل عدم عمل المؤقتات في بعض الأجهزة</string>
+    <string name="settings_contact_title">التواصل مع المطوّر</string>
+    <string name="settings_contact_hint">أخطاء، اقتراحات، أسئلة — يفتح تطبيق البريد الإلكتروني لديك</string>
+    <string name="contact_email_subject">Shhh %1$s — ملاحظات</string>
+
+    <!-- Updates -->
+    <string name="settings_updates_header">التحديثات</string>
+    <string name="settings_auto_update_title">التحقق من التحديثات تلقائيًا</string>
+    <string name="settings_auto_update_hint">مرة واحدة يوميًا عند فتح التطبيق، يسأل GitHub عمّا إذا كان هناك إصدار أحدث. لا يُرسل أي شيء يخصك.</string>
+    <string name="settings_check_update_title">التحقق من وجود تحديثات</string>
+    <string name="settings_check_update_idle">اضغط للتحقق من أحدث إصدار على GitHub</string>
+    <string name="settings_check_update_checking">جارٍ التحقق…</string>
+    <string name="settings_check_update_none">لديك أحدث إصدار</string>
+    <string name="settings_check_update_error">تعذّر الوصول إلى GitHub — تحقق من اتصالك وحاول مجددًا</string>
+    <string name="settings_check_update_available">الإصدار %1$s متاح — اضغط للتحديث</string>
+    <string name="update_dialog_title">تحديث متاح</string>
+    <string name="update_dialog_version">‏Shhh %1$s جاهز للتنزيل.</string>
+    <string name="update_dialog_download">تنزيل</string>
+    <string name="update_dialog_downloading">جارٍ التنزيل… ‎%1$d%%</string>
+    <string name="update_dialog_downloading_unknown">جارٍ التنزيل…</string>
+    <string name="update_dialog_install">تثبيت</string>
+    <string name="update_dialog_failed">فشل التنزيل — تحقق من اتصالك وحاول مجددًا.</string>
+    <string name="update_dialog_retry">إعادة المحاولة</string>
+    <string name="update_dialog_later">لاحقًا</string>
+    <string name="update_permission_body">يطلب أندرويد إذنك مرة واحدة قبل أن يتمكن Shhh من تثبيت تحديثاته. اضغط أدناه، ثم فعِّل «تثبيت التطبيقات غير المعروفة»، وعُد إلى هنا.</string>
+    <string name="update_permission_grant">السماح بالتثبيت</string>
 
     <string name="automation_sheet_title">أوامر الأتمتة</string>
     <string name="automation_sheet_body">يمكن لأي تطبيق أتمتة التحكم في Shhh عبر النشاط io.github.shhhapp.shhh/.ToggleActivity:</string>

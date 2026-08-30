@@ -59,6 +59,23 @@ class ShhhSettings(context: Context) {
         get() = prefs.getBoolean(KEY_HEADPHONES_RESTORE, false)
         set(value) = prefs.edit { putBoolean(KEY_HEADPHONES_RESTORE, value) }
 
+    // ---- Updates ----
+
+    /** Once-a-day update check when the app opens. Opt-in: no network by default. */
+    var autoUpdateCheckEnabled: Boolean
+        get() = prefs.getBoolean(KEY_AUTO_UPDATE_CHECK, false)
+        set(value) = prefs.edit { putBoolean(KEY_AUTO_UPDATE_CHECK, value) }
+
+    /** Epoch millis of the last automatic update check attempt; 0 when never. */
+    var lastUpdateCheckMillis: Long
+        get() = prefs.getLong(KEY_LAST_UPDATE_CHECK, 0L)
+        set(value) = prefs.edit { putLong(KEY_LAST_UPDATE_CHECK, value) }
+
+    /** Newest version the auto-check already prompted for, so each release nags once. */
+    var lastPromptedUpdateVersion: String
+        get() = prefs.getString(KEY_LAST_PROMPTED_UPDATE, "") ?: ""
+        set(value) = prefs.edit { putString(KEY_LAST_PROMPTED_UPDATE, value) }
+
     // ---- Hush timer ----
 
     /** Epoch millis when the running hush timer ends; 0 when no timer is active. */
@@ -107,6 +124,9 @@ class ShhhSettings(context: Context) {
         private const val KEY_LAST_KNOWN_QUIET = "last_known_quiet"
         private const val KEY_LIVE_COUNTDOWN = "live_countdown_enabled"
         private const val KEY_HEADPHONES_RESTORE = "headphones_auto_restore"
+        private const val KEY_AUTO_UPDATE_CHECK = "auto_update_check_enabled"
+        private const val KEY_LAST_UPDATE_CHECK = "last_update_check_millis"
+        private const val KEY_LAST_PROMPTED_UPDATE = "last_prompted_update_version"
         private const val KEY_TIMER_END = "timer_end_millis"
         private const val KEY_QUIET_ENABLED = "quiet_hours_enabled"
         private const val KEY_QUIET_START = "quiet_start_minutes"

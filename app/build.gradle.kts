@@ -29,8 +29,8 @@ android {
         // while-in-use requirement breaks the alarm → FGS → volume-change path
         // used for timed hush and quiet hours (see README architecture notes).
         targetSdk = 36
-        versionCode = 4
-        versionName = "1.2.1"
+        versionCode = 5
+        versionName = "1.3.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -63,7 +63,9 @@ android {
         }
     }
 
-    // F-Droid requires builds without Google's encrypted dependency metadata.
+    // Google's dependency metadata is an encrypted blob only Play Console can
+    // read. This app ships via GitHub Releases + the in-app updater, so the
+    // blob would be dead weight in every APK.
     dependenciesInfo {
         includeInApk = false
         includeInBundle = false
@@ -155,6 +157,7 @@ dependencies {
 
     testImplementation(libs.junit)
     testImplementation(libs.mockk)
+    testImplementation(libs.mockwebserver)
     testImplementation(libs.robolectric)
     testImplementation(libs.androidx.test.core)
     testImplementation(libs.androidx.test.junit)

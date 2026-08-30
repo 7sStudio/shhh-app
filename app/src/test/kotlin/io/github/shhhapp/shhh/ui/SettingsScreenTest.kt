@@ -27,7 +27,11 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.github.shhhapp.shhh.core.ShhhSettings
 import io.github.shhhapp.shhh.core.TimeFormat
+import io.github.shhhapp.shhh.update.UpdateChecker
 import io.github.shhhapp.shhh.widget.ShhhWidgetReceiver
+import okhttp3.mockwebserver.MockResponse
+import okhttp3.mockwebserver.MockWebServer
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -76,22 +80,58 @@ class SettingsScreenTest {
             quietDays = DayOfWeek.entries.toSet()
             liveCountdownEnabled = true
             headphonesAutoRestore = false
+            autoUpdateCheckEnabled = false
+            lastUpdateCheckMillis = 0L
+            lastPromptedUpdateVersion = ""
         }
         drainStartedActivities()
     }
 
-    private fun setScreen(canScheduleExact: Boolean = true) {
+    @After
+    fun tearDown() {
+        server?.shutdown()
+    }
+
+    /** Started lazily; only the update tests need a server. */
+    private var server: MockWebServer? = null
+
+    private fun startServer(): MockWebServer =
+        MockWebServer().also { it.start(); server = it }
+
+    private fun setScreen(canScheduleExact: Boolean = true, updateChecker: UpdateChecker? = null) {
         composeTestRule.setContent {
-            SettingsScreen(
-                settings = settings,
-                canScheduleExact = canScheduleExact,
-                onBack = { backs++ },
-                onQuietHoursChanged = { quietChanges++ },
-                onSettingChanged = { settingChanges++ },
-                onRequestNotificationPermission = { notificationRequests++ },
-                onRequestBluetoothPermission = { bluetoothRequests++ },
-                onRequestExactAlarmAccess = { exactAlarmRequests++ }
-            )
+            if (updateChecker == null) {
+                // Omitting the parameter exercises the composable's default.
+                SettingsScreen(
+                    settings = settings,
+                    canScheduleExact = canScheduleExact,
+                    onBack = { backs++ },
+                    onQuietHoursChanged = { quietChanges++ },
+                    onSettingChanged = { settingChanges++ },
+                    onRequestNotificationPermission = { notificationRequests++ },
+                    onRequestBluetoothPermission = { bluetoothRequests++ },
+                    onRequestExactAlarmAccess = { exactAlarmRequests++ }
+                )
+            } else {
+                SettingsScreen(
+                    settings = settings,
+                    canScheduleExact = canScheduleExact,
+                    onBack = { backs++ },
+                    onQuietHoursChanged = { quietChanges++ },
+                    onSettingChanged = { settingChanges++ },
+                    onRequestNotificationPermission = { notificationRequests++ },
+                    onRequestBluetoothPermission = { bluetoothRequests++ },
+                    onRequestExactAlarmAccess = { exactAlarmRequests++ },
+                    updateChecker = updateChecker
+                )
+            }
+        }
+    }
+
+    private fun awaitText(text: String, substring: Boolean = false) {
+        composeTestRule.waitUntil(timeoutMillis = 5_000) {
+            composeTestRule.onAllNodesWithText(text, substring = substring)
+                .fetchSemanticsNodes().isNotEmpty()
         }
     }
 
@@ -578,7 +618,145 @@ class SettingsScreenTest {
         }
     }
 
+    // ---- Updates ----
+
+    private fun releaseJson(tag: String) = """
+        {
+          "tag_name": "$tag",
+          "body": "Shiny new things.",
+          "assets": [{"name": "shhh.apk",
+            "browser_download_url": "https://example.invalid/shhh.apk", "size": 10}]
+        }
+    """.trimIndent()
+
+    private fun checkerFor(server: MockWebServer) =
+        UpdateChecker(server.url("/latest").toString())
+
+    @Test
+    fun `updates section renders with the switch off by default`() {
+        setScreen()
+
+        composeTestRule.onNodeWithText("Updates").performScrollTo().assertIsDisplayed()
+        composeTestRule.onNodeWithText("Check for updates automatically")
+            .performScrollTo().assertIsDisplayed()
+        composeTestRule.onNodeWithText("Check for updates").performScrollTo().assertIsDisplayed()
+        composeTestRule.onNodeWithText("Tap to check the latest release on GitHub")
+            .assertIsDisplayed()
+    }
+
+    @Test
+    fun `auto update switch persists both ways`() {
+        setScreen()
+
+        composeTestRule.onNodeWithTag("toggle_auto_update").performScrollTo().performClick()
+        composeTestRule.waitForIdle()
+
+        assertTrue(settings.autoUpdateCheckEnabled)
+        assertEquals(1, settingChanges)
+
+        composeTestRule.onNodeWithTag("toggle_auto_update").performClick()
+        composeTestRule.waitForIdle()
+
+        assertFalse(settings.autoUpdateCheckEnabled)
+        assertEquals(2, settingChanges)
+    }
+
+    @Test
+    fun `a manual check that finds an update opens the dialog and keeps the row hint`() {
+        val server = startServer()
+        server.enqueue(
+            MockResponse().setBody(releaseJson("v99.0.0"))
+                .setBodyDelay(400, java.util.concurrent.TimeUnit.MILLISECONDS)
+        )
+        setScreen(updateChecker = checkerFor(server))
+
+        composeTestRule.onNodeWithText("Check for updates").performScrollTo().performClick()
+        awaitText("Checking…")
+        awaitText("Update available")
+
+        composeTestRule.onNodeWithText("Shhh 99.0.0 is ready to download.").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Shiny new things.").assertIsDisplayed()
+
+        composeTestRule.onNodeWithText("Later").performClick()
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithText("Update available").assertDoesNotExist()
+        composeTestRule
+            .onNodeWithText("Version 99.0.0 is available — tap to update")
+            .assertIsDisplayed()
+
+        // Re-tapping reopens the dialog from memory instead of re-checking.
+        composeTestRule.onNodeWithText("Check for updates").performClick()
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText("Update available").assertIsDisplayed()
+        assertEquals(1, server.requestCount)
+    }
+
+    @Test
+    fun `a manual check on the latest version reports up to date`() {
+        val server = startServer()
+        server.enqueue(
+            MockResponse().setBody(releaseJson("v${io.github.shhhapp.shhh.BuildConfig.VERSION_NAME}"))
+        )
+        setScreen(updateChecker = checkerFor(server))
+
+        composeTestRule.onNodeWithText("Check for updates").performScrollTo().performClick()
+        awaitText("You're up to date")
+
+        composeTestRule.onNodeWithText("Update available").assertDoesNotExist()
+    }
+
+    @Test
+    fun `a failed manual check reports the error`() {
+        val server = startServer()
+        server.enqueue(MockResponse().setResponseCode(500))
+        setScreen(updateChecker = checkerFor(server))
+
+        composeTestRule.onNodeWithText("Check for updates").performScrollTo().performClick()
+        awaitText("Couldn't reach GitHub", substring = true)
+
+        composeTestRule.onNodeWithText("Update available").assertDoesNotExist()
+    }
+
     // ---- About ----
+
+    @Test
+    fun `contact row opens a pre-filled email to the developer`() {
+        setScreen()
+
+        composeTestRule.onNodeWithText("Contact the developer").performScrollTo().performClick()
+        composeTestRule.waitForIdle()
+
+        val app = ApplicationProvider.getApplicationContext<Application>()
+        var intent: Intent?
+        do {
+            intent = shadowOf(app).nextStartedActivity
+        } while (intent != null && intent.action != Intent.ACTION_SENDTO)
+        val email = requireNotNull(intent)
+        assertEquals("mailto:", email.data?.toString())
+        assertEquals(
+            listOf("7sStudio@tutamail.com"),
+            email.getStringArrayExtra(Intent.EXTRA_EMAIL)?.toList()
+        )
+        assertEquals(
+            "Shhh ${io.github.shhhapp.shhh.BuildConfig.VERSION_NAME} — feedback",
+            email.getStringExtra(Intent.EXTRA_SUBJECT)
+        )
+    }
+
+    @Test
+    fun `contact row survives a phone without an email app`() {
+        val app = ApplicationProvider.getApplicationContext<Application>()
+        shadowOf(app).checkActivities(true)
+        setScreen()
+
+        composeTestRule.onNodeWithText("Contact the developer").performScrollTo().performClick()
+        composeTestRule.waitForIdle()
+
+        // No crash and the screen is still there.
+        composeTestRule.onNodeWithText("Contact the developer").assertIsDisplayed()
+        shadowOf(app).checkActivities(false)
+    }
 
     @Test
     fun `source code row opens the GitHub repository`() {

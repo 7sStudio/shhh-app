@@ -1,3 +1,0 @@
-• Full French and Arabic translations, including right-to-left layout support
-• Troubleshooting: dontkillmyapp.com link in settings for OEM battery issues
-• New integration tests for scheduling and localization

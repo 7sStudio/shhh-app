@@ -17,6 +17,7 @@ uiautomator = "2.3.0"
 espresso = "3.7.0"
 kover = "0.9.9"
 mockk = "1.14.11"
+mockwebserver = "4.12.0"
 
 [libraries]
 mockk = { group = "io.mockk", name = "mockk", version.ref = "mockk" }
@@ -34,6 +35,7 @@ lifecycle-runtime-compose = { group = "androidx.lifecycle", name = "lifecycle-ru
 coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }
 
 junit = { group = "junit", name = "junit", version.ref = "junit" }
+mockwebserver = { group = "com.squareup.okhttp3", name = "mockwebserver", version.ref = "mockwebserver" }
 robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
 androidx-test-core = { group = "androidx.test", name = "core-ktx", version.ref = "androidxTestCore" }
 androidx-test-junit = { group = "androidx.test.ext", name = "junit-ktx", version.ref = "androidxTestJunit" }

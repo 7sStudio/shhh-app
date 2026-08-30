@@ -19,7 +19,7 @@
   <img src="https://img.shields.io/badge/100%25%20AI--developed-322B66.svg" alt="100% AI-developed">
 </p>
 
-A tiny, modern quiet-mode toggle for the moments you need silence *now*: meetings, movies, sleep. No accounts, no ads, no analytics — the app doesn't even have the internet permission.
+A tiny, modern quiet-mode toggle for the moments you need silence *now*: meetings, movies, sleep. No accounts, no ads, no analytics — the network is touched only if you use the built-in updater, and then only to ask GitHub for the latest release.
 
 | Home | Timed hush | Settings | Quick Settings tile | Widget |
 | :---: | :---: | :---: | :---: | :---: |
@@ -37,6 +37,7 @@ A tiny, modern quiet-mode toggle for the moments you need silence *now*: meeting
 - **True to reality** — the toggle reads the phone's *actual* state, so it never drifts out of sync with the volume keys or system settings.
 - **Material 3 Expressive** — dynamic Material You colors from your wallpaper and palette, light/dark, themed icon, springy shape-morphing UI.
 - **Multilingual** — fully translated into **French** and **Arabic**, with full Right-to-Left (RTL) support.
+- **Built-in updater** — an optional once-a-day check against this repo's [latest release](https://github.com/7sStudio/shhh-app/releases/latest) (off by default), plus a manual "Check for updates" in Settings that downloads the APK and hands it to Android's installer.
 
 ## What access it needs, and why
 
@@ -48,6 +49,8 @@ All grants are official Android switches — no root, no Shizuku, no ADB.
 | **Alarms & reminders** | So timers and quiet hours fire at the exact minute, even in Doze | Only for timed hush / quiet hours |
 | **Notifications** | The optional countdown and the headphones tap-to-restore offer | Optional |
 | **Nearby devices** | Only to hear "Bluetooth headphones connected" | Only for the headphones option |
+| **Internet** | Only for the updater: one request to the GitHub releases API and the APK download. Nothing is ever uploaded | Only for update checks |
+| **Install unknown apps** | Lets the downloaded update be handed to Android's installer | Only to install an update |
 
 The app asks for each one in context, the first time the matching feature is used.
 
@@ -126,8 +129,7 @@ CI builds, tests, checks coverage and lints every push; tagging `v*` builds and 
 
 ## Distribution
 
-- **GitHub Releases** — APKs are attached by the [release workflow](.github/workflows/release.yml).
-- **F-Droid–ready** — [fastlane metadata](fastlane/metadata/android/en-US) is in the repo and builds contain no proprietary dependency metadata (`dependenciesInfo` disabled).
+- **GitHub Releases** — APKs are attached by the [release workflow](.github/workflows/release.yml), and the app's built-in updater keeps installs current from there.
 - **Play-ready** — targetSdk meets current Play requirements; the `specialUse` foreground service declaration text is in the manifest; [privacy policy](PRIVACY.md) included.
 
 ## Icon licensing

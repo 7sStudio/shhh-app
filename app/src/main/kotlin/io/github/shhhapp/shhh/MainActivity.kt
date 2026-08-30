@@ -15,11 +15,10 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
@@ -34,8 +33,14 @@ import io.github.shhhapp.shhh.core.QuietModeController
 import io.github.shhhapp.shhh.core.ShhhSettings
 import io.github.shhhapp.shhh.schedule.HushAlarms
 import io.github.shhhapp.shhh.ui.HomeScreen
+import io.github.shhhapp.shhh.ui.RevealEnter
+import io.github.shhhapp.shhh.ui.RevealExit
 import io.github.shhhapp.shhh.ui.SettingsScreen
+import io.github.shhhapp.shhh.ui.UpdateDialog
 import io.github.shhhapp.shhh.ui.theme.ShhhTheme
+import io.github.shhhapp.shhh.update.CheckResult
+import io.github.shhhapp.shhh.update.ReleaseInfo
+import io.github.shhhapp.shhh.update.UpdateChecker
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -52,7 +57,7 @@ class MainActivity : ComponentActivity() {
 private enum class Screen { HOME, SETTINGS }
 
 @Composable
-fun ShhhApp() {
+fun ShhhApp(updateChecker: UpdateChecker = remember { UpdateChecker() }) {
     val context = LocalContext.current
     val manager = remember { HushManager(context) }
     val settings = remember { ShhhSettings(context) }
@@ -77,6 +82,32 @@ fun ShhhApp() {
     LifecycleResumeEffect(Unit) {
         refresh()
         onPauseOrDispose { }
+    }
+
+    // Opt-in update check: at most once a day, prompting once per new version.
+    var foundUpdate by remember { mutableStateOf<ReleaseInfo?>(null) }
+    LaunchedEffect(Unit) {
+        val now = System.currentTimeMillis()
+        if (settings.autoUpdateCheckEnabled &&
+            UpdateChecker.isCheckDue(settings.lastUpdateCheckMillis, now)
+        ) {
+            // Stamped at attempt time so a failing network isn't hammered.
+            settings.lastUpdateCheckMillis = now
+            val result = updateChecker.check(BuildConfig.VERSION_NAME)
+            if (result is CheckResult.UpdateAvailable &&
+                result.release.versionName != settings.lastPromptedUpdateVersion
+            ) {
+                settings.lastPromptedUpdateVersion = result.release.versionName
+                foundUpdate = result.release
+            }
+        }
+    }
+    foundUpdate?.let { release ->
+        UpdateDialog(
+            release = release,
+            checker = updateChecker,
+            onDismiss = { foundUpdate = null }
+        )
     }
 
     // Stay in sync with ringer and Do Not Disturb changes made anywhere else.
@@ -129,13 +160,8 @@ fun ShhhApp() {
 
     AnimatedContent(
         targetState = screen,
-        transitionSpec = {
-            if (targetState == Screen.SETTINGS) {
-                slideInHorizontally { it / 4 } togetherWith slideOutHorizontally { -it / 4 }
-            } else {
-                slideInHorizontally { -it / 4 } togetherWith slideOutHorizontally { it / 4 }
-            }
-        },
+        // App rule (see ui/Transitions.kt): no edge slides — fade in place.
+        transitionSpec = { RevealEnter togetherWith RevealExit },
         label = "screen"
     ) { current ->
         when (current) {
@@ -181,7 +207,8 @@ fun ShhhApp() {
                 onSettingChanged = { settingsRevision++ },
                 onRequestNotificationPermission = { ensureNotificationPermission() },
                 onRequestBluetoothPermission = { ensureBluetoothPermission() },
-                onRequestExactAlarmAccess = { requestExactAlarmAccess() }
+                onRequestExactAlarmAccess = { requestExactAlarmAccess() },
+                updateChecker = updateChecker
             )
         }
     }

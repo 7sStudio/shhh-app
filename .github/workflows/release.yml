@@ -60,10 +60,11 @@ jobs:
             echo "previous:    none (first release)"
           fi
 
-          CHANGELOG="fastlane/metadata/android/en-US/changelogs/${VERSION_CODE}.txt"
-          if [ ! -s "$CHANGELOG" ]; then
-            echo "::error::Missing $CHANGELOG — F-Droid publishes release notes from this file"
-            fail=1
+          # Advisory only: the changelog feeds the release notes, but a
+          # forgotten entry must never block shipping the APK — the tag and
+          # the built APK are the source of truth, not a markdown file.
+          if ! grep -q "^## \[${EXPECTED}\]" CHANGELOG.md; then
+            echo "::warning::CHANGELOG.md has no '## [${EXPECTED}]' section — the release will fall back to auto-generated notes"
           fi
 
           if [ "$fail" -eq 0 ]; then echo "Version metadata OK"; fi
@@ -112,8 +113,29 @@ jobs:
         if: env.HAS_SIGNING != 'true'
         run: cp app/build/outputs/apk/release/app-release-unsigned.apk Shhh-${{ github.ref_name }}-unsigned.apk
 
+      # The release body is what the in-app updater shows users in its update
+      # dialog, so it comes from this version's CHANGELOG section when one
+      # exists — and falls back to the auto-generated notes when it doesn't.
+      # Never fails: a missing changelog entry must not block the release.
+      - name: Extract release notes from CHANGELOG.md
+        run: |
+          set -euo pipefail
+          VERSION="${GITHUB_REF_NAME#v}"
+          awk -v header="## [$VERSION]" '
+            index($0, header) == 1 {grab = 1; next}
+            grab && /^## \[/ {exit}
+            grab {print}
+          ' CHANGELOG.md > release-notes.md
+          # Drop leading blank lines so the body starts with content.
+          sed -i -e '/./,$!d' release-notes.md
+          if [ ! -s release-notes.md ]; then
+            echo "_No CHANGELOG entry for ${VERSION} — see the generated notes below._" > release-notes.md
+          fi
+          cat release-notes.md
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3
         with:
           files: Shhh-*.apk
+          body_path: release-notes.md
           generate_release_notes: true

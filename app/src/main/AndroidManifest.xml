@@ -21,6 +21,13 @@
     <!-- Only to hear "Bluetooth headphones connected" for the optional
          media-restore-on-headphones feature (runtime permission). -->
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+    <!-- Used exclusively by the updater: one request to the GitHub releases
+         API (opt-in daily check or manual "Check for updates") and the APK
+         download itself. Nothing is ever uploaded. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Lets the updater hand the downloaded APK to the system installer;
+         gated by the user's "Install unknown apps" toggle. -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 
     <!-- android:allowBackup is omitted on purpose: it is deprecated from Android 12
          and its default (backup allowed) is what we want for a handful of settings. -->
@@ -111,6 +118,17 @@
                 <action android:name="android.bluetooth.headset.profile.action.CONNECTION_STATE_CHANGED" />
             </intent-filter>
         </receiver>
+
+        <!-- Exposes the downloaded update APK to the system installer only. -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/update_file_paths" />
+        </provider>
 
         <receiver
             android:name=".widget.ShhhWidgetReceiver"

@@ -7,7 +7,35 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning: [S
 
 _Nothing yet._
 
-## [1.2.1] - 2026-08-30
+## [1.3.0] - 2026-08-30
+
+### Added
+- **Built-in updater.** Settings gains an "Updates" section: a manual "Check
+  for updates" row asks the GitHub releases API for the latest version,
+  downloads the APK and hands it to Android's installer (behind the system's
+  one-time "Install unknown apps" grant), and an optional automatic check —
+  **off by default** — runs at most once a day when the app opens and prompts
+  once per new version. This adds the `INTERNET` and
+  `REQUEST_INSTALL_PACKAGES` permissions; the network is used exclusively for
+  the release check and the APK download, and nothing is ever uploaded
+  (README and PRIVACY updated accordingly).
+- **Contact the developer.** An About row that opens a pre-filled email to
+  7sStudio@tutamail.com for bugs, feature requests and questions.
+- **Release smoke tests** (`scripts/release-smoke-test.sh`, and a CI job) that
+  run a minified, shrunk release build on a device/emulator: cold start plus
+  the full widget pipeline (receiver → WorkManager → Glance → RemoteViews).
+  All other tests exercise debug artifacts, so R8/resource-shrinker breakage
+  was previously invisible until a release reached a phone.
+
+### Changed
+- **No more corner or edge animations, anywhere.** Revealed content used to
+  expand from the top-start corner (quiet-hours dial and day chips, the fixed
+  restore slider, the countdown card) and screens slid in horizontally; every
+  reveal and transition now uses a quick 150 ms in-place fade
+  (`ui/Transitions.kt` — the app-wide rule is centered fade or nothing).
+- The project no longer targets F-Droid: the fastlane metadata and the
+  F-Droid-specific build tweaks are gone. Distribution is GitHub Releases
+  (plus the new in-app updater).
 
 ### Fixed
 - **The home-screen widget no longer shows "Can't load widget"** in release
@@ -27,13 +55,9 @@ _Nothing yet._
   holder that every refresh re-seeds from the phone's live state. As added
   hardening, the controller also waits — bounded at 200 ms — for an
   asynchronously-applied ringer write to be readable before surfaces refresh.
-
-### Added
-- **Release smoke tests** (`scripts/release-smoke-test.sh`, and a CI job) that
-  run a minified, shrunk release build on a device/emulator: cold start plus
-  the full widget pipeline (receiver → WorkManager → Glance → RemoteViews).
-  All other tests exercise debug artifacts, so R8/resource-shrinker breakage
-  was previously invisible until a release reached a phone.
+- The Quick Settings tile's state receiver is now verifiably unregistered on
+  an unbind kill (test-only gap: `onDestroy` was untestable under Robolectric
+  and had slipped out of the coverage gate).
 
 ## [1.2.0] - 2026-08-27
 
