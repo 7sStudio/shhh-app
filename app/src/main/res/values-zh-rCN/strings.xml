@@ -94,7 +94,7 @@
     <!-- Updates -->
     <string name="settings_updates_header">更新</string>
     <string name="settings_auto_update_title">自动检查更新</string>
-    <string name="settings_auto_update_hint">每天打开应用时最多向 GitHub 查询一次是否有新版本。不会发送任何与你有关的信息。</string>
+    <string name="settings_auto_update_hint">打开应用时每小时最多向 GitHub 查询一次是否有新版本。不会发送任何与你有关的信息。</string>
     <string name="settings_check_update_title">检查更新</string>
     <string name="settings_check_update_idle">点按以查询 GitHub 上的最新版本</string>
     <string name="settings_check_update_checking">正在检查…</string>

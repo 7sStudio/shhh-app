@@ -92,6 +92,19 @@ fun isShadeOpen(): Boolean {
     return false
 }
 
+/**
+ * How long a zen transition may take to fully land. The propagation usually
+ * finishes within a few hundred ms, but it runs asynchronously in
+ * system_server and QUEUES: a test that flips zen states back-to-back (the
+ * alarm-stream matrix walks all four twice) can push a single settle past the
+ * generic 5 s wait under full-suite load — seen flaking exactly once there.
+ * The wait polls, so a roomy ceiling costs nothing when the system is quick.
+ */
+private const val ZEN_SETTLE_TIMEOUT_MILLIS = 20_000L
+
+/** How often [DeviceAudio.applyZen] re-sends its command while unsettled. */
+private const val ZEN_RESEND_INTERVAL_MILLIS = 2_000L
+
 /** The system-service handles every zen test needs, resolved once. */
 class DeviceAudio {
     val context: Context = InstrumentationRegistry.getInstrumentation().targetContext
@@ -121,14 +134,31 @@ class DeviceAudio {
      * volume happens to be 0 — either way, no longer SILENT.
      */
     fun applyZen(state: ZenState) {
+        // Re-issued while the wait runs: two zen flips in quick succession can
+        // settle OUT OF ORDER in system_server (seen once as a total-silence
+        // mask that never landed because the previous OFF's un-mask arrived
+        // after it), and re-sending the same idempotent command makes
+        // AudioService recompute from the intended state.
+        var lastSend = 0L
+        fun settle(what: String, condition: () -> Boolean) {
+            waitFor(what, timeoutMillis = ZEN_SETTLE_TIMEOUT_MILLIS) {
+                val now = System.currentTimeMillis()
+                if (!condition() && now - lastSend >= ZEN_RESEND_INTERVAL_MILLIS) {
+                    lastSend = now
+                    shell("cmd notification set_dnd ${state.shellArgument}")
+                }
+                condition()
+            }
+        }
+        lastSend = System.currentTimeMillis()
         shell("cmd notification set_dnd ${state.shellArgument}")
-        waitFor("interruption filter = $state") { filter == state.filter }
+        settle("interruption filter = $state") { filter == state.filter }
         if (state == ZenState.OFF) {
-            waitFor("external ringer un-masked") {
+            settle("external ringer un-masked") {
                 audioManager.ringerMode != AudioManager.RINGER_MODE_SILENT || ringVolume == 0
             }
         } else {
-            waitFor("external ringer masked by $state") {
+            settle("external ringer masked by $state") {
                 audioManager.ringerMode == AudioManager.RINGER_MODE_SILENT
             }
         }

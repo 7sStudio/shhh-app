@@ -10,6 +10,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.github.shhhapp.shhh.core.ShadowRefusingAudioManager
 import io.github.shhhapp.shhh.core.ShhhSettings
+import io.github.shhhapp.shhh.widget.WidgetUiState
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -347,6 +348,52 @@ class ToggleActivityTest {
             shadowOf(activity).nextStartedActivity.component?.className
         )
         assertEquals("still hushed", 0, ringVolume)
+    }
+
+    // ---- the optimistic widget flip ----
+
+    @Test
+    fun `a toggle leaves the widget state on the truth it produced`() {
+        WidgetUiState.refreshFrom(context)
+        assertFalse(WidgetUiState.quiet)
+
+        launch(ToggleActivity.ACTION_TOGGLE)
+
+        // Optimistic flip and confirming refresh are both asynchronous; on a
+        // successful toggle they agree, and the shown state must equal it.
+        awaitWidgetQuiet(expected = true, why = "a successful hush")
+        assertEquals(0, ringVolume)
+    }
+
+    @Test
+    @Config(shadows = [ShadowRefusingAudioManager::class])
+    fun `a refused toggle snaps the optimistic widget flip back to reality`() {
+        // The trampoline flips the widget to the expected state before the
+        // write; when Android refuses it nothing changed, and the revert
+        // refresh must win over the optimistic guess.
+        simulateDnd()
+        WidgetUiState.refreshFrom(context)
+        assertFalse(WidgetUiState.quiet)
+        ShadowRefusingAudioManager.refusedStreams =
+            setOf(AudioManager.STREAM_RING, AudioManager.STREAM_MUSIC)
+
+        launch(ToggleActivity.ACTION_TOGGLE)
+
+        awaitWidgetQuiet(expected = false, why = "the revert after a refusal")
+        // The revert must be the LAST word, not a state passed through on the
+        // way to a stuck optimistic flip.
+        Thread.sleep(200)
+        assertFalse("the optimistic flip must not out-live the refusal", WidgetUiState.quiet)
+        assertEquals("nothing may have moved", 3, ringVolume)
+    }
+
+    private fun awaitWidgetQuiet(expected: Boolean, why: String) {
+        val deadline = System.currentTimeMillis() + 5_000
+        while (System.currentTimeMillis() < deadline && WidgetUiState.quiet != expected) {
+            Thread.sleep(20)
+        }
+        assertEquals("$why must leave the widget showing quiet=$expected",
+            expected, WidgetUiState.quiet)
     }
 
     // ---- Transition suppression fork ----

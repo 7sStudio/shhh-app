@@ -40,6 +40,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 /**
  * Home screen widget: a single rounded toggle that mirrors the phone's actual
@@ -67,6 +69,16 @@ internal object WidgetUiState {
         quiet = controller.isQuiet
         canChangeSound = controller.canChangeSound
     }
+
+    /**
+     * Shows the state a transition is EXPECTED to end in, before it has run.
+     * Only the hush flag is guessed; a transition never changes what
+     * [canChangeSound] reads. Always followed by a [refreshFrom]-based publish
+     * once the outcome is known — which confirms it, or snaps it back.
+     */
+    fun showExpected(expectedQuiet: Boolean) {
+        quiet = expectedQuiet
+    }
 }
 
 class ShhhWidget : GlanceAppWidget() {
@@ -86,14 +98,37 @@ class ShhhWidget : GlanceAppWidget() {
     companion object {
         private val refreshScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
+        /**
+         * Publishes hold this across their seed-and-update, so an optimistic
+         * flip and the truth that follows it land in the order they were
+         * asked for — updateAll suspends, and two bare launches on the same
+         * dispatcher would be free to interleave around that.
+         */
+        private val publishLock = Mutex()
+
         /** Fire-and-forget refresh of every placed widget (safe from any surface). */
-        fun requestRefresh(context: Context) {
+        fun requestRefresh(context: Context) =
+            publish(context) { WidgetUiState.refreshFrom(it) }
+
+        /**
+         * Optimistic flip: shows the state the transition is expected to end
+         * in, without waiting for the volume writes, the settle poll or the
+         * timer bookkeeping. The refresh that every transition triggers
+         * afterwards re-seeds from reality — confirming this, or snapping it
+         * back when Android refused the change.
+         */
+        fun showExpected(context: Context, quiet: Boolean) =
+            publish(context) { WidgetUiState.showExpected(quiet) }
+
+        private fun publish(context: Context, seed: (Context) -> Unit) {
             val appContext = context.applicationContext
             refreshScope.launch {
-                // Seed the observable state BEFORE updateAll so live sessions
-                // recompose against the new values.
-                WidgetUiState.refreshFrom(appContext)
-                ShhhWidget().updateAll(appContext)
+                publishLock.withLock {
+                    // Seed the observable state BEFORE updateAll so live
+                    // sessions recompose against the new values.
+                    seed(appContext)
+                    ShhhWidget().updateAll(appContext)
+                }
             }
         }
     }

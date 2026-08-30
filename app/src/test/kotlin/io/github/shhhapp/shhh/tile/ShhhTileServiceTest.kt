@@ -15,6 +15,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.github.shhhapp.shhh.MainActivity
 import io.github.shhhapp.shhh.ToggleActivity
+import io.github.shhhapp.shhh.core.HushManager
 import io.github.shhhapp.shhh.core.QuietModeController
 import io.github.shhhapp.shhh.core.ShhhSettings
 import io.github.shhhapp.shhh.schedule.HushService
@@ -69,6 +70,10 @@ class ShhhTileServiceTest {
 
     @Before
     fun setUp() {
+        // The listening-instance hook is static and Robolectric shares statics
+        // across the methods of one class; a leftover registration would let a
+        // refresh land on the previous test's tile.
+        ShhhTileService.listeningInstance = null
         context = ApplicationProvider.getApplicationContext()
         audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
         notificationManager =
@@ -211,6 +216,59 @@ class ShhhTileServiceTest {
 
         assertEquals(HushService.ACTION_TOGGLE, startedService?.action)
         assertTrue(collapsed.isEmpty())
+    }
+
+    // ---- the optimistic flip ----
+
+    @Test
+    fun `clicking flips the tile optimistically before the service has done anything`() {
+        // Wi-Fi and the torch flip the moment they are tapped; leaving the old
+        // state up for the service round-trip reads as a ~1s lag. Robolectric
+        // never runs the started service, so any flip seen here happened
+        // optimistically in onClick.
+        val service = buildService()
+        service.onStartListening()
+        assertEquals(Tile.STATE_INACTIVE, service.qsTile.state)
+
+        service.onClick()
+
+        assertEquals(Tile.STATE_ACTIVE, service.qsTile.state)
+        assertEquals("On", service.qsTile.subtitle.toString())
+        assertEquals("the flip is optimistic, not a volume write", 3, ring)
+        assertEquals(HushService.ACTION_TOGGLE, startedService?.action)
+    }
+
+    @Test
+    fun `clicking a hushed phone optimistically shows the inactive tile`() {
+        ring = 0
+        val service = buildService()
+        service.onStartListening()
+        assertEquals(Tile.STATE_ACTIVE, service.qsTile.state)
+
+        service.onClick()
+
+        assertEquals(Tile.STATE_INACTIVE, service.qsTile.state)
+        assertEquals("Off", service.qsTile.subtitle.toString())
+    }
+
+    @Test
+    fun `the trampoline fallback does not fake a flip`() {
+        // When the service start is refused the toggle goes through the
+        // activity, which may itself fail or be dropped — the tile must keep
+        // showing reality rather than an outcome nothing has produced yet.
+        val service = buildService()
+        val collapsed = recordCollapsedActivities(service)
+        service.onStartListening()
+        val refusing = object : ContextWrapper(context) {
+            override fun startForegroundService(service: Intent): ComponentName? =
+                throw IllegalStateException("ForegroundServiceStartNotAllowedException")
+        }
+        ReflectionHelpers.setField(ContextWrapper::class.java, service, "mBase", refusing)
+
+        service.onClick()
+
+        assertEquals(Tile.STATE_INACTIVE, service.qsTile.state)
+        assertEquals(1, collapsed.size)
     }
 
     @Test
@@ -359,6 +417,91 @@ class ShhhTileServiceTest {
         shadowOf(Looper.getMainLooper()).idle()
 
         assertEquals(Tile.STATE_INACTIVE, service.qsTile.state)
+    }
+
+    // ---- the in-process refresh push ----
+    //
+    // The reported v1.4.0 bug: with a Do Not Disturb mode running, a tile tap
+    // hushed the phone but the tile kept showing the old state until the shade
+    // was closed and reopened. Nothing could refresh it: requestListeningState
+    // is a documented no-op for a passive tile, and RINGER_MODE_CHANGED_ACTION
+    // never fires under a zen (it reflects the external ringer mode, which
+    // every zen pins at SILENT). The direct in-process push is the only
+    // channel, so these tests drive it with no broadcast in sight.
+
+    @Test
+    fun `a hush applied by the manager refreshes a listening tile without any broadcast`() {
+        val service = buildService()
+        service.onStartListening()
+        assertEquals(Tile.STATE_INACTIVE, service.qsTile.state)
+
+        HushManager(context).hush()
+
+        assertEquals(Tile.STATE_ACTIVE, service.qsTile.state)
+        assertEquals("On", service.qsTile.subtitle.toString())
+    }
+
+    @Test
+    fun `a toggle while a dnd mode runs still refreshes the listening tile`() {
+        // The exact reported scenario, minus the broadcast the platform never
+        // sends in it.
+        simulateDnd()
+        val service = buildService()
+        service.onStartListening()
+        assertEquals(Tile.STATE_INACTIVE, service.qsTile.state)
+
+        HushManager(context).toggle()
+
+        assertEquals(Tile.STATE_ACTIVE, service.qsTile.state)
+    }
+
+    @Test
+    fun `a refresh request with no listening tile is a no-op`() {
+        // Transitions from the app, shortcuts or alarms run with the shade
+        // closed most of the time; the push must land nowhere, quietly.
+        ShhhTileService.requestTileRefresh()
+    }
+
+    @Test
+    fun `a refresh request after the shade closes does not touch the tile`() {
+        val service = buildService()
+        service.onStartListening()
+        service.onStopListening()
+
+        ring = 0
+        ShhhTileService.requestTileRefresh()
+
+        assertEquals(Tile.STATE_INACTIVE, service.qsTile.state)
+    }
+
+    @Test
+    @Config(shadows = [ShadowDestroyableTileService::class])
+    fun `a refresh request after an unbind kill does not touch the tile`() {
+        val service = buildService()
+        service.onStartListening()
+        service.onDestroy()
+
+        ring = 0
+        ShhhTileService.requestTileRefresh()
+
+        assertEquals(Tile.STATE_INACTIVE, service.qsTile.state)
+    }
+
+    @Test
+    fun `a stale stop from a replaced instance does not unhook the live one`() {
+        // The system can create a new tile service before delivering the old
+        // one's onStopListening; the identity check must keep the live
+        // instance registered.
+        val old = buildService()
+        old.onStartListening()
+        val live = buildService()
+        live.onStartListening()
+
+        old.onStopListening()
+        ring = 0
+        ShhhTileService.requestTileRefresh()
+
+        assertEquals(Tile.STATE_ACTIVE, live.qsTile.state)
     }
 
     @Test

@@ -10,6 +10,7 @@ import androidx.core.app.NotificationCompat
 import io.github.shhhapp.shhh.R
 import io.github.shhhapp.shhh.core.HushManager
 import io.github.shhhapp.shhh.core.QuietHours
+import io.github.shhhapp.shhh.core.QuietModeController
 import io.github.shhhapp.shhh.core.ShhhSettings
 import io.github.shhhapp.shhh.notify.CountdownNotifier
 import java.time.LocalDateTime
@@ -47,7 +48,13 @@ class HushService : Service() {
         when (intent?.action) {
             HushAlarms.ACTION_TIMER_RESTORE -> manager.onTimerFired()
 
-            ACTION_TOGGLE -> manager.toggle()
+            // The tile flips itself optimistically when it sends this; on a
+            // refused toggle nothing changed, so re-publish reality to snap
+            // the tile (and widget) back. Successful toggles refresh inside
+            // HushManager already.
+            ACTION_TOGGLE -> if (manager.toggle() !is QuietModeController.Result.Success) {
+                manager.refreshSurfaces()
+            }
             ACTION_HUSH -> manager.hush(durationMinutes = intent.durationExtra())
             ACTION_UNHUSH -> manager.unhush()
             ACTION_RESTORE_MEDIA -> if (manager.restoreMediaOnly()) manager.refreshSurfaces()

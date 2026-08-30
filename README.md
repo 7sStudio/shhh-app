@@ -38,8 +38,8 @@ A tiny, modern quiet-mode toggle for the moments you need silence *now*: meeting
 - **Alarms always ring** — Shhh only ever moves the ring and media sliders. The alarm stream is a separate one it never touches, so a hushed phone still wakes you at full alarm volume. (Android's own "Total silence" mode does silence alarms — that is your setting doing it, not Shhh.)
 - **Never touches Do Not Disturb** — Shhh moves two volume sliders and nothing else. It never switches ringer modes, so it can neither start nor end a Do Not Disturb, Bedtime or driving mode. If one of yours is running, it wins: un-hushing restores the sliders and your mode keeps the phone as quiet as you told it to.
 - **Material 3 Expressive** — dynamic Material You colors from your wallpaper and palette, light/dark, themed icon, springy shape-morphing UI.
-- **Multilingual** — fully translated into **French**, **Arabic**, **Spanish**, **Portuguese**, **Simplified Chinese**, **Japanese** and **Korean**, with full Right-to-Left (RTL) support for Arabic.
-- **Built-in updater** — an optional once-a-day check against this repo's [latest release](https://github.com/7sStudio/shhh-app/releases/latest) (off by default), plus a manual "Check for updates" in Settings that downloads the APK and hands it to Android's installer.
+- **Multilingual** — fully translated into **French**, **Arabic**, **Spanish**, **Portuguese**, **Simplified Chinese**, **Japanese**, **Korean**, **Hindi**, **Bengali**, **Russian**, **Urdu** and **German**, with full Right-to-Left (RTL) support for Arabic and Urdu.
+- **Built-in updater** — an optional hourly check against this repo's [latest release](https://github.com/7sStudio/shhh-app/releases/latest) (off by default), plus a manual "Check for updates" in Settings that downloads the APK and hands it to Android's installer.
 
 ## What access it needs, and why
 

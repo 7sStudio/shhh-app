@@ -7,11 +7,14 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.media.AudioManager
+import android.service.quicksettings.Tile
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.github.shhhapp.shhh.core.HushManager
+import io.github.shhhapp.shhh.core.ShadowRefusingAudioManager
 import io.github.shhhapp.shhh.core.ShhhSettings
 import io.github.shhhapp.shhh.notify.CountdownNotifier
+import io.github.shhhapp.shhh.tile.ShhhTileService
 import java.time.DayOfWeek
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -42,6 +45,8 @@ class HushServiceTest {
 
     @Before
     fun setUp() {
+        // Statics survive across the methods of one Robolectric class run.
+        ShhhTileService.listeningInstance = null
         context = ApplicationProvider.getApplicationContext()
         audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
         alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
@@ -214,6 +219,36 @@ class HushServiceTest {
 
         assertEquals("the ring must stay hushed", 0, ring)
         assertEquals(6, audioManager.getStreamVolume(AudioManager.STREAM_MUSIC))
+    }
+
+    @Test
+    @Config(shadows = [ShadowRefusingAudioManager::class])
+    fun `a refused ACTION_TOGGLE re-publishes the real state to a listening tile`() {
+        // The tile flips optimistically on tap. If Android then refuses the
+        // ring write (a zen racing in without DND access), nothing changed on
+        // the phone — the refresh must snap the tile back to reality instead
+        // of leaving the optimistic lie up until the shade is reopened.
+        try {
+            val tileService =
+                Robolectric.buildService(ShhhTileService::class.java).create().get()
+            tileService.onStartListening()
+            assertEquals(Tile.STATE_INACTIVE, tileService.qsTile.state)
+            // The optimistic flip the click would have made.
+            ShadowRefusingAudioManager.refusedStreams = setOf(AudioManager.STREAM_RING)
+            tileService.onClick()
+            assertEquals(Tile.STATE_ACTIVE, tileService.qsTile.state)
+
+            service().handleIntent(HushService.intent(context, HushService.ACTION_TOGGLE))
+
+            assertEquals("the refused write moved nothing", 3, ring)
+            assertEquals(
+                "the tile must snap back to the real state",
+                Tile.STATE_INACTIVE,
+                tileService.qsTile.state
+            )
+        } finally {
+            ShadowRefusingAudioManager.refusedStreams = emptySet()
+        }
     }
 
     @Test

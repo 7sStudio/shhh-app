@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Shhh</string>
+    <string name="app_tagline">अपने फ़ोन को चुप कराने के लिए बस एक टैप</string>
+
+    <string name="status_quiet_on">वाइब्रेट ऑन · मीडिया म्यूट</string>
+    <string name="status_quiet_off">साउंड ऑन · मीडिया वापस</string>
+
+    <string name="tile_label">Shhh</string>
+    <string name="tile_subtitle_on">ऑन</string>
+    <string name="tile_subtitle_off">ऑफ़</string>
+    <string name="tile_content_description">साइलेंट मोड टॉगल करें</string>
+
+    <string name="widget_label_on">चुप</string>
+    <string name="widget_label_off">Shhh</string>
+    <string name="widget_description">एक टैप: वाइब्रेट ऑन, मीडिया म्यूट</string>
+
+    <string name="permission_title">वैकल्पिक: परेशान न करें एक्सेस</string>
+    <string name="permission_body">Shhh इसके बिना भी पहले से काम करता है। Android सिर्फ़ तब Shhh को रोकता है जब परेशान न करें, बेडटाइम या ड्राइविंग मोड चालू हो — नीचे एक्सेस दें और तब भी Shhh काम करता रहेगा। Shhh कभी भी इन मोड को खुद चालू या बंद नहीं करता।</string>
+    <string name="permission_button">एक्सेस दें</string>
+
+    <string name="setup_add_tile">क्विक सेटिंग्स टाइल</string>
+    <string name="setup_add_widget">होम स्क्रीन विजेट</string>
+
+    <string name="timer_section_title">कुछ देर के लिए चुप कराएं</string>
+    <string name="timer_section_hint">साउंड अपने आप वापस आ जाएगा</string>
+    <string name="timer_chip_15">15 मिनट</string>
+    <string name="timer_chip_30">30 मिनट</string>
+    <string name="timer_chip_60">1 घंटा</string>
+    <string name="timer_chip_120">2 घंटे</string>
+    <string name="timer_running_until">साउंड %1$s बजे वापस आएगा</string>
+    <string name="timer_end_now">अभी बंद करें</string>
+
+    <string name="countdown_title">चुप है</string>
+    <string name="countdown_text">साउंड %1$s बजे वापस आएगा</string>
+    <string name="countdown_action_restore">अभी वापस लाएं</string>
+    <string name="channel_countdown_name">साइलेंट स्टेटस</string>
+    <string name="channel_countdown_description">साइलेंट टाइमर चलते समय काउंटडाउन दिखाता है</string>
+    <string name="channel_service_name">शेड्यूल्ड बदलाव</string>
+    <string name="channel_service_description">शेड्यूल्ड बदलाव लागू होते समय एक छोटा टेक्निकल नोटिफिकेशन</string>
+    <string name="service_notification_title">साउंड एडजस्ट हो रहा है…</string>
+
+    <string name="headphones_notification_title">हेडफ़ोन कनेक्ट हुआ</string>
+    <string name="headphones_notification_text">मीडिया वॉल्यूम वापस लाने के लिए टैप करें — रिंगर चुप ही रहेगा</string>
+
+    <string name="quiet_hours_title">साइलेंट टाइम</string>
+    <string name="quiet_hours_hint">तय समय पर अपने आप चुप हो जाए</string>
+    <string name="quiet_hours_starts">शुरू</string>
+    <string name="quiet_hours_ends">खत्म</string>
+    <string name="quiet_days_every_day">हर दिन</string>
+    <string name="quiet_days_none">कोई दिन नहीं चुना गया</string>
+
+    <string name="exact_alarm_title">अलार्म और रिमाइंडर की अनुमति दें</string>
+    <string name="exact_alarm_body">टाइमर और साइलेंट टाइम के लिए Android का "अलार्म और रिमाइंडर" एक्सेस चाहिए, ताकि साउंड ठीक उसी मिनट पर वापस आए — फ़ोन सोया हो तब भी। बस एक स्विच, एक बार।</string>
+    <string name="exact_alarm_grant">सेटिंग्स खोलें</string>
+
+    <string name="settings_title">सेटिंग्स</string>
+    <string name="settings_back">वापस</string>
+    <string name="settings_behavior_header">चुप कराने का व्यवहार</string>
+    <string name="settings_restore_title">वॉल्यूम वापस लाएं</string>
+    <string name="settings_restore_hint">साइलेंट मोड बंद करने के बाद मीडिया लेवल</string>
+    <string name="settings_restore_previous">पिछला लेवल</string>
+    <string name="settings_restore_fixed">फ़िक्स्ड लेवल</string>
+    <string name="settings_restore_fixed_value">फ़िक्स्ड लेवल · %1$d%%</string>
+    <string name="settings_notifications_header">नोटिफिकेशन</string>
+    <string name="settings_countdown_title">लाइव काउंटडाउन</string>
+    <string name="settings_countdown_hint">साइलेंट टाइमर चलते समय बचा हुआ समय देखें</string>
+    <string name="settings_headphones_header">हेडफ़ोन</string>
+    <string name="settings_headphones_title">हेडफ़ोन के लिए मीडिया अनम्यूट करें</string>
+    <string name="settings_headphones_hint">Bluetooth हेडफ़ोन कनेक्ट होने पर मीडिया वापस आ जाता है — रिंगर चुप ही रहता है</string>
+    <string name="settings_quick_access_header">क्विक एक्सेस</string>
+    <string name="settings_automation_title">ऑटोमेशन</string>
+    <string name="settings_automation_hint">Tasker, रूटीन और शॉर्टकट से Shhh कंट्रोल करें</string>
+    <string name="settings_about_header">ऐप के बारे में</string>
+    <string name="settings_version">वर्शन %1$s</string>
+    <string name="settings_source_title">सोर्स कोड</string>
+    <string name="settings_source_hint">Apache-2.0, GitHub पर</string>
+    <string name="settings_troubleshooting_title">समस्या समाधान</string>
+    <string name="settings_troubleshooting_hint">कुछ डिवाइस पर टाइमर न चलने की समस्या ठीक करें</string>
+    <string name="settings_contact_title">डेवलपर से संपर्क करें</string>
+    <string name="settings_contact_hint">बग, फ़ीचर रिक्वेस्ट, सवाल — आपकी ईमेल ऐप खुलेगी</string>
+    <string name="contact_email_subject">Shhh %1$s — फ़ीडबैक</string>
+
+    <!-- Updates -->
+    <string name="settings_updates_header">अपडेट</string>
+    <string name="settings_auto_update_title">अपने आप अपडेट चेक करें</string>
+    <string name="settings_auto_update_hint">जब भी आप ऐप खोलते हैं, हर घंटे में एक बार GitHub से पूछा जाता है कि कोई नया वर्शन है या नहीं। आपके बारे में कुछ भी नहीं भेजा जाता।</string>
+    <string name="settings_check_update_title">अपडेट चेक करें</string>
+    <string name="settings_check_update_idle">GitHub पर लेटेस्ट रिलीज़ चेक करने के लिए टैप करें</string>
+    <string name="settings_check_update_checking">चेक हो रहा है…</string>
+    <string name="settings_check_update_none">आप पहले से अपडेटेड हैं</string>
+    <string name="settings_check_update_error">GitHub तक नहीं पहुंच पाए — अपना कनेक्शन चेक करें और फिर कोशिश करें</string>
+    <string name="settings_check_update_available">वर्शन %1$s उपलब्ध है — अपडेट करने के लिए टैप करें</string>
+    <string name="update_dialog_title">अपडेट उपलब्ध है</string>
+    <string name="update_dialog_version">Shhh %1$s डाउनलोड के लिए तैयार है।</string>
+    <string name="update_dialog_download">डाउनलोड करें</string>
+    <string name="update_dialog_downloading">डाउनलोड हो रहा है… %1$d%%</string>
+    <string name="update_dialog_downloading_unknown">डाउनलोड हो रहा है…</string>
+    <string name="update_dialog_install">इंस्टॉल करें</string>
+    <string name="update_dialog_failed">डाउनलोड नहीं हो पाया — अपना कनेक्शन चेक करें और फिर से कोशिश करें।</string>
+    <string name="update_dialog_retry">फिर कोशिश करें</string>
+    <string name="update_dialog_later">बाद में</string>
+    <string name="update_permission_body">Shhh को अपने अपडेट खुद इंस्टॉल करने से पहले Android एक बार परमिशन मांगता है। नीचे टैप करें, फिर "अननोन ऐप्स इंस्टॉल करें" की अनुमति दें, और वापस आ जाएं।</string>
+    <string name="update_permission_grant">इंस्टॉल की अनुमति दें</string>
+
+    <string name="automation_sheet_title">ऑटोमेशन इंटेंट्स</string>
+    <string name="automation_sheet_body">कोई भी ऑटोमेशन ऐप जो एक्टिविटी शुरू कर सकता है (Tasker, MacroDroid, रूटीन) Shhh को कंट्रोल कर सकता है। इनमें से किसी एक एक्शन के साथ io.github.shhhapp.shhh/.ToggleActivity एक्टिविटी शुरू करें:</string>
+    <string name="automation_action_hush">…action.HUSH — अभी चुप कराएं (ऑप्शनल एक्स्ट्रा duration_minutes)</string>
+    <string name="automation_action_unhush">…action.UNHUSH — साउंड वापस लाएं</string>
+    <string name="automation_action_toggle">…action.TOGGLE — मौजूदा स्टेटस बदलें</string>
+    <string name="automation_action_media">…action.RESTORE_MEDIA — सिर्फ़ मीडिया वॉल्यूम</string>
+
+    <string name="shortcut_toggle_short">टॉगल</string>
+    <string name="shortcut_toggle_long">साइलेंट मोड टॉगल करें</string>
+    <string name="shortcut_hush30_short">30 मिनट</string>
+    <string name="shortcut_hush30_long">30 मिनट के लिए चुप कराएं</string>
+    <string name="shortcut_hush60_short">1 घंटा</string>
+    <string name="shortcut_hush60_long">1 घंटे के लिए चुप कराएं</string>
+
+    <string name="dial_label_12am">रात 12</string>
+    <string name="dial_label_6am">सुबह 6</string>
+    <string name="dial_label_12pm">दोपहर 12</string>
+    <string name="dial_label_6pm">शाम 6</string>
+    <string name="duration_hours">%1$d घंटे</string>
+    <string name="duration_minutes">%1$d मिनट</string>
+    <string name="duration_full">%1$d घंटे %2$d मिनट</string>
+</resources>

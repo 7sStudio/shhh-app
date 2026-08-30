@@ -1,6 +1,5 @@
 package io.github.shhhapp.shhh.core
 
-import android.content.ComponentName
 import android.content.Context
 import android.service.quicksettings.TileService
 import io.github.shhhapp.shhh.notify.CountdownNotifier
@@ -122,11 +121,19 @@ class HushManager(private val context: Context) {
         CountdownNotifier.cancel(context)
     }
 
+    /**
+     * Re-publishes the real state to every surface after a transition.
+     *
+     * The tile is pushed through a direct in-process call:
+     * [TileService.requestListeningState] is a documented no-op for a passive
+     * tile (no META_DATA_ACTIVE_TILE), and the tile's own broadcast receiver
+     * is deaf to a hush while any Do Not Disturb mode runs — the ring write
+     * only flips the *internal* ringer mode, and RINGER_MODE_CHANGED_ACTION
+     * fires for the *external* one, which every zen pins at SILENT. Same
+     * process is guaranteed: every surface transition runs in it.
+     */
     fun refreshSurfaces() {
         ShhhWidget.requestRefresh(context)
-        TileService.requestListeningState(
-            context,
-            ComponentName(context, ShhhTileService::class.java)
-        )
+        ShhhTileService.requestTileRefresh()
     }
 }

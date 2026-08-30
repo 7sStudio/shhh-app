@@ -29,12 +29,43 @@ import io.github.shhhapp.shhh.schedule.HushService
  * While the shade stays open, ringer and Do Not Disturb changes made
  * elsewhere (volume keys, the DND tile, Bedtime mode) are picked up through
  * a broadcast receiver that lives only for the listening window.
+ *
+ * Shhh's OWN toggles are pushed through [requestTileRefresh] instead. The
+ * broadcast cannot carry them while a Do Not Disturb mode runs: the receiver's
+ * RINGER_MODE_CHANGED_ACTION reflects the *external* ringer mode, which any
+ * zen pins at SILENT, so the internal VIBRATE↔NORMAL flip a hush causes never
+ * broadcasts (AudioService.setRingerModeExt returns early on no-change). And
+ * [TileService.requestListeningState] is a documented no-op for a tile without
+ * META_DATA_ACTIVE_TILE, so the only refresh that reaches a listening tile
+ * from the app's own transitions is this direct in-process call.
  */
 class ShhhTileService : TileService() {
 
     private var stateReceiver: BroadcastReceiver? = null
 
+    companion object {
+        /**
+         * The instance currently in the listening state, i.e. shown in an open
+         * shade — the only time a refresh can land. Every surface transition
+         * runs in this same process (tile, HushService, ToggleActivity,
+         * alarms), so a plain reference is all the plumbing the push needs.
+         */
+        @Volatile
+        internal var listeningInstance: ShhhTileService? = null
+
+        /**
+         * Re-reads the phone's state into the tile shown in an open shade;
+         * does nothing when no shade is open. Called by
+         * [io.github.shhhapp.shhh.core.HushManager.refreshSurfaces] after
+         * every hush transition.
+         */
+        fun requestTileRefresh() {
+            listeningInstance?.refreshTile()
+        }
+    }
+
     override fun onStartListening() {
+        listeningInstance = this
         if (stateReceiver == null) {
             stateReceiver = object : BroadcastReceiver() {
                 override fun onReceive(context: Context?, intent: Intent?) = refreshTile()
@@ -52,13 +83,19 @@ class ShhhTileService : TileService() {
     }
 
     override fun onStopListening() {
+        dropListeningInstance()
         unregisterStateReceiver()
     }
 
     override fun onDestroy() {
         // The system does not guarantee onStopListening before an unbind kill.
+        dropListeningInstance()
         unregisterStateReceiver()
         super.onDestroy()
+    }
+
+    private fun dropListeningInstance() {
+        if (listeningInstance === this) listeningInstance = null
     }
 
     private fun unregisterStateReceiver() {
@@ -92,9 +129,16 @@ class ShhhTileService : TileService() {
         //
         // The momentary foreground service is the sanctioned path: it is
         // allowed to change volume, and it has no UI, so nothing touches the
-        // shade. It refreshes this tile itself once the change has landed.
+        // shade. Once its change has landed it pushes the real state back here
+        // through requestTileRefresh.
         try {
             startForegroundService(HushService.intent(this, HushService.ACTION_TOGGLE))
+            // Flip the tile now, like Wi-Fi or the torch, instead of leaving
+            // it on the old state for the service's round-trip. The refresh
+            // that follows confirms it — or snaps it back if Android refused
+            // the write (a zen mode racing in between the check above and the
+            // service's volume write).
+            renderTile(quiet = !manager.isQuiet)
         } catch (_: Exception) {
             // Some OEM builds refuse a background foreground-service start.
             // Falling back costs the user the open shade, but not the toggle.
@@ -102,9 +146,10 @@ class ShhhTileService : TileService() {
         }
     }
 
-    private fun refreshTile() {
+    internal fun refreshTile() = renderTile(QuietModeController(this).isQuiet)
+
+    private fun renderTile(quiet: Boolean) {
         val tile = qsTile ?: return
-        val quiet = QuietModeController(this).isQuiet
         tile.state = if (quiet) Tile.STATE_ACTIVE else Tile.STATE_INACTIVE
         tile.label = getString(R.string.tile_label)
         tile.subtitle = getString(

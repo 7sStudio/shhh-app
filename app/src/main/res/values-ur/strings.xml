@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Shhh</string>
+    <string name="app_tagline">اپنا فون خاموش کرنے کے لیے ایک ٹیپ</string>
+
+    <string name="status_quiet_on">وائبریٹ آن · میڈیا خاموش</string>
+    <string name="status_quiet_off">آواز آن · میڈیا بحال</string>
+
+    <string name="tile_label">Shhh</string>
+    <string name="tile_subtitle_on">آن</string>
+    <string name="tile_subtitle_off">آف</string>
+    <string name="tile_content_description">خاموش موڈ تبدیل کریں</string>
+
+    <string name="widget_label_on">خاموش</string>
+    <string name="widget_label_off">Shhh</string>
+    <string name="widget_description">ایک ٹیپ: وائبریٹ اور میڈیا خاموش</string>
+
+    <string name="permission_title">اختیاری: پریشان نہ کریں تک رسائی</string>
+    <string name="permission_body">Shhh اس کے بغیر بھی کام کرتا ہے۔ Android صرف اس وقت Shhh کو روکتا ہے جب پریشان نہ کریں، نیند کا وقت یا ڈرائیونگ موڈ فعال ہو — نیچے رسائی دیں تاکہ Shhh تب بھی کام کرتا رہے۔ Shhh کبھی بھی یہ موڈز خود آن یا آف نہیں کرتا۔</string>
+    <string name="permission_button">رسائی دیں</string>
+
+    <string name="setup_add_tile">فوری ترتیبات کی ٹائل</string>
+    <string name="setup_add_widget">ہوم اسکرین ویجٹ</string>
+
+    <string name="timer_section_title">کچھ دیر کے لیے خاموش کریں</string>
+    <string name="timer_section_hint">آواز خود بخود واپس آ جائے گی</string>
+    <string name="timer_chip_15">15 منٹ</string>
+    <string name="timer_chip_30">30 منٹ</string>
+    <string name="timer_chip_60">1 گھنٹہ</string>
+    <string name="timer_chip_120">2 گھنٹے</string>
+    <string name="timer_running_until">آواز %1$s پر واپس آئے گی</string>
+    <string name="timer_end_now">ابھی ختم کریں</string>
+
+    <string name="countdown_title">خاموش</string>
+    <string name="countdown_text">آواز %1$s پر واپس آئے گی</string>
+    <string name="countdown_action_restore">ابھی بحال کریں</string>
+    <string name="channel_countdown_name">خاموشی کا اسٹیٹس</string>
+    <string name="channel_countdown_description">خاموشی ٹائمر چلنے کے دوران کاؤنٹ ڈاؤن</string>
+    <string name="channel_service_name">شیڈول تبدیلیاں</string>
+    <string name="channel_service_description">شیڈول تبدیلی لاگو ہوتے وقت مختصر تکنیکی اطلاع</string>
+    <string name="service_notification_title">آواز ایڈجسٹ ہو رہی ہے…</string>
+
+    <string name="headphones_notification_title">ہیڈ فونز منسلک ہو گئے</string>
+    <string name="headphones_notification_text">میڈیا والیوم واپس لانے کے لیے ٹیپ کریں — رنگر خاموش ہی رہے گا</string>
+
+    <string name="quiet_hours_title">خاموشی کے اوقات</string>
+    <string name="quiet_hours_hint">شیڈول کے مطابق خود بخود خاموش کریں</string>
+    <string name="quiet_hours_starts">شروع</string>
+    <string name="quiet_hours_ends">ختم</string>
+    <string name="quiet_days_every_day">ہر روز</string>
+    <string name="quiet_days_none">کوئی دن منتخب نہیں</string>
+
+    <string name="exact_alarm_title">الارمز اور یاد دہانیوں کی اجازت دیں</string>
+    <string name="exact_alarm_body">ٹائمرز اور خاموشی کے اوقات کو Android کی "الارمز اور یاد دہانیاں" رسائی کی ضرورت ہوتی ہے تاکہ آواز عین وقت پر واپس آئے — چاہے فون سو رہا ہو۔ ایک سوئچ، ایک بار۔</string>
+    <string name="exact_alarm_grant">ترتیبات کھولیں</string>
+
+    <string name="settings_title">ترتیبات</string>
+    <string name="settings_back">واپس</string>
+    <string name="settings_behavior_header">خاموشی کا رویہ</string>
+    <string name="settings_restore_title">والیوم واپس لائیں</string>
+    <string name="settings_restore_hint">خاموشی ختم ہونے کے بعد میڈیا کی سطح</string>
+    <string name="settings_restore_previous">پچھلی سطح</string>
+    <string name="settings_restore_fixed">مقررہ سطح</string>
+    <string name="settings_restore_fixed_value">مقررہ سطح · %1$d%%</string>
+    <string name="settings_notifications_header">نوٹیفیکیشنز</string>
+    <string name="settings_countdown_title">لائیو کاؤنٹ ڈاؤن</string>
+    <string name="settings_countdown_hint">خاموشی ٹائمر چلنے کے دوران باقی وقت دیکھیں</string>
+    <string name="settings_headphones_header">ہیڈ فونز</string>
+    <string name="settings_headphones_title">ہیڈ فونز کے لیے میڈیا کی آواز بحال کریں</string>
+    <string name="settings_headphones_hint">بلوٹوتھ ہیڈ فونز جڑنے پر میڈیا واپس آ جاتا ہے — رنگر خاموش ہی رہتا ہے</string>
+    <string name="settings_quick_access_header">فوری رسائی</string>
+    <string name="settings_automation_title">آٹومیشن</string>
+    <string name="settings_automation_hint">Shhh کو Tasker، روٹینز اور شارٹ کٹس سے کنٹرول کریں</string>
+    <string name="settings_about_header">تعارف</string>
+    <string name="settings_version">ورژن %1$s</string>
+    <string name="settings_source_title">سورس کوڈ</string>
+    <string name="settings_source_hint">Apache-2.0، GitHub پر</string>
+    <string name="settings_troubleshooting_title">خرابیوں کا ازالہ</string>
+    <string name="settings_troubleshooting_hint">کچھ آلات پر ٹائمرز کے کام نہ کرنے کے مسئلے کو حل کریں</string>
+    <string name="settings_contact_title">ڈویلپر سے رابطہ کریں</string>
+    <string name="settings_contact_hint">بگز، فیچر کی درخواستیں، سوالات — آپ کی ای میل ایپ کھولتا ہے</string>
+    <string name="contact_email_subject">Shhh %1$s — تاثرات</string>
+
+    <!-- Updates -->
+    <string name="settings_updates_header">اپ ڈیٹس</string>
+    <string name="settings_auto_update_title">خود بخود اپ ڈیٹس چیک کریں</string>
+    <string name="settings_auto_update_hint">جب آپ ایپ کھولتے ہیں تو ہر گھنٹے میں ایک بار GitHub سے پوچھا جاتا ہے کہ آیا کوئی نیا ورژن موجود ہے۔ آپ کے بارے میں کچھ نہیں بھیجا جاتا۔</string>
+    <string name="settings_check_update_title">اپ ڈیٹس چیک کریں</string>
+    <string name="settings_check_update_idle">GitHub پر تازہ ترین ریلیز چیک کرنے کے لیے ٹیپ کریں</string>
+    <string name="settings_check_update_checking">چیک ہو رہا ہے…</string>
+    <string name="settings_check_update_none">آپ اپ ٹو ڈیٹ ہیں</string>
+    <string name="settings_check_update_error">GitHub تک رسائی نہیں ہو سکی — اپنا کنکشن چیک کریں اور دوبارہ کوشش کریں</string>
+    <string name="settings_check_update_available">ورژن %1$s دستیاب ہے — اپ ڈیٹ کرنے کے لیے ٹیپ کریں</string>
+    <string name="update_dialog_title">اپ ڈیٹ دستیاب ہے</string>
+    <string name="update_dialog_version">Shhh %1$s ڈاؤن لوڈ کے لیے تیار ہے۔</string>
+    <string name="update_dialog_download">ڈاؤن لوڈ کریں</string>
+    <string name="update_dialog_downloading">ڈاؤن لوڈ ہو رہا ہے… %1$d%%</string>
+    <string name="update_dialog_downloading_unknown">ڈاؤن لوڈ ہو رہا ہے…</string>
+    <string name="update_dialog_install">انسٹال کریں</string>
+    <string name="update_dialog_failed">ڈاؤن لوڈ ناکام ہو گیا — اپنا کنکشن چیک کریں اور دوبارہ کوشش کریں۔</string>
+    <string name="update_dialog_retry">دوبارہ کوشش کریں</string>
+    <string name="update_dialog_later">بعد میں</string>
+    <string name="update_permission_body">Shhh کو اپنی اپ ڈیٹس انسٹال کرنے کی اجازت دینے سے پہلے Android ایک بار اجازت مانگتا ہے۔ نیچے ٹیپ کریں، پھر "نامعلوم ایپس انسٹال کریں" کی اجازت دیں، اور واپس آئیں۔</string>
+    <string name="update_permission_grant">انسٹال کی اجازت دیں</string>
+
+    <string name="automation_sheet_title">آٹومیشن انٹینٹس</string>
+    <string name="automation_sheet_body">کوئی بھی آٹومیشن ایپ جو ایکٹیویٹی شروع کر سکتی ہے (Tasker، MacroDroid، روٹینز) Shhh کو کنٹرول کر سکتی ہے۔ ان میں سے کسی ایک ایکشن کے ساتھ ایکٹیویٹی io.github.shhhapp.shhh/.ToggleActivity شروع کریں:</string>
+    <string name="automation_action_hush">…action.HUSH — ابھی خاموش کریں (اختیاری اضافی duration_minutes)</string>
+    <string name="automation_action_unhush">…action.UNHUSH — آواز بحال کریں</string>
+    <string name="automation_action_toggle">…action.TOGGLE — موجودہ حالت تبدیل کریں</string>
+    <string name="automation_action_media">…action.RESTORE_MEDIA — صرف میڈیا والیوم</string>
+
+    <string name="shortcut_toggle_short">تبدیل کریں</string>
+    <string name="shortcut_toggle_long">خاموشی تبدیل کریں</string>
+    <string name="shortcut_hush30_short">30 منٹ</string>
+    <string name="shortcut_hush30_long">30 منٹ کے لیے خاموش کریں</string>
+    <string name="shortcut_hush60_short">1 گھنٹہ</string>
+    <string name="shortcut_hush60_long">1 گھنٹے کے لیے خاموش کریں</string>
+
+    <string name="dial_label_12am">12 رات</string>
+    <string name="dial_label_6am">6 صبح</string>
+    <string name="dial_label_12pm">12 دوپہر</string>
+    <string name="dial_label_6pm">6 شام</string>
+    <string name="duration_hours">%1$d گھنٹے</string>
+    <string name="duration_minutes">%1$d منٹ</string>
+    <string name="duration_full">%1$d گھنٹے %2$d منٹ</string>
+</resources>

@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Shhh</string>
+    <string name="app_tagline">Один тап — и телефон затихнет</string>
+
+    <string name="status_quiet_on">Вибрация включена · медиа без звука</string>
+    <string name="status_quiet_off">Звук включён · медиа восстановлено</string>
+
+    <string name="tile_label">Shhh</string>
+    <string name="tile_subtitle_on">Вкл</string>
+    <string name="tile_subtitle_off">Выкл</string>
+    <string name="tile_content_description">Переключить тихий режим</string>
+
+    <string name="widget_label_on">Тихо</string>
+    <string name="widget_label_off">Shhh</string>
+    <string name="widget_description">Один тап: вибрация, медиа без звука</string>
+
+    <string name="permission_title">Необязательно: доступ к режиму «Не беспокоить»</string>
+    <string name="permission_body">Shhh уже работает без этого разрешения. Android блокирует Shhh, только пока активен режим «Не беспокоить», «Режим сна» или «Вождение» — предоставьте доступ ниже, и Shhh продолжит работать и в этих случаях. Shhh никогда не включает и не отключает эти режимы.</string>
+    <string name="permission_button">Предоставить доступ</string>
+
+    <string name="setup_add_tile">Плитка быстрых настроек</string>
+    <string name="setup_add_widget">Виджет на главном экране</string>
+
+    <string name="timer_section_title">Тишина на время</string>
+    <string name="timer_section_hint">Звук включится автоматически</string>
+    <string name="timer_chip_15">15 мин</string>
+    <string name="timer_chip_30">30 мин</string>
+    <string name="timer_chip_60">1 час</string>
+    <string name="timer_chip_120">2 часа</string>
+    <string name="timer_running_until">Звук вернётся в %1$s</string>
+    <string name="timer_end_now">Завершить сейчас</string>
+
+    <string name="countdown_title">Тихо</string>
+    <string name="countdown_text">Звук вернётся в %1$s</string>
+    <string name="countdown_action_restore">Восстановить сейчас</string>
+    <string name="channel_countdown_name">Статус тишины</string>
+    <string name="channel_countdown_description">Обратный отсчёт во время работы таймера тишины</string>
+    <string name="channel_service_name">Запланированные изменения</string>
+    <string name="channel_service_description">Короткое техническое уведомление при применении запланированного изменения</string>
+    <string name="service_notification_title">Настройка звука…</string>
+
+    <string name="headphones_notification_title">Наушники подключены</string>
+    <string name="headphones_notification_text">Нажмите, чтобы вернуть громкость медиа — звонок останется приглушённым</string>
+
+    <string name="quiet_hours_title">Часы тишины</string>
+    <string name="quiet_hours_hint">Автоматически приглушать по расписанию</string>
+    <string name="quiet_hours_starts">Начало</string>
+    <string name="quiet_hours_ends">Конец</string>
+    <string name="quiet_days_every_day">Каждый день</string>
+    <string name="quiet_days_none">Дни не выбраны</string>
+
+    <string name="exact_alarm_title">Разрешить «Будильники и напоминания»</string>
+    <string name="exact_alarm_body">Таймерам и часам тишины нужен доступ Android «Будильники и напоминания», чтобы звук возвращался ровно в нужную минуту — даже когда телефон спит. Один переключатель, один раз.</string>
+    <string name="exact_alarm_grant">Открыть настройки</string>
+
+    <string name="settings_title">Настройки</string>
+    <string name="settings_back">Назад</string>
+    <string name="settings_behavior_header">Поведение тишины</string>
+    <string name="settings_restore_title">Восстанавливать громкость до</string>
+    <string name="settings_restore_hint">Уровень медиа после возврата звука</string>
+    <string name="settings_restore_previous">Прежний уровень</string>
+    <string name="settings_restore_fixed">Фиксированный уровень</string>
+    <string name="settings_restore_fixed_value">Фиксированный уровень · %1$d%%</string>
+    <string name="settings_notifications_header">Уведомления</string>
+    <string name="settings_countdown_title">Обратный отсчёт</string>
+    <string name="settings_countdown_hint">Показывать оставшееся время во время работы таймера тишины</string>
+    <string name="settings_headphones_header">Наушники</string>
+    <string name="settings_headphones_title">Включать медиа для наушников</string>
+    <string name="settings_headphones_hint">Звук медиа возвращается при подключении Bluetooth-наушников — звонок остаётся приглушённым</string>
+    <string name="settings_quick_access_header">Быстрый доступ</string>
+    <string name="settings_automation_title">Автоматизация</string>
+    <string name="settings_automation_hint">Управляйте Shhh через Tasker, процедуры и ярлыки</string>
+    <string name="settings_about_header">О приложении</string>
+    <string name="settings_version">Версия %1$s</string>
+    <string name="settings_source_title">Исходный код</string>
+    <string name="settings_source_hint">Apache-2.0, на GitHub</string>
+    <string name="settings_troubleshooting_title">Устранение неполадок</string>
+    <string name="settings_troubleshooting_hint">Решение проблем, когда таймеры не срабатывают на некоторых устройствах</string>
+    <string name="settings_contact_title">Связаться с разработчиком</string>
+    <string name="settings_contact_hint">Баги, пожелания, вопросы — откроется ваше почтовое приложение</string>
+    <string name="contact_email_subject">Shhh %1$s — отзыв</string>
+
+    <!-- Updates -->
+    <string name="settings_updates_header">Обновления</string>
+    <string name="settings_auto_update_title">Проверять обновления автоматически</string>
+    <string name="settings_auto_update_hint">Раз в час при открытии приложения запрашивает у GitHub, есть ли новая версия. Никакие данные о вас не отправляются.</string>
+    <string name="settings_check_update_title">Проверить обновления</string>
+    <string name="settings_check_update_idle">Нажмите, чтобы проверить последний релиз на GitHub</string>
+    <string name="settings_check_update_checking">Проверка…</string>
+    <string name="settings_check_update_none">У вас последняя версия</string>
+    <string name="settings_check_update_error">Не удалось подключиться к GitHub — проверьте соединение и повторите попытку</string>
+    <string name="settings_check_update_available">Доступна версия %1$s — нажмите, чтобы обновить</string>
+    <string name="update_dialog_title">Доступно обновление</string>
+    <string name="update_dialog_version">Shhh %1$s готов к загрузке.</string>
+    <string name="update_dialog_download">Скачать</string>
+    <string name="update_dialog_downloading">Загрузка… %1$d%%</string>
+    <string name="update_dialog_downloading_unknown">Загрузка…</string>
+    <string name="update_dialog_install">Установить</string>
+    <string name="update_dialog_failed">Не удалось загрузить — проверьте соединение и повторите попытку.</string>
+    <string name="update_dialog_retry">Повторить</string>
+    <string name="update_dialog_later">Позже</string>
+    <string name="update_permission_body">Android один раз запросит разрешение, прежде чем Shhh сможет устанавливать свои обновления. Нажмите ниже, разрешите «Установку неизвестных приложений» и вернитесь обратно.</string>
+    <string name="update_permission_grant">Разрешить установку</string>
+
+    <string name="automation_sheet_title">Интенты автоматизации</string>
+    <string name="automation_sheet_body">Любое приложение автоматизации, способное запустить Activity (Tasker, MacroDroid, процедуры), может управлять Shhh. Запустите Activity io.github.shhhapp.shhh/.ToggleActivity с одним из следующих действий:</string>
+    <string name="automation_action_hush">…action.HUSH — приглушить сейчас (необязательный доп. параметр duration_minutes)</string>
+    <string name="automation_action_unhush">…action.UNHUSH — восстановить звук</string>
+    <string name="automation_action_toggle">…action.TOGGLE — переключить текущее состояние</string>
+    <string name="automation_action_media">…action.RESTORE_MEDIA — только громкость медиа</string>
+
+    <string name="shortcut_toggle_short">Переключить</string>
+    <string name="shortcut_toggle_long">Переключить тишину</string>
+    <string name="shortcut_hush30_short">30 мин</string>
+    <string name="shortcut_hush30_long">Тишина на 30 мин</string>
+    <string name="shortcut_hush60_short">1 час</string>
+    <string name="shortcut_hush60_long">Тишина на 1 час</string>
+
+    <string name="dial_label_12am">00:00</string>
+    <string name="dial_label_6am">06:00</string>
+    <string name="dial_label_12pm">12:00</string>
+    <string name="dial_label_6pm">18:00</string>
+    <string name="duration_hours">%1$d ч</string>
+    <string name="duration_minutes">%1$d мин</string>
+    <string name="duration_full">%1$d ч %2$d мин</string>
+</resources>

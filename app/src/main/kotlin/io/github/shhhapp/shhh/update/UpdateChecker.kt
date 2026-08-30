@@ -128,9 +128,9 @@ class UpdateChecker(private val endpoint: String = LATEST_RELEASE_URL) {
             "https://api.github.com/repos/7sStudio/shhh-app/releases/latest"
         private const val TIMEOUT_MILLIS = 10_000
         private const val DOWNLOAD_BUFFER_BYTES = 8 * 1024
-        private const val CHECK_INTERVAL_MILLIS = 24 * 60 * 60 * 1000L
+        private const val CHECK_INTERVAL_MILLIS = 60 * 60 * 1000L
 
-        /** The automatic check runs at most once per 24 hours; 0 means never ran. */
+        /** The automatic check runs at most once per hour; 0 means never ran. */
         fun isCheckDue(lastCheckMillis: Long, nowMillis: Long): Boolean =
             lastCheckMillis == 0L || nowMillis - lastCheckMillis >= CHECK_INTERVAL_MILLIS
 

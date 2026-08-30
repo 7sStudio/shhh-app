@@ -85,7 +85,7 @@ fun ShhhApp(updateChecker: UpdateChecker = remember { UpdateChecker() }) {
         onPauseOrDispose { }
     }
 
-    // Opt-in update check: at most once a day, prompting once per new version.
+    // Opt-in update check: at most once an hour, prompting once per new version.
     var foundUpdate by remember { mutableStateOf<ReleaseInfo?>(null) }
     LaunchedEffect(Unit) {
         val now = System.currentTimeMillis()

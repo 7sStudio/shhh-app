@@ -96,7 +96,7 @@
     <!-- Updates -->
     <string name="settings_updates_header">アップデート</string>
     <string name="settings_auto_update_title">自動でアップデートを確認</string>
-    <string name="settings_auto_update_hint">アプリを開いたときに 1 日 1 回だけ、新しいバージョンがあるか GitHub に問い合わせます。あなたに関する情報は一切送信されません。</string>
+    <string name="settings_auto_update_hint">アプリを開いたときに 1 時間に 1 回だけ、新しいバージョンがあるか GitHub に問い合わせます。あなたに関する情報は一切送信されません。</string>
     <string name="settings_check_update_title">アップデートを確認</string>
     <string name="settings_check_update_idle">タップして GitHub の最新リリースを確認</string>
     <string name="settings_check_update_checking">確認中…</string>

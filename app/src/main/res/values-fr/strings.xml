@@ -84,7 +84,7 @@
     <!-- Updates -->
     <string name="settings_updates_header">Mises à jour</string>
     <string name="settings_auto_update_title">Vérifier automatiquement les mises à jour</string>
-    <string name="settings_auto_update_hint">Une fois par jour à l\'ouverture de l\'application, demande à GitHub si une version plus récente existe. Rien vous concernant n\'est envoyé.</string>
+    <string name="settings_auto_update_hint">Une fois par heure à l\'ouverture de l\'application, demande à GitHub si une version plus récente existe. Rien vous concernant n\'est envoyé.</string>
     <string name="settings_check_update_title">Rechercher des mises à jour</string>
     <string name="settings_check_update_idle">Touchez pour vérifier la dernière version sur GitHub</string>
     <string name="settings_check_update_checking">Vérification…</string>

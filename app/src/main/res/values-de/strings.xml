@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Shhh</string>
+    <string name="app_tagline">Ein Tipp genügt, um dein Handy leise zu stellen</string>
+
+    <string name="status_quiet_on">Vibration an · Medien stumm</string>
+    <string name="status_quiet_off">Ton an · Medien wiederhergestellt</string>
+
+    <string name="tile_label">Shhh</string>
+    <string name="tile_subtitle_on">An</string>
+    <string name="tile_subtitle_off">Aus</string>
+    <string name="tile_content_description">Lautlos-Modus umschalten</string>
+
+    <string name="widget_label_on">Leise</string>
+    <string name="widget_label_off">Shhh</string>
+    <string name="widget_description">Ein Tipp: Vibration an, Medien stumm</string>
+
+    <string name="permission_title">Optional: Zugriff auf „Nicht stören“</string>
+    <string name="permission_body">Shhh funktioniert auch ohne diesen Zugriff. Android blockiert Shhh nur, während ein Nicht-stören-, Schlafenszeit- oder Fahrmodus aktiv ist – erteile unten den Zugriff, dann funktioniert Shhh auch dann weiter. Shhh schaltet diese Modi nie selbst ein oder aus.</string>
+    <string name="permission_button">Zugriff erteilen</string>
+
+    <string name="setup_add_tile">Schnelleinstellungen-Kachel</string>
+    <string name="setup_add_widget">Homescreen-Widget</string>
+
+    <string name="timer_section_title">Vorübergehend leise stellen</string>
+    <string name="timer_section_hint">Der Ton kommt von selbst wieder</string>
+    <string name="timer_chip_15">15 min</string>
+    <string name="timer_chip_30">30 min</string>
+    <string name="timer_chip_60">1 Stunde</string>
+    <string name="timer_chip_120">2 Stunden</string>
+    <string name="timer_running_until">Der Ton kehrt um %1$s zurück</string>
+    <string name="timer_end_now">Jetzt beenden</string>
+
+    <string name="countdown_title">Leise</string>
+    <string name="countdown_text">Der Ton kehrt um %1$s zurück</string>
+    <string name="countdown_action_restore">Jetzt wiederherstellen</string>
+    <string name="channel_countdown_name">Lautlos-Status</string>
+    <string name="channel_countdown_description">Countdown, während ein Lautlos-Timer läuft</string>
+    <string name="channel_service_name">Geplante Änderungen</string>
+    <string name="channel_service_description">Kurze technische Benachrichtigung, während eine geplante Änderung angewendet wird</string>
+    <string name="service_notification_title">Ton wird angepasst…</string>
+
+    <string name="headphones_notification_title">Kopfhörer verbunden</string>
+    <string name="headphones_notification_text">Tippen, um die Medienlautstärke zurückzuholen – der Klingelton bleibt leise</string>
+
+    <string name="quiet_hours_title">Ruhezeiten</string>
+    <string name="quiet_hours_hint">Automatisch nach Zeitplan leise stellen</string>
+    <string name="quiet_hours_starts">Beginn</string>
+    <string name="quiet_hours_ends">Ende</string>
+    <string name="quiet_days_every_day">Jeden Tag</string>
+    <string name="quiet_days_none">Keine Tage ausgewählt</string>
+
+    <string name="exact_alarm_title">Alarme &amp; Erinnerungen zulassen</string>
+    <string name="exact_alarm_body">Timer und Ruhezeiten benötigen Androids Zugriff auf „Alarme &amp; Erinnerungen“, damit der Ton auf die Minute genau zurückkehrt – auch während das Handy schläft. Einmal umschalten, fertig.</string>
+    <string name="exact_alarm_grant">Einstellungen öffnen</string>
+
+    <string name="settings_title">Einstellungen</string>
+    <string name="settings_back">Zurück</string>
+    <string name="settings_behavior_header">Lautlos-Verhalten</string>
+    <string name="settings_restore_title">Lautstärke wiederherstellen auf</string>
+    <string name="settings_restore_hint">Medienlautstärke nach dem Beenden des Lautlos-Modus</string>
+    <string name="settings_restore_previous">Vorheriger Pegel</string>
+    <string name="settings_restore_fixed">Fester Pegel</string>
+    <string name="settings_restore_fixed_value">Fester Pegel · %1$d%%</string>
+    <string name="settings_notifications_header">Benachrichtigungen</string>
+    <string name="settings_countdown_title">Live-Countdown</string>
+    <string name="settings_countdown_hint">Verbleibende Zeit während eines Lautlos-Timers anzeigen</string>
+    <string name="settings_headphones_header">Kopfhörer</string>
+    <string name="settings_headphones_title">Medienlautstärke bei Kopfhörern wiederherstellen</string>
+    <string name="settings_headphones_hint">Die Medienlautstärke kehrt zurück, wenn Bluetooth-Kopfhörer verbunden werden – der Klingelton bleibt leise</string>
+    <string name="settings_quick_access_header">Schnellzugriff</string>
+    <string name="settings_automation_title">Automatisierung</string>
+    <string name="settings_automation_hint">Shhh über Tasker, Routinen und Shortcuts steuern</string>
+    <string name="settings_about_header">Über</string>
+    <string name="settings_version">Version %1$s</string>
+    <string name="settings_source_title">Quellcode</string>
+    <string name="settings_source_hint">Apache-2.0, auf GitHub</string>
+    <string name="settings_troubleshooting_title">Fehlerbehebung</string>
+    <string name="settings_troubleshooting_hint">Probleme beheben, wenn Timer auf manchen Geräten nicht auslösen</string>
+    <string name="settings_contact_title">Entwickler kontaktieren</string>
+    <string name="settings_contact_hint">Fehler, Funktionswünsche, Fragen – öffnet deine E-Mail-App</string>
+    <string name="contact_email_subject">Shhh %1$s – Feedback</string>
+
+    <!-- Updates -->
+    <string name="settings_updates_header">Updates</string>
+    <string name="settings_auto_update_title">Automatisch nach Updates suchen</string>
+    <string name="settings_auto_update_hint">Einmal pro Stunde beim Öffnen der App wird bei GitHub nachgefragt, ob eine neuere Version verfügbar ist. Es werden keine Daten über dich gesendet.</string>
+    <string name="settings_check_update_title">Nach Updates suchen</string>
+    <string name="settings_check_update_idle">Tippen, um die neueste Version auf GitHub zu prüfen</string>
+    <string name="settings_check_update_checking">Wird geprüft…</string>
+    <string name="settings_check_update_none">Du bist auf dem neuesten Stand</string>
+    <string name="settings_check_update_error">GitHub konnte nicht erreicht werden – überprüfe deine Verbindung und versuche es erneut</string>
+    <string name="settings_check_update_available">Version %1$s ist verfügbar – zum Aktualisieren tippen</string>
+    <string name="update_dialog_title">Update verfügbar</string>
+    <string name="update_dialog_version">Shhh %1$s ist bereit zum Download.</string>
+    <string name="update_dialog_download">Herunterladen</string>
+    <string name="update_dialog_downloading">Wird heruntergeladen… %1$d%%</string>
+    <string name="update_dialog_downloading_unknown">Wird heruntergeladen…</string>
+    <string name="update_dialog_install">Installieren</string>
+    <string name="update_dialog_failed">Download fehlgeschlagen – überprüfe deine Verbindung und versuche es erneut.</string>
+    <string name="update_dialog_retry">Erneut versuchen</string>
+    <string name="update_dialog_later">Später</string>
+    <string name="update_permission_body">Android fragt einmalig um Erlaubnis, bevor Shhh eigene Updates installieren darf. Tippe unten, erlaube „Unbekannte Apps installieren“ und kehre dann zurück.</string>
+    <string name="update_permission_grant">Installationen erlauben</string>
+
+    <string name="automation_sheet_title">Automatisierungs-Intents</string>
+    <string name="automation_sheet_body">Jede Automatisierungs-App, die eine Activity starten kann (Tasker, MacroDroid, Routinen), kann Shhh steuern. Starte die Activity io.github.shhhapp.shhh/.ToggleActivity mit einer dieser Aktionen:</string>
+    <string name="automation_action_hush">…action.HUSH – sofort leise stellen (optional mit duration_minutes)</string>
+    <string name="automation_action_unhush">…action.UNHUSH – Ton wiederherstellen</string>
+    <string name="automation_action_toggle">…action.TOGGLE – aktuellen Status umkehren</string>
+    <string name="automation_action_media">…action.RESTORE_MEDIA – nur Medienlautstärke</string>
+
+    <string name="shortcut_toggle_short">Umschalten</string>
+    <string name="shortcut_toggle_long">Lautlos umschalten</string>
+    <string name="shortcut_hush30_short">30 min</string>
+    <string name="shortcut_hush30_long">30 Min. leise stellen</string>
+    <string name="shortcut_hush60_short">1 Stunde</string>
+    <string name="shortcut_hush60_long">1 Stunde leise stellen</string>
+
+    <string name="dial_label_12am">00:00</string>
+    <string name="dial_label_6am">06:00</string>
+    <string name="dial_label_12pm">12:00</string>
+    <string name="dial_label_6pm">18:00</string>
+    <string name="duration_hours">%1$d Std.</string>
+    <string name="duration_minutes">%1$d Min.</string>
+    <string name="duration_full">%1$d Std. %2$d Min.</string>
+</resources>

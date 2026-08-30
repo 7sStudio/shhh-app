@@ -83,12 +83,12 @@ class UpdateCheckerTest {
     // ---- throttle ----
 
     @Test
-    fun `isCheckDue is true after 24 hours and on first ever check`() {
-        val day = 24 * 60 * 60 * 1000L
+    fun `isCheckDue is true after an hour and on first ever check`() {
+        val hour = 60 * 60 * 1000L
         assertTrue(UpdateChecker.isCheckDue(lastCheckMillis = 0L, nowMillis = 1L))
-        assertTrue(UpdateChecker.isCheckDue(lastCheckMillis = 1_000L, nowMillis = 1_000L + day))
+        assertTrue(UpdateChecker.isCheckDue(lastCheckMillis = 1_000L, nowMillis = 1_000L + hour))
         assertFalse(
-            UpdateChecker.isCheckDue(lastCheckMillis = 1_000L, nowMillis = 1_000L + day - 1)
+            UpdateChecker.isCheckDue(lastCheckMillis = 1_000L, nowMillis = 1_000L + hour - 1)
         )
     }
 

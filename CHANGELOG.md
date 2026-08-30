@@ -5,7 +5,33 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning: [S
 
 ## [Unreleased]
 
-_Nothing yet._
+### Added
+- 🌍 **Five more languages** — Hindi, Bengali, Russian, Urdu (with RTL layout)
+  and German, bringing the total to thirteen.
+
+### Fixed
+- 📶 **The Quick Settings tile now updates while Do Not Disturb is on.** With a
+  DND mode running, tapping the tile hushed the phone but the tile kept its
+  old look until the panel was closed and reopened. Nothing was left to tell
+  it: the refresh the 1.4.0 service relied on
+  (`TileService.requestListeningState`) is a documented no-op for a passive
+  tile, and the ringer-mode broadcast it falls back on never fires under a
+  zen mode, which pins the external ringer at silent. The state is now pushed
+  to the tile directly, in-process.
+- 🧷 **A refused toggle can no longer leave the tile or widget lying.** If
+  Android refuses the change (a Do Not Disturb mode starting at the exact
+  moment of the tap), both surfaces now snap back to the phone's real state.
+
+### Changed
+- ⏱️ **The automatic update check now runs up to once an hour** when the app
+  opens, instead of once a day, so a new release reaches you sooner. Still
+  opt-in, still nothing uploaded.
+- 🌊 **Downloading an update shows a Material 3 Expressive progress bar** —
+  the wavy, always-in-motion kind — instead of a static line.
+- ⚡ **The tile and widget flip instantly.** Both now show the expected state
+  the moment they're tapped — like Wi-Fi or the torch — and the real state
+  confirms it right after (measured on a Pixel: under 100 ms where it used to
+  take up to a second, or forever under DND).
 
 ## [1.4.0] - 2026-08-30
 

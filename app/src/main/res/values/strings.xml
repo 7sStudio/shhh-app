@@ -95,7 +95,7 @@
     <!-- Updates -->
     <string name="settings_updates_header">Updates</string>
     <string name="settings_auto_update_title">Check for updates automatically</string>
-    <string name="settings_auto_update_hint">Once a day when you open the app, ask GitHub whether a newer version exists. Nothing about you is sent.</string>
+    <string name="settings_auto_update_hint">Once an hour when you open the app, ask GitHub whether a newer version exists. Nothing about you is sent.</string>
     <string name="settings_check_update_title">Check for updates</string>
     <string name="settings_check_update_idle">Tap to check the latest release on GitHub</string>
     <string name="settings_check_update_checking">Checking…</string>

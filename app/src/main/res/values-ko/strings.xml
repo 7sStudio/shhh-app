@@ -95,7 +95,7 @@
     <!-- Updates -->
     <string name="settings_updates_header">업데이트</string>
     <string name="settings_auto_update_title">자동으로 업데이트 확인</string>
-    <string name="settings_auto_update_hint">앱을 열 때 하루에 한 번만 GitHub에 새 버전이 있는지 확인합니다. 사용자에 관한 정보는 전송되지 않습니다.</string>
+    <string name="settings_auto_update_hint">앱을 열 때 한 시간에 한 번만 GitHub에 새 버전이 있는지 확인합니다. 사용자에 관한 정보는 전송되지 않습니다.</string>
     <string name="settings_check_update_title">업데이트 확인</string>
     <string name="settings_check_update_idle">탭하여 GitHub의 최신 릴리스를 확인하세요</string>
     <string name="settings_check_update_checking">확인 중…</string>

@@ -8,7 +8,8 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.LinearWavyProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -34,6 +35,7 @@ private enum class Phase { IDLE, NEEDS_PERMISSION, DOWNLOADING, READY, FAILED }
  * Walks the user from "an update exists" through download to the system
  * installer. The installer's own confirmation UI still applies.
  */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun UpdateDialog(
     release: ReleaseInfo,
@@ -112,13 +114,16 @@ fun UpdateDialog(
                         style = MaterialTheme.typography.bodyMedium
                     )
                     Spacer(Modifier.height(8.dp))
+                    // Material 3 Expressive: the wavy indicator carries its
+                    // own motion, so the download visibly lives even between
+                    // progress callbacks.
                     if (percent != null) {
-                        LinearProgressIndicator(
+                        LinearWavyProgressIndicator(
                             progress = { percent / 100f },
                             modifier = Modifier.fillMaxWidth()
                         )
                     } else {
-                        LinearProgressIndicator(Modifier.fillMaxWidth())
+                        LinearWavyProgressIndicator(Modifier.fillMaxWidth())
                     }
                 } else if (phase == Phase.FAILED) {
                     Spacer(Modifier.height(12.dp))

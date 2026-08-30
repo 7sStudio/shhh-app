@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Shhh</string>
+    <string name="app_tagline">এক ট্যাপেই ফোন নিঃশব্দ করুন</string>
+
+    <string name="status_quiet_on">ভাইব্রেট চালু · মিডিয়া মিউট</string>
+    <string name="status_quiet_off">সাউন্ড চালু · মিডিয়া পুনরুদ্ধার</string>
+
+    <string name="tile_label">Shhh</string>
+    <string name="tile_subtitle_on">চালু</string>
+    <string name="tile_subtitle_off">বন্ধ</string>
+    <string name="tile_content_description">নিঃশব্দ মোড টগল করুন</string>
+
+    <string name="widget_label_on">নিঃশব্দ</string>
+    <string name="widget_label_off">Shhh</string>
+    <string name="widget_description">এক ট্যাপে: ভাইব্রেট ও মিডিয়া মিউট</string>
+
+    <string name="permission_title">ঐচ্ছিক: বিরক্ত করবেন না মোডের অ্যাক্সেস</string>
+    <string name="permission_body">Shhh এটি ছাড়াও এমনিতেই কাজ করে। বিরক্ত করবেন না, ঘুমানোর সময় বা ড্রাইভিং মোড চালু থাকলে Android শুধু তখনই Shhh-কে আটকায় — নিচে অ্যাক্সেস দিন, তখনও Shhh কাজ করতে থাকবে। Shhh কখনও নিজে থেকে এই মোডগুলো চালু বা বন্ধ করে না।</string>
+    <string name="permission_button">অ্যাক্সেস দিন</string>
+
+    <string name="setup_add_tile">কুইক সেটিংস টাইল</string>
+    <string name="setup_add_widget">হোম স্ক্রিন উইজেট</string>
+
+    <string name="timer_section_title">কিছুক্ষণের জন্য নিঃশব্দ করুন</string>
+    <string name="timer_section_hint">সাউন্ড নিজে থেকেই ফিরে আসবে</string>
+    <string name="timer_chip_15">15 মিনিট</string>
+    <string name="timer_chip_30">30 মিনিট</string>
+    <string name="timer_chip_60">1 ঘণ্টা</string>
+    <string name="timer_chip_120">2 ঘণ্টা</string>
+    <string name="timer_running_until">সাউন্ড %1$s-এ ফিরে আসবে</string>
+    <string name="timer_end_now">এখনই শেষ করুন</string>
+
+    <string name="countdown_title">নিঃশব্দ</string>
+    <string name="countdown_text">সাউন্ড %1$s-এ ফিরে আসবে</string>
+    <string name="countdown_action_restore">এখনই পুনরুদ্ধার করুন</string>
+    <string name="channel_countdown_name">নিঃশব্দ স্ট্যাটাস</string>
+    <string name="channel_countdown_description">নিঃশব্দ টাইমার চলাকালীন কাউন্টডাউন</string>
+    <string name="channel_service_name">নির্ধারিত পরিবর্তন</string>
+    <string name="channel_service_description">নির্ধারিত পরিবর্তন প্রয়োগ হওয়ার সময় সংক্ষিপ্ত টেকনিক্যাল নোটিফিকেশন</string>
+    <string name="service_notification_title">সাউন্ড ঠিক করা হচ্ছে…</string>
+
+    <string name="headphones_notification_title">হেডফোন সংযুক্ত হয়েছে</string>
+    <string name="headphones_notification_text">মিডিয়া ভলিউম ফিরিয়ে আনতে ট্যাপ করুন — রিংগার নিঃশব্দই থাকবে</string>
+
+    <string name="quiet_hours_title">নিঃশব্দ সময়</string>
+    <string name="quiet_hours_hint">নির্ধারিত সময়ে স্বয়ংক্রিয়ভাবে নিঃশব্দ হবে</string>
+    <string name="quiet_hours_starts">শুরু</string>
+    <string name="quiet_hours_ends">শেষ</string>
+    <string name="quiet_days_every_day">প্রতিদিন</string>
+    <string name="quiet_days_none">কোনো দিন নির্বাচিত হয়নি</string>
+
+    <string name="exact_alarm_title">অ্যালার্ম ও রিমাইন্ডারের অনুমতি দিন</string>
+    <string name="exact_alarm_body">টাইমার ও নিঃশব্দ সময়ের জন্য Android-এর "অ্যালার্ম ও রিমাইন্ডার" অ্যাক্সেস দরকার, যাতে ফোন ঘুমিয়ে থাকা অবস্থাতেও ঠিক মিনিটেই সাউন্ড ফিরে আসে। একবার সুইচ অন করলেই হবে।</string>
+    <string name="exact_alarm_grant">সেটিংস খুলুন</string>
+
+    <string name="settings_title">সেটিংস</string>
+    <string name="settings_back">ফিরে যান</string>
+    <string name="settings_behavior_header">নিঃশব্দের আচরণ</string>
+    <string name="settings_restore_title">ভলিউম পুনরুদ্ধারের মাত্রা</string>
+    <string name="settings_restore_hint">নিঃশব্দ বন্ধ করার পর মিডিয়ার মাত্রা</string>
+    <string name="settings_restore_previous">আগের মাত্রা</string>
+    <string name="settings_restore_fixed">নির্দিষ্ট মাত্রা</string>
+    <string name="settings_restore_fixed_value">নির্দিষ্ট মাত্রা · %1$d%%</string>
+    <string name="settings_notifications_header">নোটিফিকেশন</string>
+    <string name="settings_countdown_title">লাইভ কাউন্টডাউন</string>
+    <string name="settings_countdown_hint">নিঃশব্দ টাইমার চলাকালীন বাকি সময় দেখুন</string>
+    <string name="settings_headphones_header">হেডফোন</string>
+    <string name="settings_headphones_title">হেডফোনের জন্য মিডিয়া আনমিউট করুন</string>
+    <string name="settings_headphones_hint">ব্লুটুথ হেডফোন সংযুক্ত হলে মিডিয়া ফিরে আসবে — রিংগার নিঃশব্দই থাকবে</string>
+    <string name="settings_quick_access_header">দ্রুত অ্যাক্সেস</string>
+    <string name="settings_automation_title">অটোমেশন</string>
+    <string name="settings_automation_hint">Tasker, রুটিন ও শর্টকাট থেকে Shhh নিয়ন্ত্রণ করুন</string>
+    <string name="settings_about_header">সম্পর্কে</string>
+    <string name="settings_version">ভার্সন %1$s</string>
+    <string name="settings_source_title">সোর্স কোড</string>
+    <string name="settings_source_hint">Apache-2.0, GitHub-এ</string>
+    <string name="settings_troubleshooting_title">সমস্যা সমাধান</string>
+    <string name="settings_troubleshooting_hint">কিছু ডিভাইসে টাইমার কাজ না করার সমস্যা ঠিক করুন</string>
+    <string name="settings_contact_title">ডেভেলপারের সাথে যোগাযোগ করুন</string>
+    <string name="settings_contact_hint">বাগ, ফিচার অনুরোধ, প্রশ্ন — আপনার ইমেল অ্যাপ খুলে যাবে</string>
+    <string name="contact_email_subject">Shhh %1$s — মতামত</string>
+
+    <!-- Updates -->
+    <string name="settings_updates_header">আপডেট</string>
+    <string name="settings_auto_update_title">স্বয়ংক্রিয়ভাবে আপডেট চেক করুন</string>
+    <string name="settings_auto_update_hint">অ্যাপ খোলার সময় প্রতি ঘণ্টায় একবার GitHub-কে জিজ্ঞেস করা হয় নতুন কোনো ভার্সন আছে কিনা। আপনার সম্পর্কে কিছুই পাঠানো হয় না।</string>
+    <string name="settings_check_update_title">আপডেট চেক করুন</string>
+    <string name="settings_check_update_idle">GitHub-এ সর্বশেষ রিলিজ চেক করতে ট্যাপ করুন</string>
+    <string name="settings_check_update_checking">চেক করা হচ্ছে…</string>
+    <string name="settings_check_update_none">আপনি সর্বশেষ ভার্সনেই আছেন</string>
+    <string name="settings_check_update_error">GitHub-এ পৌঁছানো যায়নি — সংযোগ পরীক্ষা করে আবার চেষ্টা করুন</string>
+    <string name="settings_check_update_available">ভার্সন %1$s পাওয়া যাচ্ছে — আপডেট করতে ট্যাপ করুন</string>
+    <string name="update_dialog_title">আপডেট উপলব্ধ</string>
+    <string name="update_dialog_version">Shhh %1$s ডাউনলোডের জন্য প্রস্তুত।</string>
+    <string name="update_dialog_download">ডাউনলোড করুন</string>
+    <string name="update_dialog_downloading">ডাউনলোড হচ্ছে… %1$d%%</string>
+    <string name="update_dialog_downloading_unknown">ডাউনলোড হচ্ছে…</string>
+    <string name="update_dialog_install">ইনস্টল করুন</string>
+    <string name="update_dialog_failed">ডাউনলোড ব্যর্থ হয়েছে — সংযোগ পরীক্ষা করে আবার চেষ্টা করুন।</string>
+    <string name="update_dialog_retry">আবার চেষ্টা করুন</string>
+    <string name="update_dialog_later">পরে</string>
+    <string name="update_permission_body">Shhh নিজে থেকে আপডেট ইনস্টল করার আগে Android একবার অনুমতি চায়। নিচে ট্যাপ করুন, তারপর "অজানা অ্যাপ ইনস্টল করুন" অনুমতি দিন, এবং ফিরে আসুন।</string>
+    <string name="update_permission_grant">ইনস্টলের অনুমতি দিন</string>
+
+    <string name="automation_sheet_title">অটোমেশন ইনটেন্ট</string>
+    <string name="automation_sheet_body">অ্যাক্টিভিটি চালু করতে পারে এমন যেকোনো অটোমেশন অ্যাপ (Tasker, MacroDroid, রুটিন) Shhh নিয়ন্ত্রণ করতে পারবে। এই অ্যাকশনগুলোর যেকোনো একটি দিয়ে io.github.shhhapp.shhh/.ToggleActivity অ্যাক্টিভিটি চালু করুন:</string>
+    <string name="automation_action_hush">…action.HUSH — এখনই নিঃশব্দ করুন (ঐচ্ছিক অতিরিক্ত duration_minutes)</string>
+    <string name="automation_action_unhush">…action.UNHUSH — সাউন্ড পুনরুদ্ধার করুন</string>
+    <string name="automation_action_toggle">…action.TOGGLE — বর্তমান অবস্থা পাল্টান</string>
+    <string name="automation_action_media">…action.RESTORE_MEDIA — শুধু মিডিয়া ভলিউম</string>
+
+    <string name="shortcut_toggle_short">টগল</string>
+    <string name="shortcut_toggle_long">নিঃশব্দ টগল করুন</string>
+    <string name="shortcut_hush30_short">30 মিনিট</string>
+    <string name="shortcut_hush30_long">30 মিনিটের জন্য নিঃশব্দ করুন</string>
+    <string name="shortcut_hush60_short">1 ঘণ্টা</string>
+    <string name="shortcut_hush60_long">1 ঘণ্টার জন্য নিঃশব্দ করুন</string>
+
+    <string name="dial_label_12am">রাত ১২টা</string>
+    <string name="dial_label_6am">সকাল ৬টা</string>
+    <string name="dial_label_12pm">দুপুর ১২টা</string>
+    <string name="dial_label_6pm">সন্ধ্যা ৬টা</string>
+    <string name="duration_hours">%1$d ঘণ্টা</string>
+    <string name="duration_minutes">%1$d মিনিট</string>
+    <string name="duration_full">%1$d ঘণ্টা %2$d মিনিট</string>
+</resources>

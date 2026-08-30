@@ -23,6 +23,8 @@ import io.github.shhhapp.shhh.ToggleActivity
 import io.github.shhhapp.shhh.core.QuietModeController
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -221,6 +223,42 @@ class ShhhWidgetTest {
     @Test
     fun `the receiver publishes the Shhh widget`() {
         assertTrue(ShhhWidgetReceiver().glanceAppWidget is ShhhWidget)
+    }
+
+    // ---- the optimistic flip ----
+
+    @Test
+    fun `an expected-state publish flips the shown state without touching any volume`() {
+        // The trampoline calls this before the transition runs, so the widget
+        // doesn't sit on its old look through the volume writes and the
+        // settle poll. It is a pure display guess: nothing may move.
+        WidgetUiState.refreshFrom(context)
+        assertFalse(WidgetUiState.quiet)
+
+        ShhhWidget.showExpected(context, quiet = true)
+
+        val deadline = System.currentTimeMillis() + 5_000
+        while (System.currentTimeMillis() < deadline && !WidgetUiState.quiet) {
+            Thread.sleep(20)
+        }
+        assertTrue("the optimistic flip must land", WidgetUiState.quiet)
+        assertEquals("a display guess must not write volume", 3, ringVolume)
+    }
+
+    @Test
+    fun `an expected-state publish never touches canChangeSound`() {
+        // Whether a tap routes to the trampoline or the app is a permission
+        // fact; guessing it optimistically could route a tap wrong.
+        WidgetUiState.refreshFrom(context)
+        assertTrue(WidgetUiState.canChangeSound)
+
+        ShhhWidget.showExpected(context, quiet = true)
+
+        val deadline = System.currentTimeMillis() + 5_000
+        while (System.currentTimeMillis() < deadline && !WidgetUiState.quiet) {
+            Thread.sleep(20)
+        }
+        assertTrue(WidgetUiState.canChangeSound)
     }
 
     @Test

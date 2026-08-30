@@ -5,6 +5,7 @@ import android.content.Intent
 import android.os.Bundle
 import io.github.shhhapp.shhh.core.HushManager
 import io.github.shhhapp.shhh.core.QuietModeController
+import io.github.shhhapp.shhh.widget.ShhhWidget
 
 /**
  * Invisible, instant toggle trampoline — and the app's public automation
@@ -28,6 +29,18 @@ class ToggleActivity : Activity() {
         super.onCreate(savedInstanceState)
 
         val manager = HushManager(this)
+
+        // Flip the widget to the expected end state right away, the way the
+        // tile flips itself on tap, so it doesn't sit on the old look through
+        // the volume writes, the settle poll and the timer bookkeeping. The
+        // refresh every transition triggers re-publishes reality afterwards.
+        when (intent?.action) {
+            ACTION_HUSH -> ShhhWidget.showExpected(this, quiet = true)
+            ACTION_UNHUSH -> ShhhWidget.showExpected(this, quiet = false)
+            ACTION_RESTORE_MEDIA -> Unit // does not change the hush state
+            else -> ShhhWidget.showExpected(this, quiet = !manager.isQuiet)
+        }
+
         val result = when (intent?.action) {
             ACTION_HUSH -> manager.hush(durationMinutes = readDurationExtra())
             ACTION_UNHUSH -> manager.unhush()
@@ -39,6 +52,9 @@ class ToggleActivity : Activity() {
         }
 
         if (result == QuietModeController.Result.NeedsDndAccess) {
+            // Nothing changed, so snap the optimistic flip back to reality —
+            // a refused transition never refreshes on its own.
+            manager.refreshSurfaces()
             // Fall through to the full app so the user can grant access.
             startActivity(
                 Intent(this, MainActivity::class.java)

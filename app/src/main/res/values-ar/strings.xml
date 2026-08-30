@@ -84,7 +84,7 @@
     <!-- Updates -->
     <string name="settings_updates_header">التحديثات</string>
     <string name="settings_auto_update_title">التحقق من التحديثات تلقائيًا</string>
-    <string name="settings_auto_update_hint">مرة واحدة يوميًا عند فتح التطبيق، يسأل GitHub عمّا إذا كان هناك إصدار أحدث. لا يُرسل أي شيء يخصك.</string>
+    <string name="settings_auto_update_hint">مرة واحدة كل ساعة عند فتح التطبيق، يسأل GitHub عمّا إذا كان هناك إصدار أحدث. لا يُرسل أي شيء يخصك.</string>
     <string name="settings_check_update_title">التحقق من وجود تحديثات</string>
     <string name="settings_check_update_idle">اضغط للتحقق من أحدث إصدار على GitHub</string>
     <string name="settings_check_update_checking">جارٍ التحقق…</string>
