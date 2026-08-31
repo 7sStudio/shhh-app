@@ -1,6 +1,11 @@
 package io.github.shhhapp.shhh.widget
 
+import android.app.WallpaperColors
+import android.app.WallpaperManager
 import android.content.Context
+import android.os.Handler
+import android.os.Looper
+import androidx.compose.ui.graphics.Color
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -31,6 +36,7 @@ import androidx.glance.layout.size
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
+import androidx.glance.unit.ColorProvider
 import androidx.glance.ColorFilter
 import io.github.shhhapp.shhh.MainActivity
 import io.github.shhhapp.shhh.R
@@ -64,11 +70,22 @@ internal object WidgetUiState {
     var canChangeSound by mutableStateOf(true)
         private set
 
+    /**
+     * Whether the home wallpaper is light enough for dark content — the same
+     * [WallpaperColors.HINT_SUPPORTS_DARK_TEXT] signal SystemUI reads to color
+     * the lockscreen clock. Null when the wallpaper engine publishes no colors
+     * (some live wallpapers) or the read fails; the theme decides then. Only
+     * the transparent widget consults this — the card carries its own surface.
+     */
+    var wallpaperPrefersDarkText by mutableStateOf<Boolean?>(null)
+        private set
+
     /** Re-reads reality; the composition recomposes when a value changes. */
     fun refreshFrom(context: Context) {
         val controller = QuietModeController(context)
         quiet = controller.isQuiet
         canChangeSound = controller.canChangeSound
+        wallpaperPrefersDarkText = readWallpaperDarkTextHint(context)
     }
 
     /**
@@ -83,6 +100,46 @@ internal object WidgetUiState {
 }
 
 /**
+ * Recolors the widgets the moment the wallpaper service finishes recomputing
+ * a new wallpaper's colors. OnColorsChangedListener is the sanctioned signal
+ * (ACTION_WALLPAPER_CHANGED is an implicit broadcast manifest receivers no
+ * longer get — and it fires BEFORE color extraction, so it would re-read the
+ * OLD hint). The listener lives exactly as long as this process does — every
+ * process start re-arms it from [io.github.shhhapp.shhh.ShhhApplication] —
+ * and after a process death the next publish covers the gap.
+ */
+fun registerWallpaperColorsListener(context: Context) {
+    val appContext = context.applicationContext
+    try {
+        WallpaperManager.getInstance(appContext).addOnColorsChangedListener(
+            { _, which ->
+                // Only the home screen wallpaper sits behind widgets.
+                if (which and WallpaperManager.FLAG_SYSTEM != 0) {
+                    ShhhWidget.requestRefresh(appContext)
+                }
+            },
+            Handler(Looper.getMainLooper())
+        )
+    } catch (_: Exception) {
+        // No wallpaper service (or a broken one) must never block app start;
+        // the widget then simply refreshes on its usual cadence.
+    }
+}
+
+private fun readWallpaperDarkTextHint(context: Context): Boolean? = try {
+    val colors = WallpaperManager.getInstance(context)
+        .getWallpaperColors(WallpaperManager.FLAG_SYSTEM)
+    if (colors == null) {
+        null
+    } else {
+        colors.colorHints and WallpaperColors.HINT_SUPPORTS_DARK_TEXT != 0
+    }
+} catch (_: Exception) {
+    // A misbehaving wallpaper service must never take the widget down.
+    null
+}
+
+/**
  * Seeds [WidgetUiState] and composes the shared content. Both widget styles
  * render from the same state and behavior; only the surface paint differs.
  */
@@ -93,7 +150,8 @@ private suspend fun GlanceAppWidget.provideHushContent(context: Context, transpa
             WidgetContent(
                 quiet = WidgetUiState.quiet,
                 canChangeSound = WidgetUiState.canChangeSound,
-                transparent = transparent
+                transparent = transparent,
+                wallpaperPrefersDarkText = WidgetUiState.wallpaperPrefersDarkText
             )
         }
     }
@@ -159,16 +217,51 @@ class ShhhTransparentWidgetReceiver : GlanceAppWidgetReceiver() {
     override val glanceAppWidget: GlanceAppWidget = ShhhTransparentWidget()
 }
 
+/** M3 ink for content sitting directly on a light wallpaper. */
+internal val WALLPAPER_INK = Color(0xFF1C1B1F)
+
 @Composable
-internal fun WidgetContent(quiet: Boolean, canChangeSound: Boolean, transparent: Boolean) {
+internal fun WidgetContent(
+    quiet: Boolean,
+    canChangeSound: Boolean,
+    transparent: Boolean,
+    wallpaperPrefersDarkText: Boolean?
+) {
     val context = LocalContext.current
 
-    // The transparent style has no card to invert against, so the hushed
-    // state shows as primary-tinted content on the bare wallpaper instead.
-    val content = if (transparent) {
-        if (quiet) GlanceTheme.colors.primary else GlanceTheme.colors.onSurface
-    } else {
+    // The transparent style has no card to invert against, so its content is
+    // colored for the wallpaper it actually sits on, not for the app theme:
+    // near-black on a wallpaper that supports dark text, white otherwise —
+    // white doubling as the safe guess when no hint exists but colors do.
+    // The hushed accent keeps the Material You hue via the fixed dynamic
+    // palette steps (not the theme's primary, which flips with dark mode and
+    // would fight the wallpaper): a dark accent on light wallpapers, a light
+    // one on dark. Only a wallpaper with no color signal at all falls back to
+    // the theme.
+    val content = if (!transparent) {
         if (quiet) GlanceTheme.colors.onPrimary else GlanceTheme.colors.onSurface
+    } else if (wallpaperPrefersDarkText == null) {
+        if (quiet) GlanceTheme.colors.primary else GlanceTheme.colors.onSurface
+    } else if (quiet) {
+        // Resolved to a concrete color here rather than passed as a resource:
+        // the resource-based ColorProvider is restricted Glance API, and the
+        // system palette resolves identically in every process anyway. Known
+        // edge: a wallpaper swap that changes hue but not brightness leaves
+        // the hint value unchanged, so a hushed widget keeps the old hue's
+        // accent until the next publish re-composes it.
+        ColorProvider(
+            Color(
+                context.getColor(
+                    if (wallpaperPrefersDarkText) {
+                        android.R.color.system_accent1_600
+                    } else {
+                        android.R.color.system_accent1_200
+                    }
+                )
+            )
+        )
+    } else {
+        ColorProvider(if (wallpaperPrefersDarkText) WALLPAPER_INK else Color.White)
     }
 
     // Taps go through an invisible foreground trampoline: Android 16+ audio

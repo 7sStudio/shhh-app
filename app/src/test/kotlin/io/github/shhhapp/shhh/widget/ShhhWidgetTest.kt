@@ -83,7 +83,8 @@ class ShhhWidgetTest {
                 WidgetContent(
                     quiet = WidgetUiState.quiet,
                     canChangeSound = WidgetUiState.canChangeSound,
-                    transparent = false
+                    transparent = false,
+                    wallpaperPrefersDarkText = WidgetUiState.wallpaperPrefersDarkText
                 )
             }
         }

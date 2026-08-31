@@ -36,6 +36,7 @@
     <!-- android:allowBackup is omitted on purpose: it is deprecated from Android 12
          and its default (backup allowed) is what we want for a handful of settings. -->
     <application
+        android:name=".ShhhApplication"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"

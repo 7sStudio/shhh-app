@@ -2,6 +2,7 @@ package io.github.shhhapp.shhh.ui
 
 import android.app.StatusBarManager
 import android.appwidget.AppWidgetManager
+import android.appwidget.AppWidgetProvider
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
@@ -60,6 +61,7 @@ import io.github.shhhapp.shhh.tile.ShhhTileService
 import io.github.shhhapp.shhh.update.CheckResult
 import io.github.shhhapp.shhh.update.ReleaseInfo
 import io.github.shhhapp.shhh.update.UpdateChecker
+import io.github.shhhapp.shhh.widget.ShhhTransparentWidgetReceiver
 import io.github.shhhapp.shhh.widget.ShhhWidgetReceiver
 import java.time.DayOfWeek
 import java.time.format.TextStyle
@@ -319,7 +321,12 @@ fun SettingsScreen(
                 ClickRow(
                     title = stringResource(R.string.setup_add_widget),
                     hint = stringResource(R.string.widget_description)
-                ) { requestPinWidget(context) }
+                ) { requestPinWidget(context, ShhhWidgetReceiver::class.java) }
+                GroupDivider()
+                ClickRow(
+                    title = stringResource(R.string.widget_transparent_label),
+                    hint = stringResource(R.string.widget_description)
+                ) { requestPinWidget(context, ShhhTransparentWidgetReceiver::class.java) }
                 GroupDivider()
                 ClickRow(
                     title = stringResource(R.string.settings_automation_title),
@@ -609,11 +616,11 @@ private fun requestAddTile(context: Context) {
     ) { }
 }
 
-private fun requestPinWidget(context: Context) {
+private fun requestPinWidget(context: Context, receiver: Class<out AppWidgetProvider>) {
     val manager = AppWidgetManager.getInstance(context)
     if (manager.isRequestPinAppWidgetSupported) {
         manager.requestPinAppWidget(
-            ComponentName(context, ShhhWidgetReceiver::class.java),
+            ComponentName(context, receiver),
             null,
             null
         )

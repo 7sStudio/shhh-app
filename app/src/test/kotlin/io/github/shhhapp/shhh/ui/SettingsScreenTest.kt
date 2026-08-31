@@ -28,6 +28,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.github.shhhapp.shhh.core.ShhhSettings
 import io.github.shhhapp.shhh.core.TimeFormat
 import io.github.shhhapp.shhh.update.UpdateChecker
+import io.github.shhhapp.shhh.widget.ShhhTransparentWidgetReceiver
 import io.github.shhhapp.shhh.widget.ShhhWidgetReceiver
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
@@ -570,6 +571,25 @@ class SettingsScreenTest {
             ComponentName(context, ShhhWidgetReceiver::class.java)
         )
         assertEquals(1, ids.size)
+    }
+
+    @Test
+    fun `transparent widget row pins the transparent widget, not the card`() {
+        val manager = AppWidgetManager.getInstance(context)
+        shadowOf(manager).setRequestPinAppWidgetSupported(true)
+        setScreen()
+
+        composeTestRule.onNodeWithText("Shhh (transparent)").performScrollTo().performClick()
+        composeTestRule.waitForIdle()
+
+        val transparentIds = manager.getAppWidgetIds(
+            ComponentName(context, ShhhTransparentWidgetReceiver::class.java)
+        )
+        val cardIds = manager.getAppWidgetIds(
+            ComponentName(context, ShhhWidgetReceiver::class.java)
+        )
+        assertEquals(1, transparentIds.size)
+        assertEquals(0, cardIds.size)
     }
 
     @Test
