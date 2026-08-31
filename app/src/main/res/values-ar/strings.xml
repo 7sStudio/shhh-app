@@ -14,6 +14,7 @@
     <string name="widget_label_on">صامت</string>
     <string name="widget_label_off">Shhh</string>
     <string name="widget_description">نقرة واحدة: اهتزاز وكتم الوسائط</string>
+    <string name="widget_transparent_label">Shhh (شفاف)</string>
 
     <string name="permission_title">اختياري: الوصول إلى «عدم الإزعاج»</string>
     <string name="permission_body">يعمل Shhh بالفعل بدون هذا الإذن. لا يمنعه أندرويد إلا أثناء تفعيل وضع «عدم الإزعاج» أو «وقت النوم» أو «القيادة» — امنح الإذن أدناه ليواصل Shhh عمله حينها أيضًا. لا يقوم Shhh أبدًا بتفعيل هذه الأوضاع أو إيقافها.</string>

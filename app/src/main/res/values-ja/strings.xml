@@ -14,6 +14,7 @@
     <string name="widget_label_on">サイレント中</string>
     <string name="widget_label_off">Shhh</string>
     <string name="widget_description">ワンタップ：バイブとメディアのミュート</string>
+    <string name="widget_transparent_label">Shhh（透明）</string>
 
     <string name="permission_title">任意：サイレント モードへのアクセス</string>
     <string name="permission_body">Shhh はこの権限がなくても動作します。サイレント モード、

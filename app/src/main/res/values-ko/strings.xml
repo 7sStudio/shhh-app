@@ -14,6 +14,7 @@
     <string name="widget_label_on">무음 중</string>
     <string name="widget_label_off">Shhh</string>
     <string name="widget_description">한 번의 탭: 진동 및 미디어 음소거</string>
+    <string name="widget_transparent_label">Shhh (투명)</string>
 
     <string name="permission_title">선택 사항: 방해 금지 모드 액세스</string>
     <string name="permission_body">Shhh는 이 권한 없이도 작동합니다. 방해 금지, 취침 시간,

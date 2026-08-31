@@ -14,6 +14,7 @@
     <string name="widget_label_on">নিঃশব্দ</string>
     <string name="widget_label_off">Shhh</string>
     <string name="widget_description">এক ট্যাপে: ভাইব্রেট ও মিডিয়া মিউট</string>
+    <string name="widget_transparent_label">Shhh (স্বচ্ছ)</string>
 
     <string name="permission_title">ঐচ্ছিক: বিরক্ত করবেন না মোডের অ্যাক্সেস</string>
     <string name="permission_body">Shhh এটি ছাড়াও এমনিতেই কাজ করে। বিরক্ত করবেন না, ঘুমানোর সময় বা ড্রাইভিং মোড চালু থাকলে Android শুধু তখনই Shhh-কে আটকায় — নিচে অ্যাক্সেস দিন, তখনও Shhh কাজ করতে থাকবে। Shhh কখনও নিজে থেকে এই মোডগুলো চালু বা বন্ধ করে না।</string>

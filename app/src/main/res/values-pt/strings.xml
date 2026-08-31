@@ -14,6 +14,7 @@
     <string name="widget_label_on">Silenciado</string>
     <string name="widget_label_off">Shhh</string>
     <string name="widget_description">Um toque: vibração e mídia sem volume</string>
+    <string name="widget_transparent_label">Shhh (transparente)</string>
 
     <string name="permission_title">Opcional: acesso ao Não perturbe</string>
     <string name="permission_body">O Shhh já funciona sem isso. O Android só o bloqueia

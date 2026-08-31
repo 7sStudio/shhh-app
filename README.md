@@ -33,7 +33,7 @@ A tiny, modern quiet-mode toggle for the moments you need silence *now*: meeting
 
 ## Features
 
-- **One-tap hush** from three surfaces: a **Quick Settings tile**, a **home screen widget**, or the app — ring volume to 0, media volume to 0.
+- **One-tap hush** from three surfaces: a **Quick Settings tile**, a **home screen widget** (classic card or a transparent style), or the app — ring volume to 0, media volume to 0.
 - **Smart restore** — un-hushing brings media volume back to exactly what it was before (or a fixed level you choose).
 - **Timed hush** — 15 min, 30 min, 1 h or 2 h; sound returns on its own at the exact minute, with an optional **Live Update countdown** in the status bar and a "Restore now" action.
 - **Quiet hours** — automatic schedule with start/end times and per-weekday control.

@@ -44,9 +44,10 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
 /**
- * Home screen widget: a single rounded toggle that mirrors the phone's actual
- * quiet state. Tapping flips it; if Do Not Disturb access is missing, tapping
- * opens the app so the user can grant it.
+ * Home screen widgets: a rounded toggle that mirrors the phone's actual quiet
+ * state, in two styles — the classic colored card ([ShhhWidget]) and a
+ * background-free variant ([ShhhTransparentWidget]). Tapping flips it; if Do
+ * Not Disturb access is missing, tapping opens the app so the user can grant it.
  */
 /**
  * Snapshot-backed mirror of the phone's sound state, the only thing the
@@ -81,19 +82,27 @@ internal object WidgetUiState {
     }
 }
 
-class ShhhWidget : GlanceAppWidget() {
-
-    override suspend fun provideGlance(context: Context, id: GlanceId) {
-        WidgetUiState.refreshFrom(context)
-        provideContent {
-            GlanceTheme {
-                WidgetContent(
-                    quiet = WidgetUiState.quiet,
-                    canChangeSound = WidgetUiState.canChangeSound
-                )
-            }
+/**
+ * Seeds [WidgetUiState] and composes the shared content. Both widget styles
+ * render from the same state and behavior; only the surface paint differs.
+ */
+private suspend fun GlanceAppWidget.provideHushContent(context: Context, transparent: Boolean) {
+    WidgetUiState.refreshFrom(context)
+    provideContent {
+        GlanceTheme {
+            WidgetContent(
+                quiet = WidgetUiState.quiet,
+                canChangeSound = WidgetUiState.canChangeSound,
+                transparent = transparent
+            )
         }
     }
+}
+
+class ShhhWidget : GlanceAppWidget() {
+
+    override suspend fun provideGlance(context: Context, id: GlanceId) =
+        provideHushContent(context, transparent = false)
 
     companion object {
         private val refreshScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
@@ -128,22 +137,39 @@ class ShhhWidget : GlanceAppWidget() {
                     // sessions recompose against the new values.
                     seed(appContext)
                     ShhhWidget().updateAll(appContext)
+                    ShhhTransparentWidget().updateAll(appContext)
                 }
             }
         }
     }
 }
 
+/** The same toggle without the colored card behind it, for see-through setups. */
+class ShhhTransparentWidget : GlanceAppWidget() {
+
+    override suspend fun provideGlance(context: Context, id: GlanceId) =
+        provideHushContent(context, transparent = true)
+}
+
 class ShhhWidgetReceiver : GlanceAppWidgetReceiver() {
     override val glanceAppWidget: GlanceAppWidget = ShhhWidget()
 }
 
+class ShhhTransparentWidgetReceiver : GlanceAppWidgetReceiver() {
+    override val glanceAppWidget: GlanceAppWidget = ShhhTransparentWidget()
+}
+
 @Composable
-internal fun WidgetContent(quiet: Boolean, canChangeSound: Boolean) {
+internal fun WidgetContent(quiet: Boolean, canChangeSound: Boolean, transparent: Boolean) {
     val context = LocalContext.current
 
-    val background = if (quiet) GlanceTheme.colors.primary else GlanceTheme.colors.widgetBackground
-    val content = if (quiet) GlanceTheme.colors.onPrimary else GlanceTheme.colors.onSurface
+    // The transparent style has no card to invert against, so the hushed
+    // state shows as primary-tinted content on the bare wallpaper instead.
+    val content = if (transparent) {
+        if (quiet) GlanceTheme.colors.primary else GlanceTheme.colors.onSurface
+    } else {
+        if (quiet) GlanceTheme.colors.onPrimary else GlanceTheme.colors.onSurface
+    }
 
     // Taps go through an invisible foreground trampoline: Android 16+ audio
     // hardening drops volume changes made from background callbacks. When a
@@ -155,12 +181,18 @@ internal fun WidgetContent(quiet: Boolean, canChangeSound: Boolean) {
         actionStartActivity<MainActivity>()
     }
 
+    var surface = GlanceModifier
+        .fillMaxSize()
+        .cornerRadius(28.dp)
+        .clickable(clickAction)
+    if (!transparent) {
+        surface = surface.background(
+            if (quiet) GlanceTheme.colors.primary else GlanceTheme.colors.widgetBackground
+        )
+    }
+
     Box(
-        modifier = GlanceModifier
-            .fillMaxSize()
-            .background(background)
-            .cornerRadius(28.dp)
-            .clickable(clickAction),
+        modifier = surface,
         contentAlignment = Alignment.Center
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {

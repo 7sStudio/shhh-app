@@ -14,6 +14,7 @@
     <string name="widget_label_on">Hushed</string>
     <string name="widget_label_off">Shhh</string>
     <string name="widget_description">One tap: vibrate and mute media</string>
+    <string name="widget_transparent_label">Shhh (transparent)</string>
 
     <string name="permission_title">Optional: Do Not Disturb access</string>
     <string name="permission_body">Shhh already works without it. Android only blocks

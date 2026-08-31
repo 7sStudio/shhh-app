@@ -14,6 +14,7 @@
     <string name="widget_label_on">Leise</string>
     <string name="widget_label_off">Shhh</string>
     <string name="widget_description">Ein Tipp: Vibration an, Medien stumm</string>
+    <string name="widget_transparent_label">Shhh (transparent)</string>
 
     <string name="permission_title">Optional: Zugriff auf „Nicht stören“</string>
     <string name="permission_body">Shhh funktioniert auch ohne diesen Zugriff. Android blockiert Shhh nur, während ein Nicht-stören-, Schlafenszeit- oder Fahrmodus aktiv ist – erteile unten den Zugriff, dann funktioniert Shhh auch dann weiter. Shhh schaltet diese Modi nie selbst ein oder aus.</string>

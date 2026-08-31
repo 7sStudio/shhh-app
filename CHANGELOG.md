@@ -3,6 +3,15 @@
 All notable changes to this project are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning: [SemVer](https://semver.org).
 
+## [Unreleased]
+
+### Added
+- 🫥 **A second, transparent widget style.** The widget picker now offers
+  "Shhh (transparent)" next to the classic card: the same one-tap toggle with
+  no background behind it, blending straight into the wallpaper. While hushed
+  its glyph and label tint to the theme's accent color instead of filling a
+  card. Much requested.
+
 ## [1.5.0] - 2026-08-30
 
 ### Added

@@ -14,6 +14,7 @@
     <string name="widget_label_on">Тихо</string>
     <string name="widget_label_off">Shhh</string>
     <string name="widget_description">Один тап: вибрация, медиа без звука</string>
+    <string name="widget_transparent_label">Shhh (прозрачный)</string>
 
     <string name="permission_title">Необязательно: доступ к режиму «Не беспокоить»</string>
     <string name="permission_body">Shhh уже работает без этого разрешения. Android блокирует Shhh, только пока активен режим «Не беспокоить», «Режим сна» или «Вождение» — предоставьте доступ ниже, и Shhh продолжит работать и в этих случаях. Shhh никогда не включает и не отключает эти режимы.</string>

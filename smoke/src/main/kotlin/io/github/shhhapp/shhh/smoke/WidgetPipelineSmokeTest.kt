@@ -54,19 +54,12 @@ class WidgetPipelineSmokeTest {
     }
 
     @Before
-    fun bindWidget() {
+    fun setUpHost() {
         // This module self-instruments, so this is the smoke app's own context —
         // it plays the launcher, hosting the release app's widget cross-app.
         context = InstrumentationRegistry.getInstrumentation().context
         shell("appwidget grantbind --package ${context.packageName} --user 0")
-
         host = CapturingHost(context)
-        widgetId = host.allocateAppWidgetId()
-        val bound = AppWidgetManager.getInstance(context).bindAppWidgetIdIfAllowed(
-            widgetId,
-            ComponentName(APP_PACKAGE, "$APP_PACKAGE.widget.ShhhWidgetReceiver")
-        )
-        assertTrue("could not bind the widget (grantbind failed?)", bound)
     }
 
     @After
@@ -76,8 +69,15 @@ class WidgetPipelineSmokeTest {
         shell("appwidget revokebind --package ${context.packageName} --user 0")
     }
 
-    @Test
-    fun boundWidgetReceivesRemoteViewsFromGlance() {
+    /** Binds [receiver] the way a launcher would and waits for its RemoteViews. */
+    private fun assertBoundWidgetReceivesRemoteViews(receiver: String) {
+        widgetId = host.allocateAppWidgetId()
+        val bound = AppWidgetManager.getInstance(context).bindAppWidgetIdIfAllowed(
+            widgetId,
+            ComponentName(APP_PACKAGE, "$APP_PACKAGE.widget.$receiver")
+        )
+        assertTrue("could not bind $receiver (grantbind failed?)", bound)
+
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         // startListening triggers APPWIDGET_UPDATE to the provider; the host
         // view must exist on the main thread to receive the resulting views.
@@ -87,11 +87,22 @@ class WidgetPipelineSmokeTest {
         }
 
         assertTrue(
-            "Glance never delivered RemoteViews for the bound widget — the " +
-                "update worker most likely crashed in the release app (check " +
-                "R8 keep rules; a launcher would show \"Can't load widget\")",
+            "Glance never delivered RemoteViews for the widget bound via " +
+                "$receiver — the update worker most likely crashed in the " +
+                "release app (check R8 keep rules; a launcher would show " +
+                "\"Can't load widget\")",
             host.delivered.await(60, TimeUnit.SECONDS)
         )
+    }
+
+    @Test
+    fun boundCardWidgetReceivesRemoteViewsFromGlance() {
+        assertBoundWidgetReceivesRemoteViews("ShhhWidgetReceiver")
+    }
+
+    @Test
+    fun boundTransparentWidgetReceivesRemoteViewsFromGlance() {
+        assertBoundWidgetReceivesRemoteViews("ShhhTransparentWidgetReceiver")
     }
 
     private companion object {

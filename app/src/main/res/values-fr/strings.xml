@@ -14,6 +14,7 @@
     <string name="widget_label_on">Silencieux</string>
     <string name="widget_label_off">Shhh</string>
     <string name="widget_description">Une tape : vibreur et média coupé</string>
+    <string name="widget_transparent_label">Shhh (transparent)</string>
 
     <string name="permission_title">Facultatif : accès Ne pas déranger</string>
     <string name="permission_body">Shhh fonctionne déjà sans cet accès. Android le bloque uniquement pendant qu\'un mode Ne pas déranger, Coucher ou Conduite est actif — accordez l\'accès ci-dessous et Shhh continuera de fonctionner alors aussi. Shhh n\'active ni ne désactive jamais ces modes.</string>

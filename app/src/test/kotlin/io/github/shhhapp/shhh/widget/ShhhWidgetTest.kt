@@ -82,7 +82,8 @@ class ShhhWidgetTest {
             CompositionLocalProvider(LocalContext provides context) {
                 WidgetContent(
                     quiet = WidgetUiState.quiet,
-                    canChangeSound = WidgetUiState.canChangeSound
+                    canChangeSound = WidgetUiState.canChangeSound,
+                    transparent = false
                 )
             }
         }

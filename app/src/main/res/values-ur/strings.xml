@@ -14,6 +14,7 @@
     <string name="widget_label_on">خاموش</string>
     <string name="widget_label_off">Shhh</string>
     <string name="widget_description">ایک ٹیپ: وائبریٹ اور میڈیا خاموش</string>
+    <string name="widget_transparent_label">Shhh (شفاف)</string>
 
     <string name="permission_title">اختیاری: پریشان نہ کریں تک رسائی</string>
     <string name="permission_body">Shhh اس کے بغیر بھی کام کرتا ہے۔ Android صرف اس وقت Shhh کو روکتا ہے جب پریشان نہ کریں، نیند کا وقت یا ڈرائیونگ موڈ فعال ہو — نیچے رسائی دیں تاکہ Shhh تب بھی کام کرتا رہے۔ Shhh کبھی بھی یہ موڈز خود آن یا آف نہیں کرتا۔</string>

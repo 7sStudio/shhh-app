@@ -14,6 +14,7 @@
     <string name="widget_label_on">已静音</string>
     <string name="widget_label_off">Shhh</string>
     <string name="widget_description">一键：振动并静音媒体</string>
+    <string name="widget_transparent_label">Shhh（透明）</string>
 
     <string name="permission_title">可选：勿扰模式权限</string>
     <string name="permission_body">Shhh 没有这项权限也能正常使用。只有在勿扰、就寝或驾驶模式

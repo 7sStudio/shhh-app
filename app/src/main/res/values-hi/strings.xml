@@ -14,6 +14,7 @@
     <string name="widget_label_on">चुप</string>
     <string name="widget_label_off">Shhh</string>
     <string name="widget_description">एक टैप: वाइब्रेट ऑन, मीडिया म्यूट</string>
+    <string name="widget_transparent_label">Shhh (पारदर्शी)</string>
 
     <string name="permission_title">वैकल्पिक: परेशान न करें एक्सेस</string>
     <string name="permission_body">Shhh इसके बिना भी पहले से काम करता है। Android सिर्फ़ तब Shhh को रोकता है जब परेशान न करें, बेडटाइम या ड्राइविंग मोड चालू हो — नीचे एक्सेस दें और तब भी Shhh काम करता रहेगा। Shhh कभी भी इन मोड को खुद चालू या बंद नहीं करता।</string>
