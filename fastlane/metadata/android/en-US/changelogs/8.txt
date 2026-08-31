@@ -1,0 +1,3 @@
+Added:
+• A second, transparent widget style — the same one-tap toggle with no background, blending straight into the wallpaper.
+• The transparent widget colors itself for your wallpaper: near-black on light wallpapers, white on dark ones, Material You accents while hushed — and it recolors the moment the wallpaper changes.
