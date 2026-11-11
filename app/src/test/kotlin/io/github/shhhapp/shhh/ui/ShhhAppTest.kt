@@ -11,7 +11,6 @@ import androidx.activity.ComponentActivity
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
-import androidx.compose.ui.test.isToggleable
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -23,6 +22,9 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.github.shhhapp.shhh.R
 import io.github.shhhapp.shhh.ShhhApp
+import io.github.shhhapp.shhh.audio.isHeadphonesOfferShown
+import io.github.shhhapp.shhh.audio.postStandInHeadphonesOffer
+import io.github.shhhapp.shhh.core.HushManager
 import io.github.shhhapp.shhh.core.ShadowRefusingAudioManager
 import io.github.shhhapp.shhh.core.ShhhSettings
 import io.github.shhhapp.shhh.update.UpdateChecker
@@ -321,6 +323,42 @@ class ShhhAppTest {
     }
 
     @Test
+    fun `the until chip hushes until the picked time`() {
+        val before = System.currentTimeMillis()
+        launchApp()
+
+        composeTestRule.onNodeWithTag("chip_until").performScrollTo().performClick()
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithText(context.getString(android.R.string.ok)).performClick()
+        composeTestRule.waitForIdle()
+
+        assertEquals(0, ringVolume)
+        assertEquals(0, mediaVolume)
+        // The clock opens an hour ahead and the end lands on a whole minute.
+        assertTrue(settings.timerEndMillis > before + 58 * 60_000L)
+        assertTrue(settings.timerEndMillis <= System.currentTimeMillis() + 61 * 60_000L)
+        val countdownPrefix = string(R.string.timer_running_until).substringBefore("%1\$s")
+        composeTestRule
+            .onNodeWithText(countdownPrefix, substring = true)
+            .assertIsDisplayed()
+    }
+
+    @Test
+    fun `the until chip without the alarm grant at the last moment explains it`() {
+        launchApp()
+        composeTestRule.onNodeWithTag("chip_until").performScrollTo().performClick()
+        composeTestRule.waitForIdle()
+        // The grant vanishes while the clock is open.
+        ShadowAlarmManager.setCanScheduleExactAlarms(false)
+
+        composeTestRule.onNodeWithText(context.getString(android.R.string.ok)).performClick()
+        composeTestRule.waitForIdle()
+
+        assertEquals("nothing was hushed", 3, ringVolume)
+        composeTestRule.onNodeWithText(string(R.string.exact_alarm_body)).assertIsDisplayed()
+    }
+
+    @Test
     fun `End now cancels the timer and restores sound`() {
         launchApp()
         composeTestRule.onNodeWithText(string(R.string.timer_chip_30))
@@ -359,6 +397,94 @@ class ShhhAppTest {
         assertEquals(context.packageName, launched.data?.schemeSpecificPart)
     }
 
+    @Test
+    fun `a grant that vanishes before a chip tap is explained and nothing is hushed`() {
+        launchApp()
+        // The screen read the grant as present; it is gone by the tap.
+        ShadowAlarmManager.setCanScheduleExactAlarms(false)
+
+        composeTestRule.onNodeWithText(string(R.string.timer_chip_30))
+            .performScrollTo()
+            .performClick()
+        composeTestRule.waitForIdle()
+
+        assertEquals(3, ringVolume)
+        assertEquals(0L, settings.timerEndMillis)
+        composeTestRule.onNodeWithText(string(R.string.exact_alarm_title)).assertIsDisplayed()
+    }
+
+    // ---- the exact-alarm explanation asked for by a launch ----
+    // A shortcut or automation intent asked for a timed hush with no alarm to
+    // end it; ToggleActivity refused and opened the app to explain.
+
+    @Test
+    fun `an explanation request shows the dialog and Grant opens the system screen`() {
+        val explain = mutableStateOf(true)
+        composeTestRule.setContent { ShhhApp(explainExactAlarms = explain) }
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText(string(R.string.exact_alarm_title)).assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.exact_alarm_grant)).performClick()
+        composeTestRule.waitForIdle()
+
+        assertFalse(explain.value)
+        assertEquals(
+            Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM,
+            requireNotNull(startedActivity).action
+        )
+        composeTestRule.onNodeWithText(string(R.string.exact_alarm_title)).assertDoesNotExist()
+    }
+
+    @Test
+    fun `an explanation request can be dismissed`() {
+        val explain = mutableStateOf(true)
+        composeTestRule.setContent { ShhhApp(explainExactAlarms = explain) }
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText(context.getString(android.R.string.cancel)).performClick()
+        composeTestRule.waitForIdle()
+
+        assertFalse(explain.value)
+        assertNull(startedActivity)
+        composeTestRule.onNodeWithText(string(R.string.exact_alarm_title)).assertDoesNotExist()
+    }
+
+    // ---- an un-hush shhh never saw ----
+
+    @Test
+    fun `opening the app after an un-hush shhh never saw clears the timer and its card`() {
+        HushManager(context).hush(durationMinutes = 30)
+        // Raised from the system volume panel while the app was closed.
+        ringVolume = 4
+
+        launchApp()
+
+        assertEquals(0L, settings.timerEndMillis)
+        composeTestRule.onNodeWithText(string(R.string.timer_end_now)).assertDoesNotExist()
+        composeTestRule.onNodeWithText(string(R.string.status_quiet_off)).assertIsDisplayed()
+        assertEquals("the user's ring level stays", 4, ringVolume)
+    }
+
+    @Test
+    fun `a ringer change outside the app disarms a timer the user ended`() {
+        launchApp()
+        composeTestRule.onNodeWithText(string(R.string.timer_chip_30))
+            .performScrollTo()
+            .performClick()
+        composeTestRule.waitForIdle()
+        assertTrue(settings.timerEndMillis > 0)
+
+        composeTestRule.runOnUiThread {
+            ringVolume = 4
+            context.sendBroadcast(Intent(AudioManager.RINGER_MODE_CHANGED_ACTION))
+        }
+        shadowOf(android.os.Looper.getMainLooper()).idle()
+        composeTestRule.waitForIdle()
+
+        assertEquals(0L, settings.timerEndMillis)
+        composeTestRule.onNodeWithText(string(R.string.timer_end_now)).assertDoesNotExist()
+    }
+
     // ---- quiet hours ----
 
     @Test
@@ -367,7 +493,7 @@ class ShhhAppTest {
         val before = System.currentTimeMillis()
         launchApp()
 
-        composeTestRule.onNode(isToggleable()).performScrollTo().performClick()
+        composeTestRule.onNodeWithTag("quiet_hours_switch").performScrollTo().performClick()
         composeTestRule.waitForIdle()
 
         assertTrue(settings.quietHoursEnabled)
@@ -381,7 +507,7 @@ class ShhhAppTest {
         setQuietWindow(startOffset = 120, endOffset = 180)
         launchApp()
 
-        composeTestRule.onNode(isToggleable()).performScrollTo().performClick()
+        composeTestRule.onNodeWithTag("quiet_hours_switch").performScrollTo().performClick()
         composeTestRule.waitForIdle()
 
         assertTrue(settings.quietHoursEnabled)
@@ -399,7 +525,7 @@ class ShhhAppTest {
         composeTestRule.waitForIdle()
         assertEquals(0, ringVolume)
 
-        composeTestRule.onNode(isToggleable()).performScrollTo().performClick()
+        composeTestRule.onNodeWithTag("quiet_hours_switch").performScrollTo().performClick()
         composeTestRule.waitForIdle()
 
         assertTrue(settings.quietHoursEnabled)
@@ -413,10 +539,10 @@ class ShhhAppTest {
     fun `turning quiet hours back off leaves the current state alone`() {
         setQuietWindow(startOffset = -60, endOffset = 60)
         launchApp()
-        composeTestRule.onNode(isToggleable()).performScrollTo().performClick()
+        composeTestRule.onNodeWithTag("quiet_hours_switch").performScrollTo().performClick()
         composeTestRule.waitForIdle()
 
-        composeTestRule.onNode(isToggleable()).performScrollTo().performClick()
+        composeTestRule.onNodeWithTag("quiet_hours_switch").performScrollTo().performClick()
         composeTestRule.waitForIdle()
 
         assertFalse(settings.quietHoursEnabled)
@@ -439,6 +565,42 @@ class ShhhAppTest {
         composeTestRule.waitForIdle()
 
         composeTestRule.onNodeWithText(string(R.string.status_quiet_on)).assertIsDisplayed()
+    }
+
+    @Test
+    fun `opening the app on an audible phone clears a stale headphones offer`() {
+        // Hushed, offered, then un-hushed from the system volume panel.
+        postStandInHeadphonesOffer(context)
+
+        launchApp()
+
+        assertFalse(isHeadphonesOfferShown(context))
+    }
+
+    @Test
+    fun `opening the app on a hushed phone keeps the headphones offer`() {
+        ringVolume = 0
+        postStandInHeadphonesOffer(context)
+
+        launchApp()
+
+        assertTrue(isHeadphonesOfferShown(context))
+    }
+
+    @Test
+    fun `un-hushing from the big toggle clears the headphones offer`() {
+        ringVolume = 0
+        mediaVolume = 0
+        launchApp()
+        postStandInHeadphonesOffer(context)
+
+        composeTestRule
+            .onNodeWithContentDescription(string(R.string.tile_content_description))
+            .performClick()
+        composeTestRule.waitForIdle()
+
+        assertTrue(ringVolume > 0)
+        assertFalse(isHeadphonesOfferShown(context))
     }
 
     @Test

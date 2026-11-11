@@ -67,6 +67,13 @@ class ShhhSettingsTest {
     }
 
     @Test
+    fun `lastQuietWindowStart defaults to none and round-trips`() {
+        assertEquals(0L, settings.lastQuietWindowStart)
+        settings.lastQuietWindowStart = 1_794_000_000L
+        assertEquals(1_794_000_000L, reloaded.lastQuietWindowStart)
+    }
+
+    @Test
     fun `lastKnownQuiet round-trips`() {
         settings.lastKnownQuiet = true
         assertTrue(reloaded.lastKnownQuiet)

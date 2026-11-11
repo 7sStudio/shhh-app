@@ -8,6 +8,8 @@ import android.content.Intent
 import android.media.AudioManager
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.github.shhhapp.shhh.audio.isHeadphonesOfferShown
+import io.github.shhhapp.shhh.audio.postStandInHeadphonesOffer
 import io.github.shhhapp.shhh.core.ShadowRefusingAudioManager
 import io.github.shhhapp.shhh.core.ShhhSettings
 import io.github.shhhapp.shhh.widget.WidgetUiState
@@ -81,6 +83,62 @@ class ToggleActivityTest {
     private var ringVolume: Int
         get() = audioManager.getStreamVolume(AudioManager.STREAM_RING)
         set(value) = audioManager.setStreamVolume(AudioManager.STREAM_RING, value, 0)
+
+    @Test
+    fun `a duration extra too large to be real is cut to a day`() {
+        launch(ToggleActivity.ACTION_HUSH) {
+            putExtra(ToggleActivity.EXTRA_DURATION_MINUTES, Long.MAX_VALUE.toString())
+        }
+
+        assertEquals(0, ringVolume)
+        val day = 24L * 60L * 60_000L
+        assertTrue(
+            "must not overflow into a timer that already ended",
+            settings.timerEndMillis > System.currentTimeMillis()
+        )
+        assertTrue(settings.timerEndMillis <= System.currentTimeMillis() + day)
+    }
+
+    // ---- headphones offer ----
+    // The offer's own tap lands here (RESTORE_MEDIA), and so does every
+    // surface's un-hush; either way it must not outlive what it offered.
+
+    @Test
+    fun `the UNHUSH action clears an untapped headphones offer`() {
+        ringVolume = 0
+        mediaVolume = 0
+        postStandInHeadphonesOffer(context)
+
+        launch(ToggleActivity.ACTION_UNHUSH)
+
+        assertTrue(ringVolume > 0)
+        assertFalse(isHeadphonesOfferShown(context))
+    }
+
+    @Test
+    fun `the TOGGLE action that un-hushes clears the headphones offer`() {
+        ringVolume = 0
+        mediaVolume = 0
+        postStandInHeadphonesOffer(context)
+
+        launch(ToggleActivity.ACTION_TOGGLE)
+
+        assertFalse(isHeadphonesOfferShown(context))
+    }
+
+    @Test
+    fun `the RESTORE_MEDIA action retires the headphones offer and stays hushed`() {
+        settings.previousMediaVolume = 6
+        ringVolume = 0
+        mediaVolume = 0
+        postStandInHeadphonesOffer(context)
+
+        launch(ToggleActivity.ACTION_RESTORE_MEDIA)
+
+        assertEquals(6, mediaVolume)
+        assertEquals("the ringer stays hushed", 0, ringVolume)
+        assertFalse(isHeadphonesOfferShown(context))
+    }
 
     // ---- Do Not Disturb ----
     // Under an active zen mode the tile hands every tap to this activity,
@@ -286,8 +344,11 @@ class ToggleActivityTest {
     @Test
     fun `restore media action tolerates a device that refuses the volume change`() {
         // Max media volume of 0 makes every setStreamVolume land on 0, which is
-        // how QuietModeController reports "the change did not take".
+        // how QuietModeController reports "the change did not take". Media
+        // starts muted, as on a hushed phone: media already audible would be
+        // "media is back" and never written at all.
         ringVolume = 0
+        mediaVolume = 0
         shadowOf(audioManager).setStreamMaxVolume(0)
 
         val activity = launch(ToggleActivity.ACTION_RESTORE_MEDIA)
@@ -326,6 +387,10 @@ class ToggleActivityTest {
         val next = shadowOf(activity).nextStartedActivity
         assertEquals(MainActivity::class.java.name, next.component?.className)
         assertTrue(next.flags and Intent.FLAG_ACTIVITY_NEW_TASK != 0)
+        assertFalse(
+            "a DND refusal is not an exact-alarm one",
+            next.hasExtra(MainActivity.EXTRA_EXPLAIN_EXACT_ALARMS)
+        )
         assertEquals(3, ringVolume)
         assertEquals(8, mediaVolume)
         assertTrue(activity.isFinishing)
@@ -348,6 +413,77 @@ class ToggleActivityTest {
             shadowOf(activity).nextStartedActivity.component?.className
         )
         assertEquals("still hushed", 0, ringVolume)
+    }
+
+    // ---- Missing exact-alarm access ----
+    // Launcher shortcuts ("Hush for 30 min") and automation intents never saw
+    // the in-app chips' grant check; a timed hush with no alarm to end it
+    // used to hush forever under a countdown running past zero.
+
+    @Test
+    fun `a timed hush without exact alarm access changes nothing and opens the explanation`() {
+        ShadowAlarmManager.setCanScheduleExactAlarms(false)
+
+        val activity = launch(ToggleActivity.ACTION_HUSH) {
+            putExtra(ToggleActivity.EXTRA_DURATION_MINUTES, 30)
+        }
+
+        assertEquals(3, ringVolume)
+        assertEquals(8, mediaVolume)
+        assertEquals(0L, settings.timerEndMillis)
+        assertNull(shadowOf(alarmManager).peekNextScheduledAlarm())
+        val next = shadowOf(activity).nextStartedActivity
+        assertEquals(MainActivity::class.java.name, next.component?.className)
+        assertTrue(next.getBooleanExtra(MainActivity.EXTRA_EXPLAIN_EXACT_ALARMS, false))
+        assertTrue(next.flags and Intent.FLAG_ACTIVITY_NEW_TASK != 0)
+        assertTrue(
+            "an already-open app must get the request through onNewIntent",
+            next.flags and Intent.FLAG_ACTIVITY_SINGLE_TOP != 0 &&
+                next.flags and Intent.FLAG_ACTIVITY_CLEAR_TOP != 0
+        )
+        assertTrue(activity.isFinishing)
+    }
+
+    @Test
+    fun `a refused timed hush snaps the optimistic widget flip back`() {
+        ShadowAlarmManager.setCanScheduleExactAlarms(false)
+        WidgetUiState.refreshFrom(context)
+        assertFalse(WidgetUiState.quiet)
+
+        launch(ToggleActivity.ACTION_HUSH) {
+            putExtra(ToggleActivity.EXTRA_DURATION_MINUTES, "30")
+        }
+
+        awaitWidgetQuiet(expected = false, why = "the revert after a refused timed hush")
+        Thread.sleep(200)
+        assertFalse("the optimistic flip must not out-live the refusal", WidgetUiState.quiet)
+    }
+
+    @Test
+    fun `an untimed hush without exact alarm access just works`() {
+        ShadowAlarmManager.setCanScheduleExactAlarms(false)
+
+        val activity = launch(ToggleActivity.ACTION_HUSH)
+
+        assertEquals(0, ringVolume)
+        assertNull(shadowOf(activity).nextStartedActivity)
+    }
+
+    // ---- un-hushing an audible phone ----
+
+    @Test
+    fun `the UNHUSH action on an audible phone keeps the user's media volume`() {
+        // Measured: shhh off, media at 7, UNHUSH -> media dropped to 5, the
+        // level saved at the last hush.
+        mediaVolume = 5
+        launch(ToggleActivity.ACTION_HUSH)
+        launch(ToggleActivity.ACTION_UNHUSH)
+        mediaVolume = 7
+
+        launch(ToggleActivity.ACTION_UNHUSH)
+
+        assertEquals(7, mediaVolume)
+        assertEquals(3, ringVolume)
     }
 
     // ---- the optimistic widget flip ----

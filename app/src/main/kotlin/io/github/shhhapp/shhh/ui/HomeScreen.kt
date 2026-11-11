@@ -31,6 +31,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -54,6 +55,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -63,6 +65,7 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -81,12 +84,14 @@ fun HomeScreen(
     settingsRevision: Int,
     onToggle: () -> Unit,
     onHushFor: (Long) -> Unit,
+    onHushUntil: (Int) -> Unit,
     onEndTimer: () -> Unit,
     onQuietHoursToggled: (Boolean) -> Unit,
     onRequestExactAlarmAccess: () -> Unit,
     onOpenSettings: () -> Unit
 ) {
     var showExactAlarmDialog by remember { mutableStateOf(false) }
+    var showUntilPicker by remember { mutableStateOf(false) }
 
     Scaffold { innerPadding ->
         Column(
@@ -166,6 +171,9 @@ fun HomeScreen(
                 enabled = canChangeSound,
                 onHushFor = { minutes ->
                     if (canScheduleExact) onHushFor(minutes) else showExactAlarmDialog = true
+                },
+                onPickUntil = {
+                    if (canScheduleExact) showUntilPicker = true else showExactAlarmDialog = true
                 }
             )
 
@@ -173,8 +181,14 @@ fun HomeScreen(
 
             // Recompose the summary when persisted settings change outside Compose.
             androidx.compose.runtime.key(settingsRevision) {
+                // Quiet hours switched on, but the "Alarms & reminders" grant
+                // has since gone: no start alarm can fire, so the schedule on
+                // the card is a promise nothing keeps. Say so on the card, and
+                // make the card lead to the grant instead of the settings.
+                val stalled = settings.quietHoursEnabled && !canScheduleExact
                 QuietHoursCard(
                     settings = settings,
+                    stalled = stalled,
                     onToggled = { enabled ->
                         if (enabled && !canScheduleExact) {
                             showExactAlarmDialog = true
@@ -182,7 +196,9 @@ fun HomeScreen(
                             onQuietHoursToggled(enabled)
                         }
                     },
-                    onOpen = onOpenSettings
+                    onOpen = {
+                        if (stalled) showExactAlarmDialog = true else onOpenSettings()
+                    }
                 )
             }
 
@@ -197,6 +213,21 @@ fun HomeScreen(
                 onRequestExactAlarmAccess()
             },
             onDismiss = { showExactAlarmDialog = false }
+        )
+    }
+
+    if (showUntilPicker) {
+        // Opens an hour ahead: the common case is "until this is over".
+        val oneHourAhead = remember {
+            java.time.LocalTime.now().plusHours(1).let { it.hour * 60 + it.minute }
+        }
+        TimePickerDialog(
+            initialMinutes = oneHourAhead,
+            onDismiss = { showUntilPicker = false },
+            onConfirm = { minutesOfDay ->
+                showUntilPicker = false
+                onHushUntil(minutesOfDay)
+            }
         )
     }
 }
@@ -266,10 +297,14 @@ private fun QuietToggle(quiet: Boolean, enabled: Boolean, onToggle: () -> Unit) 
             }
             .clip(RoundedCornerShape(corner))
             .background(container)
-            .clickable(
+            // A switch, not a button: a screen reader announces it with its
+            // on/off state instead of leaving the state to the glyph alone.
+            .toggleable(
+                value = quiet,
                 interactionSource = interactionSource,
                 indication = ripple(),
-                enabled = enabled
+                enabled = enabled,
+                role = Role.Switch
             ) {
                 haptics.performHapticFeedback(HapticFeedbackType.LongPress)
                 onToggle()
@@ -332,8 +367,10 @@ private fun CountdownCard(endMillis: Long, onEndTimer: () -> Unit) {
     }
 }
 
+private const val DISABLED_CHIP_ALPHA = 0.38f
+
 @Composable
-private fun TimerChips(enabled: Boolean, onHushFor: (Long) -> Unit) {
+private fun TimerChips(enabled: Boolean, onHushFor: (Long) -> Unit, onPickUntil: () -> Unit) {
     Column(Modifier.fillMaxWidth()) {
         Text(
             text = stringResource(R.string.timer_section_title),
@@ -351,6 +388,15 @@ private fun TimerChips(enabled: Boolean, onHushFor: (Long) -> Unit) {
             DurationChip(R.string.timer_chip_60, 60, enabled, onHushFor, Modifier.weight(1f))
             DurationChip(R.string.timer_chip_120, 120, enabled, onHushFor, Modifier.weight(1f))
         }
+        Spacer(Modifier.height(8.dp))
+        // Its own row: a fifth chip would squeeze the labels above past one
+        // line in the longer languages.
+        TimerChip(
+            label = stringResource(R.string.timer_chip_until),
+            enabled = enabled,
+            onClick = onPickUntil,
+            modifier = Modifier.fillMaxWidth().testTag("chip_until")
+        )
     }
 }
 
@@ -362,21 +408,42 @@ private fun DurationChip(
     onHushFor: (Long) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    TimerChip(
+        label = stringResource(labelRes),
+        enabled = enabled,
+        onClick = { onHushFor(minutes) },
+        modifier = modifier,
+        textModifier = Modifier.testTag("text_$minutes")
+    )
+}
+
+@Composable
+private fun TimerChip(
+    label: String,
+    enabled: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    textModifier: Modifier = Modifier
+) {
     Box(
         modifier = modifier
+            // Material's disabled-content opacity: a chip that will not
+            // respond must not look like one that will.
+            .alpha(if (enabled) 1f else DISABLED_CHIP_ALPHA)
             .clip(MaterialTheme.shapes.small)
             .background(MaterialTheme.colorScheme.secondaryContainer)
-            .clickable(enabled = enabled) { onHushFor(minutes) }
+            .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
             .padding(horizontal = 4.dp, vertical = 10.dp),
         contentAlignment = Alignment.Center
     ) {
-        Text(stringResource(labelRes), maxLines = 1, modifier = Modifier.testTag("text_$minutes"))
+        Text(label, maxLines = 1, modifier = textModifier)
     }
 }
 
 @Composable
 private fun QuietHoursCard(
     settings: ShhhSettings,
+    stalled: Boolean,
     onToggled: (Boolean) -> Unit,
     onOpen: () -> Unit
 ) {
@@ -406,9 +473,21 @@ private fun QuietHoursCard(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+                if (stalled) {
+                    Text(
+                        text = stringResource(R.string.exact_alarm_title),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.testTag("quiet_hours_stalled")
+                    )
+                }
             }
             Spacer(Modifier.width(12.dp))
-            Switch(checked = enabled, onCheckedChange = onToggled)
+            Switch(
+                checked = enabled,
+                onCheckedChange = onToggled,
+                modifier = Modifier.testTag("quiet_hours_switch")
+            )
         }
     }
 }

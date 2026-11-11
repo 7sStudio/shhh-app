@@ -3,6 +3,69 @@
 All notable changes to this project are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning: [SemVer](https://semver.org).
 
+## [1.7.0] - 2026-11-11
+
+### Added
+- ⏳ **Hush until a time you pick.** A new "Until a set time" chip sits under
+  the 15 min / 30 min / 1 hour / 2 hours ones: it opens the clock, and sound
+  comes back at exactly that minute (tomorrow, if that time has already
+  passed today).
+- 🌅 **Quiet hours catch up after a restart.** If the phone was off (or mid
+  restart) when quiet hours were due to begin, it used to stay loud until the
+  next night. Coming back up inside the window, Shhh now hushes until the
+  window ends, exactly as if the start had fired on time. If you already
+  switched sound back on during that window, a restart leaves it on.
+- 👆 **Long-pressing the Quick Settings tile opens Shhh** instead of Android's
+  generic app-info page.
+- 🚧 **The Quiet hours card says when it cannot run.** If quiet hours are on
+  but Android's "Alarms & reminders" access has been taken away since, the
+  card now shows it and a tap leads straight to the fix, instead of quietly
+  showing a schedule nothing will act on.
+
+### Changed
+- 🎧 **The headphones option hears more earbuds and no longer waits for a
+  tap.** It now also reacts to media-only and LE Audio earbuds, not just ones
+  with a call profile, and hands the restore to the same momentary service
+  the tile and the timers use — the route Android allows to change volume —
+  so media can come back on its own. If Android still refuses, the one-tap
+  "bring media volume back" notification is there as before.
+- ♿ **Clearer for screen readers, and for eyes.** The big toggle is announced
+  as a switch with its on/off state, the duration chips as buttons, and chips
+  that cannot be used right now look dimmed instead of looking tappable.
+- 🧮 **Timed hushes are capped at 24 hours.** A longer duration sent by an
+  automation app is cut to a day instead of being taken literally.
+
+### Fixed
+- 🎧 **The "Headphones connected" notification no longer outlives the hush.**
+  If you left its "tap to bring media volume back" offer untapped, it stayed
+  in the shade after Shhh was switched off — and tapping it then would move a
+  media volume you had since set yourself. Switching Shhh off from anywhere
+  (app, tile, widget, shortcut, timer, quiet hours) now clears every
+  notification Shhh posted, bringing media back another way retires the offer
+  too, and an un-hush made from the system volume panel is caught the next
+  time the app or the tile looks at the phone.
+- ⏰ **A timed hush no longer hushes forever when it can't end on time.**
+  Without Android's "Alarms & reminders" access (the default on a fresh
+  install), the "Hush for 30 min" shortcut and timed automation intents hushed
+  the phone anyway, and the "Sound returns at…" notification just kept
+  counting past zero. Now a timed hush that nothing could end changes nothing
+  and opens Shhh on the explanation of that one-time switch. An ordinary hush
+  needs no such access and works as before.
+- 🔁 **A timer that runs out while the phone is off now brings the sound
+  back.** Shhh assumed a reboot resets the ringer; it doesn't, so the phone
+  stayed hushed with the timer gone. The overdue restore now runs as soon as
+  the phone is back up (or the clock or time zone changes), and the countdown
+  notification of a timer still running comes back after a reboot too.
+- 🎚️ **Un-hushing never overrides a volume you already set.** Switching Shhh
+  off on a phone that was already audible put the media volume back to the
+  level saved at the last hush. Shhh now only brings back a slider that is
+  still at zero, so "Restore now" after nudging the ringer up by hand still
+  returns your media, and leaves your ringer where you put it.
+- ⏱️ **Ending a timed hush from the volume panel takes the timer down too.**
+  Raising the ringer yourself left the timer, its alarm and the "Sound returns
+  at…" countdown (in the shade and in the app) standing until it ran out. They
+  now go the next time the app or the tile looks at the phone.
+
 ## [1.6.0] - 2026-08-31
 
 ### Added

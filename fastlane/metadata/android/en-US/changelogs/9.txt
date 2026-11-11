@@ -1,0 +1,14 @@
+Added:
+• Hush until a time you pick — a new "Until a set time" chip next to the fixed durations.
+• Quiet hours catch up after a restart, and the card says when it cannot run.
+• Long-pressing the Quick Settings tile opens Shhh.
+
+Changed:
+• The headphones option also hears media-only and LE Audio earbuds, and can bring media back without a tap.
+• Clearer for screen readers; timed hushes are capped at 24 hours.
+
+Fixed:
+• A timed hush can no longer hush forever when Android's "Alarms & reminders" access is missing.
+• A timer that runs out while the phone is off now brings the sound back.
+• Un-hushing never overrides a volume you already set.
+• Leftover notifications and timers are cleared when Shhh goes off, however it goes off.

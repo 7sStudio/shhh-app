@@ -19,6 +19,8 @@ import io.github.shhhapp.shhh.widget.ShhhWidget
  *
  * Supported actions (all exported, all safe — they only affect sound state):
  *  - [ACTION_HUSH]    with optional int/string extra [EXTRA_DURATION_MINUTES]
+ *                     (a duration needs the "Alarms & reminders" grant; without
+ *                     it nothing changes and the app opens to explain why)
  *  - [ACTION_UNHUSH]
  *  - [ACTION_TOGGLE]  (default when launched with no action)
  *  - [ACTION_RESTORE_MEDIA] (media volume only; ringer stays hushed)
@@ -51,15 +53,23 @@ class ToggleActivity : Activity() {
             else -> manager.toggle()
         }
 
-        if (result == QuietModeController.Result.NeedsDndAccess) {
-            // Nothing changed, so snap the optimistic flip back to reality —
-            // a refused transition never refreshes on its own.
+        if (result !is QuietModeController.Result.Success) {
+            // Refused (no Do Not Disturb access under a zen, or a timed hush
+            // without the "Alarms & reminders" grant): nothing changed, so
+            // snap the optimistic flip back to reality — a refused transition
+            // never refreshes on its own.
             manager.refreshSurfaces()
             // Fall through to the full app so the user can grant access.
-            startActivity(
-                Intent(this, MainActivity::class.java)
-                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            )
+            val open = Intent(this, MainActivity::class.java)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            if (result == QuietModeController.Result.NeedsExactAlarmAccess) {
+                // The app explains the missing grant in its exact-alarm dialog.
+                // SINGLE_TOP + CLEAR_TOP deliver the request to an app that is
+                // already open (onNewIntent) instead of just raising its task.
+                open.putExtra(MainActivity.EXTRA_EXPLAIN_EXACT_ALARMS, true)
+                    .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+            }
+            startActivity(open)
         }
 
         finish()

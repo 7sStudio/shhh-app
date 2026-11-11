@@ -1,5 +1,6 @@
 package io.github.shhhapp.shhh.tile
 
+import android.app.AlarmManager
 import android.app.Application
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -15,12 +16,15 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.github.shhhapp.shhh.MainActivity
 import io.github.shhhapp.shhh.ToggleActivity
+import io.github.shhhapp.shhh.audio.isHeadphonesOfferShown
+import io.github.shhhapp.shhh.audio.postStandInHeadphonesOffer
 import io.github.shhhapp.shhh.core.HushManager
 import io.github.shhhapp.shhh.core.QuietModeController
 import io.github.shhhapp.shhh.core.ShhhSettings
 import io.github.shhhapp.shhh.schedule.HushService
 import java.lang.reflect.Proxy
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -32,6 +36,7 @@ import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.Implementation
 import org.robolectric.annotation.Implements
+import org.robolectric.shadows.ShadowAlarmManager
 import org.robolectric.shadows.ShadowAudioManager
 import org.robolectric.util.ReflectionHelpers
 
@@ -163,6 +168,95 @@ class ShhhTileServiceTest {
         val tile = service.qsTile
         assertEquals(Tile.STATE_ACTIVE, tile.state)
         assertEquals("On", tile.subtitle.toString())
+    }
+
+    @Test
+    fun `opening the shade on an audible phone clears a stale headphones offer`() {
+        // Hushed, offered, then un-hushed from the system volume panel: shhh
+        // was never told, and the offer is still sitting in this very shade.
+        postStandInHeadphonesOffer(context)
+        val service = buildService()
+
+        service.onStartListening()
+
+        assertFalse(isHeadphonesOfferShown(context))
+    }
+
+    @Test
+    fun `opening the shade on a hushed phone keeps the headphones offer`() {
+        ring = 0
+        postStandInHeadphonesOffer(context)
+        val service = buildService()
+
+        service.onStartListening()
+
+        assertTrue(isHeadphonesOfferShown(context))
+    }
+
+    // ---- an un-hush shhh never saw ----
+    // A timed hush, then the ring raised from the system volume panel: the
+    // timer, its alarm and the countdown in this very shade are all stale.
+
+    private fun armTimedHush(): Long {
+        ShadowAlarmManager.setCanScheduleExactAlarms(true)
+        HushManager(context).hush(durationMinutes = 30)
+        assertTrue(settings.timerEndMillis > 0)
+        return settings.timerEndMillis
+    }
+
+    private val alarmManager: AlarmManager
+        get() = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+
+    @Test
+    fun `opening the shade after an un-hush shhh never saw disarms the timer`() {
+        armTimedHush()
+        ring = 4
+
+        buildService().onStartListening()
+
+        assertEquals(0L, settings.timerEndMillis)
+        assertNull(shadowOf(alarmManager).peekNextScheduledAlarm())
+    }
+
+    @Test
+    fun `opening the shade on a hushed phone keeps the timer`() {
+        val armedEnd = armTimedHush()
+
+        buildService().onStartListening()
+
+        assertEquals(armedEnd, settings.timerEndMillis)
+        assertNotNull(shadowOf(alarmManager).peekNextScheduledAlarm())
+    }
+
+    @Test
+    fun `a ringer change while the shade is open disarms a timer the user ended`() {
+        armTimedHush()
+        val service = buildService()
+        service.onStartListening()
+
+        ring = 4
+        context.sendBroadcast(Intent(AudioManager.RINGER_MODE_CHANGED_ACTION))
+        shadowOf(Looper.getMainLooper()).idle()
+
+        assertEquals(0L, settings.timerEndMillis)
+        assertEquals(Tile.STATE_INACTIVE, service.qsTile.state)
+    }
+
+    @Test
+    fun `the refresh pushed after shhh's own transition never disarms the timer`() {
+        // Right after a hush the ring write may not have settled, and would
+        // read as "not hushed". The push path renders only; reconciling there
+        // would kill the timer that was just armed.
+        val armedEnd = armTimedHush()
+        val service = buildService()
+        service.onStartListening()
+        ring = 4 // stands in for a ring write that has not landed yet
+
+        ShhhTileService.requestTileRefresh()
+
+        assertEquals(armedEnd, settings.timerEndMillis)
+        assertNotNull(shadowOf(alarmManager).peekNextScheduledAlarm())
+        assertEquals(Tile.STATE_INACTIVE, service.qsTile.state)
     }
 
     @Test

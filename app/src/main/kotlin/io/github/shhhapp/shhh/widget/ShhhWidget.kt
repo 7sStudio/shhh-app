@@ -163,13 +163,22 @@ class ShhhWidget : GlanceAppWidget() {
         provideHushContent(context, transparent = false)
 
     companion object {
-        private val refreshScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+        /**
+         * One publish starts at a time, in the order they were asked for: on
+         * the plain multi-threaded pool two back-to-back launches could reach
+         * [publishLock] in either order, and an optimistic flip landing after
+         * the truth that refutes it stays up. A refused timed hush (no
+         * exact-alarm grant) re-publishes within microseconds of its flip,
+         * which made that race common.
+         */
+        private val refreshScope =
+            CoroutineScope(SupervisorJob() + Dispatchers.Default.limitedParallelism(1))
 
         /**
          * Publishes hold this across their seed-and-update, so an optimistic
          * flip and the truth that follows it land in the order they were
-         * asked for — updateAll suspends, and two bare launches on the same
-         * dispatcher would be free to interleave around that.
+         * asked for — updateAll suspends, and the next publish would
+         * otherwise run in that gap.
          */
         private val publishLock = Mutex()
 

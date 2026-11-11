@@ -10,8 +10,8 @@ So: <b>Shhh</b> 🤫
 Also has:
 
 <ul>
-<li>⏱️ <b>Timed hush</b> — 15 min / 30 min / 1 h / 2 h; sound returns on its own, with an optional live countdown in the status bar</li>
-<li>🌙 <b>Quiet hours</b> — automatic schedule with start/end times and per-weekday control</li>
+<li>⏱️ <b>Timed hush</b> — 15 min / 30 min / 1 h / 2 h, or until a time you pick; sound returns on its own, with an optional live countdown in the status bar</li>
+<li>🌙 <b>Quiet hours</b> — automatic schedule with start/end times and per-weekday control; catches up after a restart</li>
 <li>📱 <b>Quick Settings tile</b> + home screen widget</li>
 <li>🎧 <b>Headphones option</b> — media un-mutes when Bluetooth headphones connect; the ringer stays hushed</li>
 <li>🤖 <b>Automation friendly</b> — Tasker, MacroDroid and routines can trigger it</li>

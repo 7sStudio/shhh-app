@@ -32,6 +32,7 @@
     <string name="timer_chip_30">30 分钟</string>
     <string name="timer_chip_60">1 小时</string>
     <string name="timer_chip_120">2 小时</string>
+    <string name="timer_chip_until">直到指定时间</string>
     <string name="timer_running_until">声音将于 %1$s 恢复</string>
     <string name="timer_end_now">立即结束</string>
 

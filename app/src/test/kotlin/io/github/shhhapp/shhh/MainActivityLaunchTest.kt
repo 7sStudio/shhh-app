@@ -2,12 +2,15 @@ package io.github.shhhapp.shhh
 
 import android.app.NotificationManager
 import android.content.Context
+import android.content.Intent
 import android.media.AudioManager
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
+import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.github.shhhapp.shhh.core.ShhhSettings
@@ -16,6 +19,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.Robolectric
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 
@@ -76,5 +80,117 @@ class MainActivityLaunchTest {
         composeTestRule
             .onNodeWithText(context.getString(R.string.status_quiet_on))
             .assertIsDisplayed()
+    }
+}
+
+/**
+ * The launch [ToggleActivity] makes after refusing a timed hush that has no
+ * exact alarm to end it: the app must open on the existing "Alarms &
+ * reminders" explanation, whether it starts fresh or is already running.
+ */
+@RunWith(AndroidJUnit4::class)
+@Config(sdk = [34])
+class MainActivityExactAlarmExplanationTest {
+
+    private val context: Context = ApplicationProvider.getApplicationContext()
+
+    init {
+        val notificationManager =
+            context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        shadowOf(notificationManager).setNotificationPolicyAccessGranted(true)
+        ShhhSettings(context).apply {
+            timerEndMillis = 0L
+            quietHoursEnabled = false
+            autoUpdateCheckEnabled = false
+        }
+    }
+
+    @get:Rule
+    val composeTestRule = createEmptyComposeRule()
+
+    private val title get() = context.getString(R.string.exact_alarm_title)
+
+    private fun explainIntent(explain: Boolean = true) =
+        Intent(context, MainActivity::class.java)
+            .putExtra(MainActivity.EXTRA_EXPLAIN_EXACT_ALARMS, explain)
+
+    @Test
+    fun `a fresh launch asking for the explanation shows it`() {
+        ActivityScenario.launch<MainActivity>(explainIntent()).use {
+            composeTestRule.onNodeWithText(title).assertIsDisplayed()
+        }
+    }
+
+    @Test
+    fun `a relaunch from Recents does not replay the explanation`() {
+        // Recents restarts a task with the intent that first started it.
+        val replayed = explainIntent()
+            .addFlags(Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY)
+
+        ActivityScenario.launch<MainActivity>(replayed).use {
+            composeTestRule.onNodeWithText(context.getString(R.string.app_tagline))
+                .assertIsDisplayed()
+            composeTestRule.onNodeWithText(title).assertDoesNotExist()
+        }
+    }
+
+    @Test
+    fun `long-pressing the tile is routed to the app`() {
+        val resolved = context.packageManager.queryIntentActivities(
+            Intent(android.service.quicksettings.TileService.ACTION_QS_TILE_PREFERENCES)
+                .setPackage(context.packageName),
+            0
+        )
+
+        assertEquals(
+            listOf(MainActivity::class.java.name),
+            resolved.map { it.activityInfo.name }
+        )
+    }
+
+    @Test
+    fun `a plain launch shows no explanation`() {
+        ActivityScenario.launch<MainActivity>(explainIntent(explain = false)).use {
+            composeTestRule.onNodeWithText(context.getString(R.string.app_tagline))
+                .assertIsDisplayed()
+            composeTestRule.onNodeWithText(title).assertDoesNotExist()
+        }
+    }
+
+    @Test
+    fun `the explanation survives a rotation and a dismissal does too`() {
+        ActivityScenario.launch<MainActivity>(explainIntent()).use { scenario ->
+            scenario.recreate()
+            composeTestRule.onNodeWithText(title).assertIsDisplayed()
+
+            composeTestRule.onNodeWithText(context.getString(android.R.string.cancel))
+                .performClick()
+            composeTestRule.waitForIdle()
+            // The launch intent still carries the extra; the saved state wins.
+            scenario.recreate()
+
+            composeTestRule.onNodeWithText(title).assertDoesNotExist()
+        }
+    }
+
+    @Test
+    fun `a request delivered to the running app shows the explanation`() {
+        val controller = Robolectric.buildActivity(MainActivity::class.java).setup()
+        composeTestRule.onNodeWithText(title).assertDoesNotExist()
+
+        controller.newIntent(explainIntent(explain = false))
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithText(title).assertDoesNotExist()
+
+        controller.newIntent(explainIntent())
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText(title).assertIsDisplayed()
+        assertEquals(
+            "the delivered intent becomes the activity's own",
+            true,
+            controller.get().intent.getBooleanExtra(MainActivity.EXTRA_EXPLAIN_EXACT_ALARMS, false)
+        )
+        controller.pause().stop().destroy()
     }
 }

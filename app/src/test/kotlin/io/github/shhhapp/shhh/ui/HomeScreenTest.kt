@@ -11,12 +11,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsOn
-import androidx.compose.ui.test.isToggleable
+import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
@@ -57,6 +58,7 @@ class HomeScreenTest {
     private class Recorder {
         var toggles = 0
         val hushedFor = mutableListOf<Long>()
+        val hushedUntil = mutableListOf<Int>()
         var endTimerCalls = 0
         val quietHoursToggles = mutableListOf<Boolean>()
         var exactAlarmRequests = 0
@@ -98,6 +100,7 @@ class HomeScreenTest {
             settingsRevision = settingsRevision,
             onToggle = { rec.toggles++ },
             onHushFor = { rec.hushedFor += it },
+            onHushUntil = { rec.hushedUntil += it },
             onEndTimer = { rec.endTimerCalls++ },
             onQuietHoursToggled = { rec.quietHoursToggles += it },
             onRequestExactAlarmAccess = { rec.exactAlarmRequests++ },
@@ -302,6 +305,72 @@ class HomeScreenTest {
         assertEquals(chips.map { it.second }, rec.hushedFor)
     }
 
+    // The "until a set time" chip: same gates as the duration chips, then a
+    // clock instead of a fixed length.
+
+    private val okButton get() = ApplicationProvider.getApplicationContext<android.content.Context>()
+        .getString(android.R.string.ok)
+    private val cancelButton get() = ApplicationProvider.getApplicationContext<android.content.Context>()
+        .getString(android.R.string.cancel)
+
+    @Test
+    fun `the until chip opens a clock and hands the picked time on`() {
+        composeTestRule.setContent { Screen() }
+
+        composeTestRule.onNodeWithTag("chip_until").performScrollTo().performClick()
+        composeTestRule.waitForIdle()
+        assertTrue("nothing is hushed before a time is confirmed", rec.hushedUntil.isEmpty())
+        composeTestRule.onNodeWithText(okButton).performClick()
+        composeTestRule.waitForIdle()
+
+        // The clock opens an hour ahead; allow for the minute turning over.
+        val now = java.time.LocalTime.now().let { it.hour * 60 + it.minute }
+        val picked = rec.hushedUntil.single()
+        assertTrue(
+            "expected about an hour ahead, got $picked at $now",
+            Math.floorMod(picked - now, 24 * 60) in 59..61
+        )
+        composeTestRule.onNodeWithText(okButton).assertDoesNotExist()
+    }
+
+    @Test
+    fun `cancelling the clock hushes nothing`() {
+        composeTestRule.setContent { Screen() }
+
+        composeTestRule.onNodeWithTag("chip_until").performScrollTo().performClick()
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithText(cancelButton).performClick()
+        composeTestRule.waitForIdle()
+
+        assertTrue(rec.hushedUntil.isEmpty())
+        composeTestRule.onNodeWithText(okButton).assertDoesNotExist()
+    }
+
+    @Test
+    fun `the until chip explains the grant instead of opening a clock without exact alarms`() {
+        composeTestRule.setContent { Screen(canScheduleExact = false) }
+
+        composeTestRule.onNodeWithTag("chip_until").performScrollTo().performClick()
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText(str(R.string.exact_alarm_body)).assertIsDisplayed()
+        assertTrue(rec.hushedUntil.isEmpty())
+    }
+
+    @Test
+    fun `the until chip is inert when sound cannot be changed`() {
+        composeTestRule.setContent { Screen(canChangeSound = false) }
+
+        composeTestRule.onNodeWithTag("chip_until")
+            .performScrollTo()
+            .assertIsNotEnabled()
+            .performClick()
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText(okButton).assertDoesNotExist()
+        assertTrue(rec.hushedUntil.isEmpty())
+    }
+
     @Test
     fun `chips are inert when sound cannot be changed`() {
         composeTestRule.setContent { Screen(canChangeSound = false) }
@@ -322,7 +391,7 @@ class HomeScreenTest {
         settings.quietHoursEnabled = false
         composeTestRule.setContent { Screen() }
 
-        composeTestRule.onNode(isToggleable()).performScrollTo().assertIsOff().performClick()
+        composeTestRule.onNodeWithTag("quiet_hours_switch").performScrollTo().assertIsOff().performClick()
         composeTestRule.waitForIdle()
 
         assertEquals(listOf(true), rec.quietHoursToggles)
@@ -333,7 +402,7 @@ class HomeScreenTest {
         settings.quietHoursEnabled = true
         composeTestRule.setContent { Screen() }
 
-        composeTestRule.onNode(isToggleable()).performScrollTo().assertIsOn().performClick()
+        composeTestRule.onNodeWithTag("quiet_hours_switch").performScrollTo().assertIsOn().performClick()
         composeTestRule.waitForIdle()
 
         assertEquals(listOf(false), rec.quietHoursToggles)
@@ -394,7 +463,7 @@ class HomeScreenTest {
         settings.quietHoursEnabled = false
         composeTestRule.setContent { Screen(canScheduleExact = false) }
 
-        composeTestRule.onNode(isToggleable()).performScrollTo().performClick()
+        composeTestRule.onNodeWithTag("quiet_hours_switch").performScrollTo().performClick()
         composeTestRule.waitForIdle()
 
         assertTrue(
@@ -409,11 +478,90 @@ class HomeScreenTest {
         settings.quietHoursEnabled = true
         composeTestRule.setContent { Screen(canScheduleExact = false) }
 
-        composeTestRule.onNode(isToggleable()).performScrollTo().performClick()
+        composeTestRule.onNodeWithTag("quiet_hours_switch").performScrollTo().performClick()
         composeTestRule.waitForIdle()
 
         assertEquals(listOf(false), rec.quietHoursToggles)
-        composeTestRule.onNodeWithText(str(R.string.exact_alarm_title)).assertDoesNotExist()
+        // The body, not the title: the card itself carries the title as its
+        // warning while quiet hours are on without the grant.
+        composeTestRule.onNodeWithText(str(R.string.exact_alarm_body)).assertDoesNotExist()
+    }
+
+    @Test
+    fun `quiet hours on without exact alarm access says so on the card`() {
+        settings.quietHoursEnabled = true
+        composeTestRule.setContent { Screen(canScheduleExact = false) }
+
+        composeTestRule.onNodeWithTag("quiet_hours_stalled", useUnmergedTree = true).performScrollTo()
+            .assertIsDisplayed()
+            .assertTextEquals(str(R.string.exact_alarm_title))
+    }
+
+    @Test
+    fun `tapping the stalled card explains the grant instead of opening settings`() {
+        settings.quietHoursEnabled = true
+        composeTestRule.setContent { Screen(canScheduleExact = false) }
+
+        composeTestRule.onNodeWithText(str(R.string.quiet_hours_title))
+            .performScrollTo().performClick()
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText(str(R.string.exact_alarm_body)).assertIsDisplayed()
+        assertEquals(0, rec.openSettingsCalls)
+    }
+
+    @Test
+    fun `the card carries no warning while the grant is there or quiet hours are off`() {
+        settings.quietHoursEnabled = true
+        composeTestRule.setContent { Screen(canScheduleExact = true) }
+        composeTestRule.onNodeWithTag("quiet_hours_stalled", useUnmergedTree = true).assertDoesNotExist()
+
+        composeTestRule.onNodeWithText(str(R.string.quiet_hours_title))
+            .performScrollTo().performClick()
+        composeTestRule.waitForIdle()
+        assertEquals("the healthy card still opens settings", 1, rec.openSettingsCalls)
+    }
+
+    @Test
+    fun `quiet hours off shows no warning even without the grant`() {
+        settings.quietHoursEnabled = false
+        composeTestRule.setContent { Screen(canScheduleExact = false) }
+
+        composeTestRule.onNodeWithTag("quiet_hours_stalled", useUnmergedTree = true).assertDoesNotExist()
+    }
+
+    @Test
+    fun `the big toggle is a switch that reads its state to a screen reader`() {
+        composeTestRule.setContent { Screen(quiet = true) }
+
+        composeTestRule.onNodeWithContentDescription(str(R.string.tile_content_description))
+            .assert(
+                androidx.compose.ui.test.SemanticsMatcher.expectValue(
+                    androidx.compose.ui.semantics.SemanticsProperties.Role,
+                    androidx.compose.ui.semantics.Role.Switch
+                )
+            )
+            .assertIsOn()
+    }
+
+    @Test
+    fun `the big toggle reads off while the phone is audible`() {
+        composeTestRule.setContent { Screen(quiet = false) }
+
+        composeTestRule.onNodeWithContentDescription(str(R.string.tile_content_description))
+            .assertIsOff()
+    }
+
+    @Test
+    fun `the duration chips are buttons to a screen reader`() {
+        composeTestRule.setContent { Screen() }
+
+        composeTestRule.onNodeWithTag("chip_30").assert(
+            androidx.compose.ui.test.SemanticsMatcher.expectValue(
+                androidx.compose.ui.semantics.SemanticsProperties.Role,
+                androidx.compose.ui.semantics.Role.Button
+            )
+        )
     }
 
     @Test

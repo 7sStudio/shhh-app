@@ -33,6 +33,7 @@
     <string name="timer_chip_30">30 分</string>
     <string name="timer_chip_60">1 時間</string>
     <string name="timer_chip_120">2 時間</string>
+    <string name="timer_chip_until">指定した時刻まで</string>
     <string name="timer_running_until">%1$s に音が戻ります</string>
     <string name="timer_end_now">今すぐ終了</string>
 

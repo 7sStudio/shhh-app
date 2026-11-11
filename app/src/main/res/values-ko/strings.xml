@@ -32,6 +32,7 @@
     <string name="timer_chip_30">30분</string>
     <string name="timer_chip_60">1시간</string>
     <string name="timer_chip_120">2시간</string>
+    <string name="timer_chip_until">지정한 시간까지</string>
     <string name="timer_running_until">%1$s에 소리가 돌아옵니다</string>
     <string name="timer_end_now">지금 종료</string>
 

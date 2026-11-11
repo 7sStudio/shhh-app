@@ -11,7 +11,8 @@ import android.os.SystemClock
  *
  * Quiet ON  = ring volume 0 + media volume 0.
  * Quiet OFF = ring volume restored + media volume restored (previous level or
- *             a fixed percentage, per settings).
+ *             a fixed percentage, per settings), each only while it is still
+ *             at 0: a slider the user already raised is theirs.
  *
  * Shhh moves volume sliders and nothing else. It deliberately never calls
  * [AudioManager.setRingerMode]: that is AOSP's *external* ringer path, wired
@@ -116,6 +117,14 @@ class QuietModeController(
 
         /** Do Not Disturb access has not been granted; nothing was changed. */
         data object NeedsDndAccess : Result
+
+        /**
+         * A timed hush was asked for, but the "Alarms & reminders" grant
+         * (SCHEDULE_EXACT_ALARM) is missing, so nothing could bring the sound
+         * back when the time is up. Nothing was changed. Returned by
+         * [HushManager], which owns the timer; this class never produces it.
+         */
+        data object NeedsExactAlarmAccess : Result
     }
 
     /** Flips quiet mode based on the phone's actual current state. */
@@ -150,10 +159,24 @@ class QuietModeController(
         Result.NeedsDndAccess
     }
 
-    /** Mirror of [goQuiet]: ring volume first, media volume best-effort after it. */
+    /**
+     * Mirror of [goQuiet]: ring volume first, media volume best-effort after it.
+     *
+     * A restore never overwrites a slider that is already audible: each one is
+     * written only while it reads 0. Un-hushing a phone the user already made
+     * loud again (by hand, from the volume panel) must leave their levels
+     * alone, and the gate is per slider rather than on [isQuiet] so that a
+     * user who raised only the ring still gets the media back. Under a zen
+     * that owns the ring the ring reads 0, and [applyRingVolume] still
+     * declines the write.
+     */
     fun restoreSound(): Result = try {
-        applyRingVolume(restoreTargetRingVolume())
-        setMediaVolumeBestEffort(restoreTargetVolume())
+        if (audioManager.getStreamVolume(AudioManager.STREAM_RING) == 0) {
+            applyRingVolume(restoreTargetRingVolume())
+        }
+        if (audioManager.getStreamVolume(AudioManager.STREAM_MUSIC) == 0) {
+            setMediaVolumeBestEffort(restoreTargetVolume())
+        }
         settings.lastKnownQuiet = false
         Result.Success(quiet = false)
     } catch (_: SecurityException) {
@@ -197,9 +220,16 @@ class QuietModeController(
         }
     }
 
-    /** Restores ONLY the media volume, leaving the ring hushed (headphones case). */
+    /**
+     * Restores ONLY the media volume, leaving the ring hushed (headphones
+     * case). Media already above 0 means media is back, whoever brought it
+     * back: nothing is written and the answer is true, the same rule as
+     * [restoreSound].
+     */
     fun restoreMediaVolumeOnly(): Boolean = try {
-        audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, restoreTargetVolume(), 0)
+        if (audioManager.getStreamVolume(AudioManager.STREAM_MUSIC) == 0) {
+            audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, restoreTargetVolume(), 0)
+        }
         audioManager.getStreamVolume(AudioManager.STREAM_MUSIC) > 0
     } catch (_: SecurityException) {
         false

@@ -545,8 +545,9 @@ private fun ClickRow(
     }
 }
 
+/** Clock dialog shared by the quiet-hours times and the home "until" chip. */
 @Composable
-private fun TimePickerDialog(
+internal fun TimePickerDialog(
     initialMinutes: Int,
     onDismiss: () -> Unit,
     onConfirm: (Int) -> Unit

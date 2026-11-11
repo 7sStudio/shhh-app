@@ -186,6 +186,40 @@ class HushServiceTest {
     }
 
     @Test
+    fun `ACTION_HUSH with a duration but no exact alarm access changes nothing`() {
+        ShadowAlarmManager.setCanScheduleExactAlarms(false)
+
+        service().handleIntent(
+            HushService.intent(context, HushService.ACTION_HUSH)
+                .putExtra(HushService.EXTRA_DURATION_MINUTES, 30)
+        )
+
+        assertEquals(3, ring)
+        assertEquals(5, audioManager.getStreamVolume(AudioManager.STREAM_MUSIC))
+        assertEquals(0L, settings.timerEndMillis)
+        assertNull(shadowOf(alarmManager).peekNextScheduledAlarm())
+    }
+
+    @Test
+    fun `a refused timed ACTION_HUSH re-publishes the real state to a listening tile`() {
+        val tileService = Robolectric.buildService(ShhhTileService::class.java).create().get()
+        tileService.onStartListening()
+        // The optimistic flip a tile tap makes, standing in for any surface
+        // that showed the hush before it was refused.
+        tileService.onClick()
+        assertEquals(Tile.STATE_ACTIVE, tileService.qsTile.state)
+        ShadowAlarmManager.setCanScheduleExactAlarms(false)
+
+        service().handleIntent(
+            HushService.intent(context, HushService.ACTION_HUSH)
+                .putExtra(HushService.EXTRA_DURATION_MINUTES, 30)
+        )
+
+        assertEquals("nothing may have moved", 3, ring)
+        assertEquals(Tile.STATE_INACTIVE, tileService.qsTile.state)
+    }
+
+    @Test
     fun `ACTION_HUSH without a duration hushes without arming anything`() {
         service().handleIntent(HushService.intent(context, HushService.ACTION_HUSH))
 
@@ -249,6 +283,27 @@ class HushServiceTest {
         } finally {
             ShadowRefusingAudioManager.refusedStreams = emptySet()
         }
+    }
+
+    @Test
+    fun `ACTION_HEADPHONES_CONNECTED brings media back for a hushed phone with the option on`() {
+        settings.headphonesAutoRestore = true
+        HushManager(context).hush()
+
+        service().handleIntent(Intent(HushService.ACTION_HEADPHONES_CONNECTED))
+
+        assertEquals(5, audioManager.getStreamVolume(AudioManager.STREAM_MUSIC))
+        assertEquals("the ringer stays hushed", 0, ring)
+    }
+
+    @Test
+    fun `ACTION_HEADPHONES_CONNECTED does nothing with the option off`() {
+        settings.headphonesAutoRestore = false
+        HushManager(context).hush()
+
+        service().handleIntent(Intent(HushService.ACTION_HEADPHONES_CONNECTED))
+
+        assertEquals(0, audioManager.getStreamVolume(AudioManager.STREAM_MUSIC))
     }
 
     @Test

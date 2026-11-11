@@ -110,6 +110,17 @@ class ShhhSettings(context: Context) {
             prefs.edit { putInt(KEY_QUIET_DAYS, bits) }
         }
 
+    /**
+     * Start of the last quiet-hours window shhh acted on, as wall-clock epoch
+     * seconds (the local date-time read as UTC, so a time-zone change does
+     * not turn the same window into a new one); 0 when none. Lets a boot
+     * inside a window tell "the start passed while the phone was off" from
+     * "the start was handled, and the user has since un-hushed".
+     */
+    var lastQuietWindowStart: Long
+        get() = prefs.getLong(KEY_LAST_QUIET_WINDOW_START, 0L)
+        set(value) = prefs.edit { putLong(KEY_LAST_QUIET_WINDOW_START, value) }
+
     companion object {
         const val NO_SAVED_VOLUME = -1
         private const val ALL_DAYS_MASK = 0b1111111
@@ -130,5 +141,6 @@ class ShhhSettings(context: Context) {
         private const val KEY_QUIET_START = "quiet_start_minutes"
         private const val KEY_QUIET_END = "quiet_end_minutes"
         private const val KEY_QUIET_DAYS = "quiet_days"
+        private const val KEY_LAST_QUIET_WINDOW_START = "last_quiet_window_start"
     }
 }

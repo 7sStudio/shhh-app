@@ -193,23 +193,15 @@ class TileShadeIntegrationTest {
         // stronger assertion than watching the shade, because it fails even if
         // some future Android stops collapsing on activity start.
         openShade()
-        val before = shell("dumpsys activity activities")
         assertTrue(
             "no shhh activity may be running before the tap",
-            !before.contains("io.github.shhhapp.shhh/.ToggleActivity")
+            !isActivityAlive("ToggleActivity")
         )
 
         tapTileAndAwait(expectedQuiet = true)
 
-        val after = shell("dumpsys activity activities")
-        assertTrue(
-            "the tile must not launch ToggleActivity",
-            !after.contains("io.github.shhhapp.shhh/.ToggleActivity")
-        )
-        assertTrue(
-            "the tile must not launch MainActivity either",
-            !after.contains("io.github.shhhapp.shhh/.MainActivity")
-        )
+        assertTrue("the tile must not launch ToggleActivity", !isActivityAlive("ToggleActivity"))
+        assertTrue("the tile must not launch MainActivity either", !isActivityAlive("MainActivity"))
     }
 
     @Test
@@ -223,7 +215,7 @@ class TileShadeIntegrationTest {
 
         shell("cmd statusbar click-tile $TILE")
         waitFor("the app opened", timeoutMillis = 10_000) {
-            shell("dumpsys activity activities").contains("io.github.shhhapp.shhh/.MainActivity")
+            isActivityAlive("MainActivity")
         }
 
         device.grantDndAccess()

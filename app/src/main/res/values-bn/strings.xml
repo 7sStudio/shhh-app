@@ -29,6 +29,7 @@
     <string name="timer_chip_30">30 মিনিট</string>
     <string name="timer_chip_60">1 ঘণ্টা</string>
     <string name="timer_chip_120">2 ঘণ্টা</string>
+    <string name="timer_chip_until">নির্দিষ্ট সময় পর্যন্ত</string>
     <string name="timer_running_until">সাউন্ড %1$s-এ ফিরে আসবে</string>
     <string name="timer_end_now">এখনই শেষ করুন</string>
 

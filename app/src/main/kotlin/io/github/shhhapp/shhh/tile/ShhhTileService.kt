@@ -68,7 +68,7 @@ class ShhhTileService : TileService() {
         listeningInstance = this
         if (stateReceiver == null) {
             stateReceiver = object : BroadcastReceiver() {
-                override fun onReceive(context: Context?, intent: Intent?) = refreshTile()
+                override fun onReceive(context: Context?, intent: Intent?) = observePhone()
             }
             registerReceiver(
                 stateReceiver,
@@ -79,7 +79,7 @@ class ShhhTileService : TileService() {
                 Context.RECEIVER_NOT_EXPORTED
             )
         }
-        refreshTile()
+        observePhone()
     }
 
     override fun onStopListening() {
@@ -146,7 +146,24 @@ class ShhhTileService : TileService() {
         }
     }
 
+    /**
+     * Re-reads the phone into the tile. Render only: this is also the refresh
+     * that follows shhh's own transitions ([requestTileRefresh]), where a ring
+     * write that has not settled yet must not be taken for an un-hush.
+     */
     internal fun refreshTile() = renderTile(QuietModeController(this).isQuiet)
+
+    /**
+     * The tile looking at the phone on its own account — the shade opening,
+     * or a ringer / Do Not Disturb change made elsewhere. That is when an
+     * un-hush shhh never saw (the volume panel) shows up, and this shade is
+     * where its leftovers (countdown, headphones offer) would be staring at
+     * the user, so they are retired before the tile is redrawn.
+     */
+    private fun observePhone() {
+        HushManager(this).retireStaleHush()
+        refreshTile()
+    }
 
     private fun renderTile(quiet: Boolean) {
         val tile = qsTile ?: return

@@ -34,11 +34,11 @@ A tiny, modern quiet-mode toggle for the moments you need silence *now*: meeting
 ## Features
 
 - **One-tap hush** from three surfaces: a **Quick Settings tile**, a **home screen widget** (classic card or a transparent style that colors itself for your wallpaper), or the app — ring volume to 0, media volume to 0.
-- **Smart restore** — un-hushing brings media volume back to exactly what it was before (or a fixed level you choose).
-- **Timed hush** — 15 min, 30 min, 1 h or 2 h; sound returns on its own at the exact minute, with an optional **Live Update countdown** in the status bar and a "Restore now" action.
-- **Quiet hours** — automatic schedule with start/end times and per-weekday control.
-- **Headphones option** — media un-mutes when Bluetooth headphones connect; the ringer stays hushed.
-- **Launcher shortcuts** — long-press the app icon: Toggle · Hush 30 min · Hush 1 hour.
+- **Smart restore** — un-hushing brings media volume back to exactly what it was before (or a fixed level you choose), and never overrides a slider you have already raised yourself.
+- **Timed hush** — 15 min, 30 min, 1 h, 2 h, or **until a time you pick**; sound returns on its own at the exact minute — even if the phone was switched off when the time came — with an optional **Live Update countdown** in the status bar and a "Restore now" action.
+- **Quiet hours** — automatic schedule with start/end times and per-weekday control. A phone that restarts inside the window is hushed when it comes back up.
+- **Headphones option** — media un-mutes when Bluetooth headphones connect (call, media-only and LE Audio earbuds alike); the ringer stays hushed.
+- **Launcher shortcuts** — long-press the app icon: Toggle · Hush 30 min · Hush 1 hour. Long-pressing the Quick Settings tile opens the app.
 - **Automation friendly** — Tasker, MacroDroid and routines can trigger it (see below).
 - **True to reality** — the toggle reads the phone's *actual* state, so it never drifts out of sync with the volume keys or system settings.
 - **Alarms always ring** — Shhh only ever moves the ring and media sliders. The alarm stream is a separate one it never touches, so a hushed phone still wakes you at full alarm volume. (Android's own "Total silence" mode does silence alarms — that is your setting doing it, not Shhh.)
@@ -73,8 +73,8 @@ am start -n io.github.shhhapp.shhh/.ToggleActivity \
 
 | Action | Effect |
 | --- | --- |
-| `…shhh.action.HUSH` | Hush now; optional `duration_minutes` extra |
-| `…shhh.action.UNHUSH` | Restore sound |
+| `…shhh.action.HUSH` | Hush now; optional `duration_minutes` extra (up to 24 h). A timed hush needs the "Alarms & reminders" access: without it nothing changes and Shhh opens to explain |
+| `…shhh.action.UNHUSH` | Restore sound (sliders already above zero are left alone) |
 | `…shhh.action.TOGGLE` | Flip current state |
 | `…shhh.action.RESTORE_MEDIA` | Media volume only; ringer stays hushed |
 
@@ -91,6 +91,7 @@ Since Android 16/17, the OS **silently ignores** volume changes from backgrounde
 
 - **A visible activity is always allowed.** Widget taps, launcher shortcuts, notification actions and automation intents route through [`ToggleActivity`](app/src/main/kotlin/io/github/shhhapp/shhh/ToggleActivity.kt) — invisible, zero-animation, toggles and finishes in the same frame.
 - **A foreground service is always allowed.** Scheduled transitions (timer expiry, quiet-hours start) fire an exact alarm whose receipt permits starting [`HushService`](app/src/main/kotlin/io/github/shhhapp/shhh/schedule/HushService.kt) — it lives for under a second, applies the change, and stops.
+  The same service catches up after a restart (a timer that ran out, or a quiet-hours start that came due, while the phone was off — boot is one of the few moments Android lets a background app start one) and brings media back when Bluetooth headphones connect.
 
 The **Quick Settings tile** takes the service path rather than the activity one, and that is deliberate. A tile can only launch an activity through `startActivityAndCollapse`, which closes the notification shade by definition — so routing tile taps through `ToggleActivity` made the panel slam shut on every tap. Handing the work to `HushService` applies the change with no UI at all, so the tile behaves like Wi-Fi or the torch and the shade stays exactly where you left it. (Opening the app to grant Do Not Disturb access still collapses the shade, which is what a tile is meant to do when it opens an app.)
 
@@ -121,10 +122,10 @@ keyPassword=…
 ## Testing
 
 ```bash
-./gradlew testDebugUnitTest      # 277 JVM unit tests (Robolectric + Compose UI test)
+./gradlew testDebugUnitTest      # 526 JVM unit tests (Robolectric + Compose UI test)
 ./gradlew koverVerifyDebug       # coverage gate
 ./gradlew koverHtmlReportDebug   # coverage report -> app/build/reports/kover/htmlDebug
-./gradlew connectedAndroidTest   # integration tests on a device/emulator
+./gradlew connectedAndroidTest   # 80 integration tests on a device/emulator
 ./gradlew lintDebug              # Android Lint
 ```
 
@@ -135,7 +136,7 @@ regression fails the build. The Compose screens, the Glance widget, the Quick
 Settings tile, the trampoline activity, the alarm receivers and the momentary
 foreground service all run headless under Robolectric.
 
-CI builds, tests, checks coverage and lints every push; tagging `v*` builds and publishes a release APK automatically.
+CI builds, tests, checks coverage and lints every push, smoke-tests the minified release build on an emulator, and runs the on-device suite as a non-blocking job; tagging `v*` builds and publishes a release APK automatically.
 
 ## Distribution
 

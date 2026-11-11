@@ -39,6 +39,8 @@ class AlarmStreamIntegrationTest {
         controller = QuietModeController(device.context, settings)
         device.resetShhhState(settings)
         device.resetToAudibleNoZen()
+        // The timed hush below needs the grant, or it changes nothing at all.
+        device.allowExactAlarms()
     }
 
     @After

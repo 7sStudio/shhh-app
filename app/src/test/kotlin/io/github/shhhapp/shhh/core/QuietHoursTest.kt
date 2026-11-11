@@ -24,6 +24,31 @@ class QuietHoursTest {
     )
 
     @Test
+    fun `activeWindow gives both ends of the window now falls in`() {
+        // 02:00 on Thursday is inside the window that started Wednesday 23:00.
+        val window = QuietHours.activeWindow(LocalDateTime.of(2026, 8, 27, 2, 0), everyNight)
+
+        assertEquals(
+            QuietHours.Window(
+                start = LocalDateTime.of(2026, 8, 26, 23, 0),
+                end = LocalDateTime.of(2026, 8, 27, 7, 0)
+            ),
+            window
+        )
+    }
+
+    @Test
+    fun `activeWindow is null outside a window and when quiet hours are off`() {
+        assertNull(QuietHours.activeWindow(wednesdayNoon, everyNight))
+        assertNull(
+            QuietHours.activeWindow(
+                LocalDateTime.of(2026, 8, 27, 2, 0),
+                everyNight.copy(enabled = false)
+            )
+        )
+    }
+
+    @Test
     fun `nextStart is tonight when before start time`() {
         assertEquals(
             LocalDateTime.of(2026, 8, 26, 23, 0),

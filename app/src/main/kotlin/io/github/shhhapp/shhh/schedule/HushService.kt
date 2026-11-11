@@ -8,10 +8,10 @@ import android.content.pm.ServiceInfo
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import io.github.shhhapp.shhh.R
+import io.github.shhhapp.shhh.audio.HeadsetReceiver
 import io.github.shhhapp.shhh.core.HushManager
 import io.github.shhhapp.shhh.core.QuietHours
 import io.github.shhhapp.shhh.core.QuietModeController
-import io.github.shhhapp.shhh.core.ShhhSettings
 import io.github.shhhapp.shhh.notify.CountdownNotifier
 import java.time.LocalDateTime
 
@@ -55,15 +55,20 @@ class HushService : Service() {
             ACTION_TOGGLE -> if (manager.toggle() !is QuietModeController.Result.Success) {
                 manager.refreshSurfaces()
             }
-            ACTION_HUSH -> manager.hush(durationMinutes = intent.durationExtra())
+            // Refused the same way (a timed hush without the "Alarms &
+            // reminders" grant changes nothing): re-publish reality.
+            ACTION_HUSH -> {
+                val result = manager.hush(durationMinutes = intent.durationExtra())
+                if (result !is QuietModeController.Result.Success) manager.refreshSurfaces()
+            }
             ACTION_UNHUSH -> manager.unhush()
             ACTION_RESTORE_MEDIA -> if (manager.restoreMediaOnly()) manager.refreshSurfaces()
+            // Bluetooth headphones connected while hushed; the receiver that
+            // heard it is a background context and cannot write the volume.
+            ACTION_HEADPHONES_CONNECTED -> HeadsetReceiver.restoreMediaOrOffer(this)
 
             HushAlarms.ACTION_QUIET_START -> {
-                val schedule = QuietHours.fromSettings(ShhhSettings(this))
-                QuietHours.activeWindowEnd(now, schedule)?.let { end ->
-                    manager.hushUntil(end)
-                }
+                manager.hushForQuietWindow(now)
                 // Line up the next occurrence.
                 HushAlarms.syncQuietHoursAlarm(this, now)
             }
@@ -99,6 +104,8 @@ class HushService : Service() {
         const val ACTION_HUSH = "io.github.shhhapp.shhh.service.HUSH"
         const val ACTION_UNHUSH = "io.github.shhhapp.shhh.service.UNHUSH"
         const val ACTION_RESTORE_MEDIA = "io.github.shhhapp.shhh.service.RESTORE_MEDIA"
+        const val ACTION_HEADPHONES_CONNECTED =
+            "io.github.shhhapp.shhh.service.HEADPHONES_CONNECTED"
         const val EXTRA_DURATION_MINUTES = "duration_minutes"
 
         /** The intent a surface with no UI of its own uses to change hush state. */

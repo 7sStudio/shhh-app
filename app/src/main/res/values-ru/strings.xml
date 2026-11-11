@@ -29,6 +29,7 @@
     <string name="timer_chip_30">30 мин</string>
     <string name="timer_chip_60">1 час</string>
     <string name="timer_chip_120">2 часа</string>
+    <string name="timer_chip_until">До выбранного времени</string>
     <string name="timer_running_until">Звук вернётся в %1$s</string>
     <string name="timer_end_now">Завершить сейчас</string>
 

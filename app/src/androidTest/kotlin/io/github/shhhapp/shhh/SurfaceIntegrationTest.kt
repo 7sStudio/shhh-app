@@ -44,6 +44,8 @@ class SurfaceIntegrationTest {
         shell("cmd statusbar collapse")
         device.resetShhhState(settings)
         device.resetToAudibleNoZen()
+        // Timed hushes need the grant (without it they change nothing).
+        device.allowExactAlarms()
     }
 
     @After
@@ -139,7 +141,7 @@ class SurfaceIntegrationTest {
      */
     private fun sendAction(action: String, extras: String = "") {
         waitFor("no trampoline instance left running") {
-            !shell("dumpsys activity activities").contains("/.ToggleActivity")
+            !isActivityAlive("ToggleActivity")
         }
         shell(
             "am start -a $action -n ${device.context.packageName}/.ToggleActivity $extras"

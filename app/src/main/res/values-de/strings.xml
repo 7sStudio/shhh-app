@@ -29,6 +29,7 @@
     <string name="timer_chip_30">30 min</string>
     <string name="timer_chip_60">1 Stunde</string>
     <string name="timer_chip_120">2 Stunden</string>
+    <string name="timer_chip_until">Bis zu einer bestimmten Uhrzeit</string>
     <string name="timer_running_until">Der Ton kehrt um %1$s zurück</string>
     <string name="timer_end_now">Jetzt beenden</string>
 

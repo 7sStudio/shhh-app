@@ -45,21 +45,29 @@ object QuietHours {
         return if (schedule.endMinutes <= schedule.startMinutes) end.plusDays(1) else end
     }
 
+    /** One occurrence of the quiet window: [start] inclusive, [end] exclusive. */
+    data class Window(val start: LocalDateTime, val end: LocalDateTime)
+
     /**
-     * When [now] falls inside an active window, that window's end; else null.
-     * Used to hush immediately when quiet hours are enabled mid-window.
+     * The window [now] falls inside, or null. Used to hush immediately when
+     * quiet hours are enabled mid-window, and to catch up on a start that
+     * passed while the phone was off.
      */
-    fun activeWindowEnd(now: LocalDateTime, schedule: Schedule): LocalDateTime? {
+    fun activeWindow(now: LocalDateTime, schedule: Schedule): Window? {
         if (!schedule.enabled) return null
         for (dayOffset in 0..1L) {
             val date = now.toLocalDate().minusDays(dayOffset)
             if (date.dayOfWeek !in schedule.days) continue
             val start = date.atTime(toTime(schedule.startMinutes))
             val end = endFor(start, schedule)
-            if (!now.isBefore(start) && now.isBefore(end)) return end
+            if (!now.isBefore(start) && now.isBefore(end)) return Window(start, end)
         }
         return null
     }
+
+    /** When [now] falls inside an active window, that window's end; else null. */
+    fun activeWindowEnd(now: LocalDateTime, schedule: Schedule): LocalDateTime? =
+        activeWindow(now, schedule)?.end
 
     private fun toTime(minutes: Int): LocalTime = LocalTime.of(minutes / 60, minutes % 60)
 }

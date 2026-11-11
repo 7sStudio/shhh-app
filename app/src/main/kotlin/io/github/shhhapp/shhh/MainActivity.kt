@@ -19,6 +19,7 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
@@ -29,8 +30,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import io.github.shhhapp.shhh.core.HushManager
+import io.github.shhhapp.shhh.core.QuietModeController
 import io.github.shhhapp.shhh.core.ShhhSettings
 import io.github.shhhapp.shhh.schedule.HushAlarms
+import io.github.shhhapp.shhh.ui.ExactAlarmDialog
 import io.github.shhhapp.shhh.ui.HomeScreen
 import io.github.shhhapp.shhh.ui.RevealEnter
 import io.github.shhhapp.shhh.ui.RevealExit
@@ -42,21 +45,63 @@ import io.github.shhhapp.shhh.update.ReleaseInfo
 import io.github.shhhapp.shhh.update.UpdateChecker
 
 class MainActivity : ComponentActivity() {
+
+    /**
+     * Whether the exact-alarm explanation is up. Set by a launch carrying
+     * [EXTRA_EXPLAIN_EXACT_ALARMS] (a timed hush from a shortcut or an
+     * automation intent that had no alarm to end it), both on a fresh launch
+     * and on one delivered to the running activity; kept across recreation so
+     * a rotation neither drops the dialog nor brings back a dismissed one.
+     */
+    private val explainExactAlarms = mutableStateOf(false)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        explainExactAlarms.value = savedInstanceState?.getBoolean(EXTRA_EXPLAIN_EXACT_ALARMS)
+            ?: intent.asksToExplainExactAlarms()
         setContent {
             ShhhTheme {
-                ShhhApp()
+                ShhhApp(explainExactAlarms = explainExactAlarms)
             }
         }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        if (intent.asksToExplainExactAlarms()) {
+            explainExactAlarms.value = true
+        }
+    }
+
+    /**
+     * A task reopened from Recents is relaunched with the intent that first
+     * started it, extra included. That is the system replaying history, not
+     * a timed hush being refused again, so it must not bring the dialog back.
+     */
+    private fun Intent.asksToExplainExactAlarms(): Boolean =
+        getBooleanExtra(EXTRA_EXPLAIN_EXACT_ALARMS, false) &&
+            flags and Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY == 0
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putBoolean(EXTRA_EXPLAIN_EXACT_ALARMS, explainExactAlarms.value)
+    }
+
+    companion object {
+        /** Boolean extra: open on the exact-alarm ("Alarms & reminders") explanation. */
+        const val EXTRA_EXPLAIN_EXACT_ALARMS = "io.github.shhhapp.shhh.extra.EXPLAIN_EXACT_ALARMS"
     }
 }
 
 private enum class Screen { HOME, SETTINGS }
 
 @Composable
-fun ShhhApp(updateChecker: UpdateChecker = remember { UpdateChecker() }) {
+fun ShhhApp(
+    updateChecker: UpdateChecker = remember { UpdateChecker() },
+    explainExactAlarms: MutableState<Boolean> = remember { mutableStateOf(false) }
+) {
     val context = LocalContext.current
     val manager = remember { HushManager(context) }
     val settings = remember { ShhhSettings(context) }
@@ -70,6 +115,9 @@ fun ShhhApp(updateChecker: UpdateChecker = remember { UpdateChecker() }) {
     // Bumped whenever persisted settings change so summaries recompose.
     var settingsRevision by remember { mutableIntStateOf(0) }
 
+    // Re-reads the phone into the screen. Render only: this also runs right
+    // after shhh's own transitions, where a ring write that has not settled
+    // yet must not be taken for an un-hush (see observe()).
     fun refresh() {
         quiet = manager.isQuiet
         hasDndAccess = manager.hasDndAccess
@@ -79,9 +127,17 @@ fun ShhhApp(updateChecker: UpdateChecker = remember { UpdateChecker() }) {
         settingsRevision++
     }
 
+    // The app looking at the phone on its own account (resume, a ringer or
+    // Do Not Disturb change made elsewhere): an un-hush shhh never saw shows
+    // up here, so retire what that hush left standing before rendering.
+    fun observe() {
+        manager.retireStaleHush()
+        refresh()
+    }
+
     // Refresh when returning from Settings (permission grant) or recents.
     LifecycleResumeEffect(Unit) {
-        refresh()
+        observe()
         onPauseOrDispose { }
     }
 
@@ -114,7 +170,7 @@ fun ShhhApp(updateChecker: UpdateChecker = remember { UpdateChecker() }) {
     // Stay in sync with ringer and Do Not Disturb changes made anywhere else.
     DisposableEffect(Unit) {
         val receiver = object : BroadcastReceiver() {
-            override fun onReceive(c: Context?, i: Intent?) = refresh()
+            override fun onReceive(c: Context?, i: Intent?) = observe()
         }
         context.registerReceiver(
             receiver,
@@ -157,6 +213,16 @@ fun ShhhApp(updateChecker: UpdateChecker = remember { UpdateChecker() }) {
         )
     }
 
+    if (explainExactAlarms.value) {
+        ExactAlarmDialog(
+            onGrant = {
+                explainExactAlarms.value = false
+                requestExactAlarmAccess()
+            },
+            onDismiss = { explainExactAlarms.value = false }
+        )
+    }
+
     BackHandler(enabled = screen != Screen.HOME) { screen = Screen.HOME }
 
     AnimatedContent(
@@ -184,7 +250,22 @@ fun ShhhApp(updateChecker: UpdateChecker = remember { UpdateChecker() }) {
                 },
                 onHushFor = { minutes ->
                     ensureNotificationPermission()
-                    manager.hush(durationMinutes = minutes)
+                    // The chips check the grant first; this catches it
+                    // vanishing between that check and the hush.
+                    if (manager.hush(durationMinutes = minutes) ==
+                        QuietModeController.Result.NeedsExactAlarmAccess
+                    ) {
+                        explainExactAlarms.value = true
+                    }
+                    refresh()
+                },
+                onHushUntil = { minutesOfDay ->
+                    ensureNotificationPermission()
+                    if (manager.hushUntilTimeOfDay(minutesOfDay) ==
+                        QuietModeController.Result.NeedsExactAlarmAccess
+                    ) {
+                        explainExactAlarms.value = true
+                    }
                     refresh()
                 },
                 onEndTimer = {
@@ -221,11 +302,7 @@ fun ShhhApp(updateChecker: UpdateChecker = remember { UpdateChecker() }) {
 /** Re-syncs the alarm and hushes immediately when enabling mid-window. */
 private fun onQuietHoursChanged(context: Context, manager: HushManager) {
     HushAlarms.syncQuietHoursAlarm(context)
-    val settings = ShhhSettings(context)
-    if (settings.quietHoursEnabled && !manager.isQuiet) {
-        val schedule = io.github.shhhapp.shhh.core.QuietHours.fromSettings(settings)
-        io.github.shhhapp.shhh.core.QuietHours
-            .activeWindowEnd(java.time.LocalDateTime.now(), schedule)
-            ?.let { end -> manager.hushUntil(end) }
-    }
+    // A phone that is already hushed is left as it is: no timer is put on a
+    // hush the user started themselves.
+    manager.hushForQuietWindow(onlyIfAudible = true)
 }

@@ -376,6 +376,60 @@ class QuietModeControllerTest {
         assertTrue(controller.isQuiet)
     }
 
+    // ------------------------------------- a restore never overrides the user
+
+    @Test
+    fun `restoreSound on an audible phone leaves both sliders where the user put them`() {
+        // Measured: shhh off, media at 7, UNHUSH -> media dropped to the 5
+        // saved at the last hush.
+        controller.goQuiet()
+        controller.restoreSound()
+        ring = 6
+        media = 7
+
+        val result = controller.restoreSound()
+
+        assertEquals(QuietModeController.Result.Success(quiet = false), result)
+        assertEquals(6, ring)
+        assertEquals(7, media)
+    }
+
+    @Test
+    fun `restoreSound after the ring was raised by hand still brings media back`() {
+        // Not gated on isQuiet: "Restore now" after nudging the ring up must
+        // not leave media muted.
+        controller.goQuiet()
+        ring = 6
+
+        controller.restoreSound()
+
+        assertEquals("the hand-set ring stays", 6, ring)
+        assertEquals(5, media)
+        assertFalse(settings.lastKnownQuiet)
+    }
+
+    @Test
+    fun `restoreSound after media was raised by hand still brings the ring back`() {
+        controller.goQuiet()
+        media = 9
+
+        controller.restoreSound()
+
+        assertEquals(3, ring)
+        assertEquals("the hand-set media stays", 9, media)
+    }
+
+    @Test
+    fun `restoreMediaVolumeOnly leaves a media volume that is already back alone`() {
+        controller.goQuiet()
+        media = 9
+
+        assertTrue("media is back, so the answer is yes", controller.restoreMediaVolumeOnly())
+
+        assertEquals(9, media)
+        assertEquals(0, ring)
+    }
+
     @Test
     fun `restoreMediaVolumeOnly reports failure when the volume stays at zero`() {
         // A max volume of 0 makes the write land on 0 — the shape of an

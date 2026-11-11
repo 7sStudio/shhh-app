@@ -5,6 +5,7 @@ import android.content.Context
 import android.media.AudioManager
 import androidx.test.platform.app.InstrumentationRegistry
 import io.github.shhhapp.shhh.core.ShhhSettings
+import io.github.shhhapp.shhh.schedule.HushAlarms
 import org.junit.Assert.assertTrue
 import java.io.FileInputStream
 
@@ -34,6 +35,23 @@ fun waitFor(what: String, timeoutMillis: Long = 5_000, condition: () -> Boolean)
         assertTrue("timed out waiting for: $what", System.currentTimeMillis() < deadline)
         Thread.sleep(50)
     }
+}
+
+/**
+ * Whether one of this app's activities with the given simple class name is
+ * alive in a task.
+ *
+ * A plain substring search of `dumpsys activity activities` is not enough: the
+ * window manager goes on printing references to activities that are long
+ * gone — seen as `mImeParent=ActivityRecord{… /.MainActivity t-1 f}` (no task,
+ * finished), which stays until some other window takes the keyboard and made
+ * every "wait until our activity is gone" time out. A live record carries a
+ * real task id and no finished flag: `ActivityRecord{… pkg/.Name t760}`.
+ */
+fun isActivityAlive(simpleName: String): Boolean {
+    val pkg = InstrumentationRegistry.getInstrumentation().targetContext.packageName
+    val live = Regex("ActivityRecord\\{[^}]*" + Regex.escape("$pkg/.$simpleName") + " t\\d+\\}")
+    return live.containsMatchIn(shell("dumpsys activity activities"))
 }
 
 /**
@@ -208,6 +226,19 @@ class DeviceAudio {
         waitFor("Do Not Disturb access revoked") {
             !notificationManager.isNotificationPolicyAccessGranted
         }
+    }
+
+    /**
+     * Grants "Alarms & reminders" (SCHEDULE_EXACT_ALARM), which every timed
+     * hush needs. A fresh install starts without it. There is deliberately
+     * no matching revoke: taking the grant away makes the system kill the
+     * app's uid, test runner included (measured on Android 17), so tests of
+     * the missing grant rely on the fresh-install default instead — see
+     * AbsentExactAlarmGrantIntegrationTest.
+     */
+    fun allowExactAlarms() {
+        shell("appops set ${context.packageName} SCHEDULE_EXACT_ALARM allow")
+        waitFor("exact alarms allowed") { HushAlarms.canScheduleExact(context) }
     }
 
     /** Clears every persisted value a hush test can be influenced by. */

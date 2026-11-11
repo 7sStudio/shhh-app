@@ -29,6 +29,7 @@
     <string name="timer_chip_30">٣٠ دقيقة</string>
     <string name="timer_chip_60">ساعة واحدة</string>
     <string name="timer_chip_120">ساعتان</string>
+    <string name="timer_chip_until">حتى وقت محدد</string>
     <string name="timer_running_until">يعود الصوت في %1$s</string>
     <string name="timer_end_now">إلغاء الآن</string>
 
