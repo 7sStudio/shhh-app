@@ -136,7 +136,7 @@ regression fails the build. The Compose screens, the Glance widget, the Quick
 Settings tile, the trampoline activity, the alarm receivers and the momentary
 foreground service all run headless under Robolectric.
 
-CI builds, tests, checks coverage and lints every push, smoke-tests the minified release build on an emulator, and runs the on-device suite as a non-blocking job; tagging `v*` builds and publishes a release APK automatically.
+CI builds, tests, checks coverage and lints every push, and smoke-tests the minified release build on an emulator; tagging `v*` builds and publishes a release APK automatically. The on-device suite runs locally (`./gradlew connectedAndroidTest`).
 
 ## Distribution
 

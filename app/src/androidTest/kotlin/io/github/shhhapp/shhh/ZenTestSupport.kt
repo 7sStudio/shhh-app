@@ -255,11 +255,21 @@ class DeviceAudio {
      * `setStreamVolume` and every ringer-mode change together with the package
      * that asked for it. It is what makes "shhh never calls setRingerMode"
      * checkable from the outside instead of by reading the source.
+     *
+     * `dumpsys audio` titles that section differently per release — Android
+     * 16 prints `Events log: volume changes (...)` followed by `Events log:
+     * mute commands`, Android 17 prints `## Volume events` followed by
+     * `### Mute commands` — while the event lines themselves are identical.
+     * Reading only the newer titles returned nothing at all on Android 16,
+     * which the "proof the log would have caught it" assertion rightly failed.
      */
     fun volumeEvents(): List<String> =
         shell("dumpsys audio").lineSequence()
-            .dropWhile { !it.contains("## Volume events") }
-            .takeWhile { !it.contains("### Mute commands") }
+            .dropWhile {
+                !it.contains("## Volume events") && !it.contains("Events log: volume changes")
+            }
+            .drop(1)
+            .takeWhile { !it.contains("mute commands", ignoreCase = true) }
             .map { it.trim() }
             .filter { it.isNotEmpty() }
             .toList()
